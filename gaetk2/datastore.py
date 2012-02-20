@@ -8,7 +8,6 @@ Copyright (c) 2011, 2012 HUDORA. All rights reserved.
 """
 
 from google.appengine.api import taskqueue
-import logging
 import zlib
 
 
@@ -25,12 +24,11 @@ def taskqueue_add_multi(qname, url, paramlist, **kwargs):
     for params in paramlist:
         tasks.append(taskqueue.Task(url=url, params=params, **kwargs))
         # Batch Addition to Taskqueue
-        if len(tasks) >= 100:
+        if len(tasks) >= 50:
             taskqueue.Queue(name=qname).add(tasks)
             tasks = []
     if tasks:
         taskqueue.Queue(name=qname).add(tasks)
-    logging.debug(u'%d tasks queued to %s', len(paramlist), url)
 
 
 def taskqueue_add_multi_payload(name, url, payloadlist, **kwargs):
@@ -46,12 +44,11 @@ def taskqueue_add_multi_payload(name, url, payloadlist, **kwargs):
         payload = zlib.compress(payload)
         tasks.append(taskqueue.Task(url=url, payload=payload, **kwargs))
         # Patch Addition to Taskqueue
-        if len(tasks) >= 100:
+        if len(tasks) >= 50:
             taskqueue.Queue(name=name).add(tasks)
             tasks = []
     if tasks:
         taskqueue.Queue(name=name).add(tasks)
-    logging.debug(u'%d tasks queued to %s', len(payloadlist), url)
 
 
 def query_iterator(query, limit=50):
@@ -66,3 +63,11 @@ def query_iterator(query, limit=50):
         for entity in bucket:
             yield entity
         cursor = query.cursor()
+
+
+def copy_entity(entity, **kwargs):
+    """Copy entity"""
+    klass = type(entity)
+    properties = dict((key, value.__get__(entity, klass)) for (key, value) in klass.properties().iteritems())
+    properties.update(**kwargs)
+    return klass(**properties)
