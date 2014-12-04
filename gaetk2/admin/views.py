@@ -14,13 +14,13 @@ import datetime
 import gaetk.handler
 import webapp2
 from google.appengine.datastore import entity_pb
-from google.appengine.ext import db
+from google.appengine.ext import db, ndb
 
 from gaetk.admin import autodiscover
 from gaetk.admin import search
 from gaetk.admin.models import DeletedObject
 from gaetk.admin.sites import site
-from gaetk.admin.util import get_app_name, get_model_class
+from gaetk.admin.util import get_app_name, get_kind
 
 
 def make_app(url_mapping):
@@ -35,13 +35,11 @@ def make_app(url_mapping):
     return application
 
 
-
 class AdminHandler(gaetk.handler.BasicHandler):
     """Basisklasse AdminHandler."""
     def authchecker(self, method, *args, **kwargs):
         """Autentifizierung. `login: required` in app.yaml macht die Drecksarbeit für uns."""
 
-        # TODO: 'admin' in permissions
         self.login_required()
         if not self.is_admin():
             raise gaetk.handler.HTTP403_Forbidden
@@ -68,9 +66,9 @@ class AdminIndexHandler(AdminHandler):
         """Zeige Template mit allen registrierten Models an"""
 
         apps = {}
-        for model_class in site._registry:
+        for model_class in site.registry.keys():
             application = get_app_name(model_class)
-            apps.setdefault(application, []).append(model_class.kind())
+            apps.setdefault(application, []).append(get_kind(model_class))
         self.render({'apps': apps}, 'admin/index.html')
 
 
@@ -80,16 +78,14 @@ class AdminListHandler(AdminHandler):
     def get(self, application, model):
         """Rendert eine Liste aller registrierten Modells."""
 
-        model_class = get_model_class(application, model)
-        admin_class = site._registry[model_class]
+        model_class = site.get_model_class(application, model)
+        if not model_class:
+            raise gaetk.handler.HTTP404_NotFound('No model %s' % ('%s.%s' % (application, model)))
+        admin_class = site.get_admin_class(model_class)
 
         # unsupported: Link-Fields (oder wie das heißt)
         # unsupported: callables in List_fields
         query = admin_class.get_queryset(self.request)
-
-        cursor = self.request.get('cursor')
-        if cursor:
-            query = query.with_cursor(cursor)
 
         template_values = self.paginate(query,
                                         defaultcount=admin_class.list_per_page,
@@ -107,7 +103,9 @@ class AdminSearchHandler(AdminHandler):
     def get(self, application, model):
         """Erwartet den Parameter `q`"""
 
-        model_class = get_model_class(application, model)
+        model_class = site.get_model_class(application, model)
+        if not model_class:
+            raise gaetk.handler.HTTP404_NotFound('No model %s' % ('%s.%s' % (application, model)))
 
         pagesize = 40
         term = self.request.get('q')
@@ -137,8 +135,11 @@ class AdminDetailHandler(AdminHandler):
         application, model, action_or_objectid = args
 
         # Authchecker, hat der User Zugriff auf das Model mit der Action wäre noch was.
-        model_class = get_model_class(application, model)
-        admin_class = site._registry[model_class]
+
+        model_class = site.get_model_class(application, model)
+        if not model_class:
+            raise gaetk.handler.HTTP404_NotFound('No model %s' % ('%s.%s' % (application, model)))
+        admin_class = site.get_admin_class(model_class)
 
         # Bestimme Route! Da könnte man dann auch einen Handler mit angeben.
         if action_or_objectid == 'add':
@@ -155,7 +156,11 @@ class AdminUndeleteHandler(AdminHandler):
     def get(self, key):
         """Objekt mit <key> wiederherstellen."""
         archived = DeletedObject.get(key)
-        entity = db.model_from_protobuf(entity_pb.EntityProto(archived.data))
+        if archived.dblayer == 'ndb':
+            entity = ndb.ModelAdapter().pb_to_entity(entity_pb.EntityProto(archived.data))
+        else:
+            # precondition: model class must be imported
+            entity = db.model_from_protobuf(entity_pb.EntityProto(archived.data))
         entity.put()
         archived.delete()
         self.add_message(
@@ -163,7 +168,7 @@ class AdminUndeleteHandler(AdminHandler):
             u'Objekt <strong><A href="/admin/%s/%s/%s/">%s</a></strong> wurde wieder hergestellt.' % (
                 get_app_name(entity.__class__), entity.__class__.__name__, entity.key(), entity))
         raise gaetk.handler.HTTP301_Moved(location='/admin/%s/%s/' % (
-                                          get_app_name(entity.__class__), entity.__class__.__name__))
+            get_app_name(entity.__class__), entity.__class__.__name__))
 
 
 autodiscover()

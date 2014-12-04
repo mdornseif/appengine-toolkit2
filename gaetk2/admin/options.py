@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-common/admin/options.py
+gaetk2/admin/options.py
 
 Created by Christian Klein on 2011-08-22.
 Copyright (c) 2011 HUDORA GmbH. All rights reserved.
@@ -18,8 +18,11 @@ import wtforms
 
 from google.appengine.ext import db
 from google.appengine.ext import deferred
+from google.appengine.ext import ndb
 from wtforms.ext.appengine.db import model_form
 
+from gaetk.admin import util
+from gaetk.admin.sites import site
 from gaetk.admin.models import DeletedObject
 
 
@@ -36,6 +39,7 @@ class ModelAdmin(object):
     # Reihenfolge ihrer Erzeugung sortiert, jedoch kann jede Admin-Klasse die Sortierung
     # mit 'order_field' beeinflussen, indem sie ein bel. anderes Feld dort angibt.
     order_field = '-created_at'
+    ordering = None
 
     # Standardmaessig lassen wir die App Engine fuer das Model automatisch einen
     # Key generieren. Es besteht jedoch in der Admin-Klasse die Moeglichkeit, via
@@ -46,17 +50,17 @@ class ModelAdmin(object):
     prepopulated_fields = {}
 
     blob_upload_fields = []
+
     list_fields = ('__str__',)
     list_display_links = ()
     list_per_page = 25
-    ordering = None
 
     # Wird dem Field beim Rendern übergeben
     # (ist das erste eigene Attribut)
     field_args = {}
 
-    # Actions
-    actions = []  # wohl eher nicht... Also entfernen!
+    # Actions, bisher nicht implementiert.
+    actions = []
 
     def __init__(self, model, admin_site):
         self.model = model
@@ -75,19 +79,43 @@ class ModelAdmin(object):
             return
 
         direction = request.get('ot', 'asc')
-        if direction == 'desc':
-            order_field = '-' + order_field
-        return order_field
+        return order_field, '-' if direction == 'desc' else '+'
+
+    def _get_queryset_db(self, ordering=None):
+        """Queryset für Subklasse von db.Model"""
+        query = self.model.all()
+        if ordering:
+            attr, direction = ordering
+            if attr in self.model.properties():
+                if direction == '-':
+                    attr = '-' + attr
+                query.order(attr)
+        return query
+
+    def _get_queryset_ndb(self, ordering):
+        """Queryset für Subklasse von ndb.Model"""
+        query = self.model.query()
+        if ordering:
+            attr, direction = ordering
+            prop = self.model._properties.get(attr)
+            if prop:
+                if direction == '-':
+                    return query.order(-prop)
+                else:
+                    return query.order(prop)
+        return query
 
     def get_queryset(self, request):
         """Gib das QuerySet für die Admin-Seite zurück
 
         Es wird die gewünschte Sortierung durchgeführt.
         """
-        query = self.model.all()
+        # TODO: Tupel: (attr, direction)
         ordering = self.get_ordering(request)
-        if ordering:
-            query.order(ordering)
+        if issubclass(self.model, ndb.Model):
+            query = self._get_queryset_ndb(ordering)
+        elif issubclass(self.model, db.Model):
+            query = self._get_queryset_db(ordering)
         return query
 
     def get_form(self, **kwargs):
@@ -119,26 +147,26 @@ class ModelAdmin(object):
 
         return klass
 
-    def get_object(self, key):
+    def get_object(self, encoded_key):
         """Ermittle die Instanz über den gegeben ID"""
-        return self.model.get(unquote(key))
-    # logs...
+        if issubclass(self.model, ndb.Model):
+            key = ndb.Key(urlsafe=encoded_key)
+            instance = key.get()
+        elif issubclass(self.model, db.Model):
+            instance = self.model.get(unquote(encoded_key))
+        return instance
 
     def handle_blobstore_fields(self, handler, obj):
         """Upload für Blobs"""
-        from common.admin.util import upload_to_blobstore
-
         # Falls das Feld vom Typ cgi.FieldStorage ist, wurde eine Datei zum Upload übergeben
         for blob_upload_field in self.blob_upload_fields:
             blob = handler.request.params.get(blob_upload_field)
             if blob.__class__ == cgi.FieldStorage:
-                blob_key = upload_to_blobstore(blob)
+                blob_key = util.upload_to_blobstore(blob)
                 setattr(obj, blob_upload_field, blob_key)
 
     def change_view(self, handler, object_id, extra_context=None):
         """View zum Bearbeiten eines vorhandenen Objekts"""
-
-        from common.admin.util import get_app_name
 
         obj = self.get_object(object_id)
         if obj is None:
@@ -149,20 +177,32 @@ class ModelAdmin(object):
 
         if handler.request.get('delete') == 'yesiwant':
             # Der User hat gebeten, dieses Objekt zu löschen.
-            data = db.model_to_protobuf(obj).Encode()
-            archived = DeletedObject(key_name=str(obj.key()), model_class=model_class.__name__,
-                                     old_key=str(obj.key()), data=data)
+            if hasattr(obj, 'model') and issubclass(obj.model, db.Model):
+                data = db.model_to_protobuf(obj).Encode()
+                dblayer = 'db'
+                key = obj.key()
+            else:
+                # assume ndb
+                data = ndb.ModelAdapter().entity_to_pb(obj).Encode()
+                dblayer = 'ndb'
+                key = obj.key
+            archived = DeletedObject(key_name=str(key), model_class=model_class.__name__,
+                                     old_key=str(key), dblayer=dblayer, data=data)
             archived.put()
-            obj.delete()
             # Indexierung für Admin-Volltextsuche
-            from common.admin.search import remove_from_index
-            deferred.defer(remove_from_index, obj.key())
+            from gaetk.admin.search import remove_from_index
+            if dblayer == 'ndb':
+                obj.key.delete()
+                deferred.defer(remove_from_index, obj.key)
+            else:
+                obj.delete()
+                deferred.defer(remove_from_index, obj.key())
             handler.add_message(
                 'warning',
                 u'<strong>%s</strong> wurde gelöscht. <a href="%s">Objekt wiederherstellen!</a>' % (
                     obj, archived.undelete_url()))
-            raise gaetk.handler.HTTP302_Found(location='/admin/%s/%s/' % (get_app_name(model_class),
-                                                                          model_class.kind()))
+            raise gaetk.handler.HTTP302_Found(location='/admin/%s/%s/' % (
+                util.get_app_name(model_class), util.get_kind(model_class)))
 
         # Wenn das Formular abgeschickt wurde und gültig ist,
         # speichere das veränderte Objekt und leite auf die Übersichtsseite um.
@@ -177,10 +217,10 @@ class ModelAdmin(object):
                 key = obj.put()
                 handler.add_message('success', u'<strong>%s</strong> wurde gespeichert.' % obj)
                 # Indexierung für Admin-Volltextsuche
-                from common.admin.search import add_to_index
+                from gaetk.admin.search import add_to_index
                 deferred.defer(add_to_index, key)
                 raise gaetk.handler.HTTP302_Found(location='/admin/%s/%s/' % (
-                    get_app_name(model_class), model_class.kind()))
+                    util.get_app_name(model_class), util.get_kind(model_class)))
         else:
             form = form_class(obj=obj)
 
@@ -198,8 +238,7 @@ class ModelAdmin(object):
         # Key generieren. Es besteht jedoch in der Admin-Klasse die Moeglichkeit, via
         # 'db_key_field=[propertyname]' ein Feld festzulegen, dessen Inhalt im Formular
         # als Key beim Erzeugen der Instanz genutzt wird.
-        from common.admin.sites import site
-        admin_class = site._registry.get(self.model)
+        admin_class = site.get_admin_class(self.model)
         key_field = None
         if admin_class and hasattr(admin_class, 'db_key_field'):
             key_field = admin_class.db_key_field
@@ -218,12 +257,17 @@ class ModelAdmin(object):
                     factory = self.model.create
                 else:
                     factory = self.model
-                obj = factory(key_name=key_name, **form_data)
+
+                if issubclass(self.model, ndb.Model):
+                    obj = factory(id=key_name, **form_data)
+                else:
+                    obj = factory(key_name=key_name, **form_data)
+
                 self.handle_blobstore_fields(handler, obj)
                 key = obj.put()
                 handler.add_message('success', u'<strong>%s</strong> wurde angelegt.' % obj)
                 # Indexierung für Admin-Volltextsuche
-                from common.admin.search import add_to_index
+                from gaetk.admin.search import add_to_index
                 deferred.defer(add_to_index, key)
                 raise gaetk.handler.HTTP302_Found(location='..')
         else:
@@ -259,14 +303,22 @@ class ModelAdmin(object):
             raise gaetk.handler.HTTP400_BadRequest(u'Falsche Request Methode für diesen Aufruf: %s' %
                                                    handler.request.method)
         # Instanzen sammeln und dann gemeinsam löschen
-        objects = []
+        keys = []
         for object_id in handler.request.get_all('object_id'):
             obj = self.get_object(object_id)
             if obj is None:
                 raise gaetk.handler.HTTP404_NotFound(u'Keine Instanz zu ID %s gefunden.' % object_id)
-            objects.append(obj)
             logging.info(u'Delete %s', object_id)
-        db.delete(objects)
+            if issubclass(self.model, ndb.Model):
+                keys.append(ndb.Key(urlsafe=object_id))
+            elif issubclass(self.model, db.Model):
+                keys.append(db.Key(object_id))
+
+        if issubclass(self.model, ndb.Model):
+            ndb.delete_multi(keys)
+        elif issubclass(self.model, db.Model):
+            db.delete(keys)
+
         raise gaetk.handler.HTTP302_Found(location='..')
 
     def get_template(self, action):
