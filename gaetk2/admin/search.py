@@ -6,17 +6,12 @@ gaetk2/admin/search.py
 Created by Christian Klein on 2013-12-25.
 Copyright (c) 2013 HUDORA GmbH. All rights reserved.
 """
-import config
-config.imported = True
-
 import logging
 
 from google.appengine.api import search
-from google.appengine.ext import db
 
 import gaetk.compat
 from gaetk.admin import autodiscover
-from gaetk.admin.sites import site
 from gaetk.admin.util import get_app_name
 
 
@@ -79,7 +74,6 @@ def perform_search(indexname, query_string, options=None):
 
 def add_to_index(key):
     """Füge Instanz dem Suchindex hinzu"""
-
     obj = gaetk.compat.xdb_get(key)
     if obj is None:
         return
@@ -88,10 +82,14 @@ def add_to_index(key):
     skey = gaetk.compat.xdb_str_key(key)
     kind = gaetk.compat.xdb_kind(obj)
 
-    admin = site._registry.get(type(obj))
-    if hasattr(admin, 'searchdoc'):
-        data = admin.searchdoc(obj)
-    elif hasattr(obj, 'as_dict'):
+    # We have some very nasty problems with cyclic imports
+    # site registry depends on options and options depends
+    # on a lot of stuff which depends on the site registry
+    #admin = gaetk.admin.sites.site._registry.get(type(obj))
+    #if hasattr(admin, 'searchdoc'):
+    #    data = admin.searchdoc(obj)
+
+    if hasattr(obj, 'as_dict'):
         data = obj.as_dict()
     else:
         key_name = gaetk.compat.xdb_id_or_name(key)
