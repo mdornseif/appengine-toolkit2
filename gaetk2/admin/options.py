@@ -7,6 +7,7 @@ Created by Christian Klein on 2011-08-22.
 Copyright (c) 2011, 2014 HUDORA GmbH. All rights reserved.
 """
 import cgi
+import datetime
 import logging
 
 import gaetk.handler
@@ -127,13 +128,22 @@ class ModelAdmin(object):
     def get_ordering(self, request):
         """Return the sort order attribute"""
         order_field = request.get('o')
+        direction = request.get('ot', 'asc')
 
-        if not order_field:  # in self.model
-            order_field = self.ordering
+        if not order_field and self.ordering:
+            if self.ordering.startswith('-'):
+                direction = 'desc'
+                order_field = self.ordering[1:]
+            elif self.ordering.startswith('+'):
+                direction = 'asc'
+                order_field = self.ordering[1:]
+            else:
+                order_field = self.ordering
+                direction = 'asc'
+
         if not order_field:
             return
 
-        direction = request.get('ot', 'asc')
         return order_field, '-' if direction == 'desc' else '+'
 
     def get_queryset(self, request):
@@ -225,7 +235,7 @@ class ModelAdmin(object):
         if handler.request.method == 'POST':
             form = form_class(handler.request.POST)
             if form.validate():
-                key_name = compat.xdb_id_or_name(xdb_key(obj))
+                key_name = compat.xdb_id_or_name(compat.xdb_key(obj))
                 self.handle_blobstore_fields(handler, obj, key_name)
                 if hasattr(obj, 'update'):
                     obj.update(form.data)
@@ -280,8 +290,8 @@ class ModelAdmin(object):
                     obj = factory(key_name=key_name, **form_data)
 
                 # Beim Anlegen muss dann halt einmal gespeichert werden,
-                # ansonsten ist der ID unbekannt. 
-                if self.self.blob_upload_fields and key_name is None:
+                # ansonsten ist der ID unbekannt.
+                if self.blob_upload_fields and key_name is None:
                     key_name = compat.xdb_id_or_name(obj.put())
 
                 self.handle_blobstore_fields(handler, obj, key_name)
