@@ -24,7 +24,6 @@ from gaetk import compat
 
 from gaetk.compat import xdb_kind
 
-# sites registry
 
 class AdminSite(object):
     """Konzept zur Verwaltung (per Weboberfläche) adminsitrierbarer GAE Models."""
@@ -75,7 +74,6 @@ class AdminSite(object):
 # The global AdminSite instance
 site = AdminSite()
 
-# options
 
 class ModelAdmin(object):
     """Admin Modell."""
@@ -370,7 +368,7 @@ class ModelAdmin(object):
 
         `extra_context` ist für die Signatur erforderlich, wird aber nicht genutzt.
         """
-        exporter = ModelExporter(self.model)
+        exporter = modelexporter.ModelExporter(self.model)
         filename = '%s-%s.xls' % (compat.xdb_kind(self.model), datetime.datetime.now())
         handler.response.headers['Content-Type'] = 'application/msexcel'
         handler.response.headers['content-disposition'] = \
