@@ -110,6 +110,7 @@ class ModelAdmin(object):
     field_args = {}
 
     read_only = False
+    deletable = True
 
     # Actions, bisher nicht implementiert.
     actions = []
