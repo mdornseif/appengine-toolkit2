@@ -6,12 +6,11 @@ gaetk2/admin/__init__.py
 Created by Christian Klein on 2011-08-19.
 Copyright (c) 2011 HUDORA GmbH. All rights reserved.
 """
-import config
-config.imported = True
-
 import logging
 import os
 import sys
+
+import config
 
 
 def import_module(name):
@@ -43,5 +42,5 @@ def autodiscover(appsdir=None):
             module_name = '.'.join((directory, subdir, 'admin'))
             try:
                 import_module(module_name)
-            except ImportError, error:
+            except ImportError as error:
                 logging.error(u'Error while importing %s: %s', module_name, error)

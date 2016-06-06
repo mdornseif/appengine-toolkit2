@@ -17,7 +17,7 @@ import wtforms
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 from google.appengine.ext import ndb
-from wtforms.ext.appengine.db import model_form
+from wtforms_appengine.db import model_form
 
 from gaetk import compat
 from gaetk import modelexporter
@@ -90,7 +90,7 @@ class ModelAdmin(object):
     # Reihenfolge ihrer Erzeugung sortiert, jedoch kann jede Admin-Klasse die Sortierung
     # mit 'order_field' beeinflussen, indem sie ein bel. anderes Feld dort angibt.
     order_field = '-created_at'
-    ordering = None
+    ordering = ''
 
     # Standardmaessig lassen wir die App Engine fuer das Model automatisch einen
     # Key generieren. Es besteht jedoch in der Admin-Klasse die Moeglichkeit, via
