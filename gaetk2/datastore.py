@@ -133,6 +133,7 @@ def write_on_change(model, key, data, flush_cache=False):
 def write_on_change_instance(obj, data):
     """Schreibe Instanz mit geänderten Daten in Datastore."""
 
+    properties = compat.xdb_properties(obj)
     dirty = False
     for key, value in data.iteritems():
         if value != getattr(obj, key, None):
