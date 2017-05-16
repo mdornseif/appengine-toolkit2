@@ -6,6 +6,8 @@ infrastructure.py
 Created by Maximillian Dornseif on 2011-01-07.
 Copyright (c) 2011, 2012, 2016, 2017 Cyberlogi/HUDORA. All rights reserved.
 """
+import logging
+import os
 import re
 import zlib
 
@@ -77,20 +79,41 @@ def defer(obj, *args, **kwargs):
             script: google.appengine.ext.deferred.deferred.application
             login: admin
     """
+    def to_str(value):
+        """Convert all datatypes to str"""
+        if isinstance(value, unicode):
+            return value.encode('ascii', 'ignore')
+        return str(value)
 
-    url = "{0}({1!s},{2!r})".format(
+    suffix = '{0}({1!s},{2!r})'.format(
         obj.__name__,
-        ','.join([str(x) for x in args]),
-        ','.join(["%s=%s" % (x[0], x[1]) for x in kwargs.items() if not x[0].startswith('_')])
+        ','.join(to_str(arg) for arg in args),
+        ','.join('%s=%s' % (key, to_str(value)) for (key, value) in kwargs.items() if not key.startswith('_'))
     )
-    url = url.replace(' ', '-')
-    url = re.sub(r'[^/A-Za-z0-9_,.:@&+$\(\)\-]+', '', url)
-    url = google.appengine.ext.deferred.deferred._DEFAULT_URL + '/' + re.sub(r'-+', '-', url)
-
+    suffix = re.sub(r'-+', '-', suffix.replace(' ', '-'))
+    suffix = re.sub(r'[^/A-Za-z0-9_,.:@&+$\(\)\-]+', '', suffix)
+    url = google.appengine.ext.deferred.deferred._DEFAULT_URL + '/' + suffix[:1600]
     kwargs["_url"] = kwargs.pop("_url", url)
-    kwargs["_target"] = kwargs.pop("_target", 'workers')
     kwargs["_queue"] = kwargs.pop("_queue", 'workersq')
-    return deferred.defer(obj, *args, **kwargs)
+    if _is_production():
+        # we only route to the workers backend/module on production machines
+        kwargs["_target"] = kwargs.pop("_target", 'workers')
+    try:
+        return deferred.defer(obj, *args, **kwargs)
+    except taskqueue.TaskAlreadyExistsError:
+        logging.info('Task already exists')
+    except taskqueue.TombstonedTaskError:
+        logging.info('Task did already run')
+
+
+def _is_production():
+    """checks if we can assume to run on a development machine"""
+    if os.environ.get('SERVER_NAME', '').startswith('dev-'):
+        return False
+    elif os.environ.get('SERVER_SOFTWARE', '').startswith('Development'):
+        return False
+    else:
+        return True
 
 
 # Datastore
@@ -115,6 +138,7 @@ def copy_entity(e, **extra_args):
     props = dict((v._code_name, v.__get__(e, klass)) for v in klass._properties.itervalues() if type(v) is not ndb.ComputedProperty)
     props.update(extra_args)
     return klass(**props)
+
 
 def write_on_change(model, key, data, flush_cache=False):
     """Schreibe (nur) die geänderten Daten in den Datastore."""
