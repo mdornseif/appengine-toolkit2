@@ -1,0 +1,58 @@
+#
+# using `includes` retrieves only the following types of directives :
+# * builtins
+# * includes
+# * handlers
+# * skip_files
+
+includes:
+- lib/site-packages/mapreduce/include.yaml
+
+# Patterns are evaluated in the order they appear in the app.yaml file,
+# from top to bottom. The first mapping whose pattern matches the URL
+# is the one used to handle the request.
+handlers:
+# needed to allow abritary postfixes for better overview during logging
+- url: /_ah/queue/deferred(.*)
+  script: google.appengine.ext.deferred.deferred.application
+  login: admin
+- url: /gaetk2/static
+  static_dir: lib/appengine-toolkit2/static
+  http_headers:
+    Access-Control-Allow-Origin: "*"
+- url: /robots.txt
+  script: gaetk2.defaulviews.defaultthandlers.application
+- url: /version.txt
+  script: gaetk2.views.default.application
+
+- url: /favicon\.ico
+  static_files: static/icons/favicon.ico
+  upload: static/icons/favicon.ico
+  expiration: "10d"
+- url: /(apple-touch-icon[\dx-]*?)(-precomposed)?\.png
+  static_files: static/icons/\1.png
+  upload: static/icons/apple-.*png
+  expiration: "10d"
+
+# libraries unfortunately is ignored
+
+skip_files:
+- ^(.*/)?.*~
+- ^(.*/)?.*\.py[co]
+- ^(.*/)?\.[^c].*
+- ^(.*/)?(CHANGES|LICENSE|AUTHORS)
+- ^(.*/)?Makefile
+- ^(.*/)?setup.py
+- ^.*/.*/(example|test|bin|tmp)s?/.*
+- ^(example|test|bin|tmp)s?/.*
+- ^.*/.*/doc/.*
+- ^.*/README.*
+- ^(.*/)?lib/CentralServices/keys/.*
+- ^(.*/)?lib/google_appengine/.*
+- ^(.*/)?lib/py2js/.*
+- .*\.graffle
+- .*/requirements.txt
+- .*MANIFEST.in
+- .*PKG-INFO
+- js_src/.*
+- js_*/.*
