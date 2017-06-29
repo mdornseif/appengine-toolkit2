@@ -53,7 +53,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         if handler:
             return handler(request, response, e)
         else:
-            if code >= 500 and users.is_current_user_admin() not is_production():
+            if code >= 500 and users.is_current_user_admin() and not is_production():
                 # clear output and set to HTML
                 response.clear()
                 response.headers['Content-Type'] = 'text/html'

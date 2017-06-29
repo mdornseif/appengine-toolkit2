@@ -54,11 +54,10 @@ class Debug(JsonHandler):
         )
 
 
-class GetJWTjson(DefaultHandler):
+class GetJWTtxt(DefaultHandler):
     """Create our own hudora-specific JWT."""
 
-    def get(self):
-        """Build JWT and return it as plaintext."""
+    def get_jwt(self):
         iat = datetime.utcnow()
         nbf = iat + timedelta(seconds=0)
         exp = iat + timedelta(seconds=3600)
@@ -69,7 +68,15 @@ class GetJWTjson(DefaultHandler):
             'sub': self.credential.uid,
             "Email": self.credential.email
         }
-        self.return_text(jwt.encode(jwt_payload, config.JWT_SECRET_KEY, algorithm='HS256'))
+        return jwt.encode(jwt_payload, config.JWT_SECRET_KEY, algorithm='HS256')
+
+    def get(self):
+        """Build JWT and return it as plaintext."""
+
+        if not self.credential:
+            self.return_text('// NAK - unauthenticated')
+
+        self.return_text('// ACK - ' + self.get_jwt())
 
 
 class LogoutHandler(DefaultHandler):
@@ -195,7 +202,7 @@ class CredentialsHandler(JsonHandler):
 
 application = make_app([
     (r'^/gaetk2/auth/debug$', Debug),
-    (r'^/gaetk2/auth/getjwt.json$', GetJWTjson),
+    (r'^/gaetk2/auth/getjwt.txt$', GetJWTtxt),
     (r'^/gaetk2/auth/logout$', LogoutHandler),
 ])
 

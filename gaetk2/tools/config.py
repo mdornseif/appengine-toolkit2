@@ -19,8 +19,11 @@ config = lib_config.register(
         # auth
         CREDENTIAL_CACHE_TIMEOUT=600,
         JWT_SECRET_KEY='*unset*',
-        GOOGLE_OAUTH_CONFIG={},  # see https://console.developers.google.com/apis/credentials?project=huwawi2
-        GOOGLE_OAUTH_ALLOWED_DOMAINS=['hudora.de'],
+        OAUTH_GOOGLE_CONFIG={},  # see https://console.developers.google.com/apis/credentials?project=huwawi2
+        OAUTH_GOOGLE_ALLOWED_DOMAINS=['hudora.de'],
+        AUTH0_DOMAIN='*unset*',
+        AUTH0_CLIENT_ID='*unset*',
+        AUTH0_CLIENT_SECRET='*unset*',
         # Backup To Google CloudStorage (or BlobStore)
         BACKUP_GS_BUCKET='*unset*',
         BACKUP_FILESYSTEM='gs',

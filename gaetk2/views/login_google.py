@@ -59,25 +59,25 @@ class LoginGoogleHandler(BasicHandler, AuthMixin):
 
         # First try the host the current request came from
         callback_url = self.request.host_url + callbackpath
-        if callback_url not in config.GOOGLE_OAUTH_CONFIG['redirect_uris']:
+        if callback_url not in config.OAUTH_GOOGLE_CONFIG['redirect_uris']:
             logging.critical("%s not valid", callback_url)
             # this did not work. Try to get the Servername from the
             # environment and enforce https
             callback_url = 'https://' + os.environ.get('SERVER_NAME') + callbackpath
-            if callback_url not in config.GOOGLE_OAUTH_CONFIG['redirect_uris']:
+            if callback_url not in config.OAUTH_GOOGLE_CONFIG['redirect_uris']:
                 logging.debug("%s not valid", callback_url)
                 # this did not work. Try to use the default version.
                 callback_url = 'https://' + os.environ.get('DEFAULT_VERSION_HOSTNAME') + callbackpath
-                if callback_url not in config.GOOGLE_OAUTH_CONFIG['redirect_uris']:
+                if callback_url not in config.OAUTH_GOOGLE_CONFIG['redirect_uris']:
                     logging.debug("%s not valid", callback_url)
                     # this also did not work. Just use the first available callback URL.
-                    callback_url = config.GOOGLE_OAUTH_CONFIG['redirect_uris'][0]
+                    callback_url = config.OAUTH_GOOGLE_CONFIG['redirect_uris'][0]
             logging.info('using %s', callback_url)
 
         self.session['oauth_redirect_uri'] = callback_url
         # Construct OAuth Request.
         params = dict(
-            client_id=config.GOOGLE_OAUTH_CONFIG['client_id'],
+            client_id=config.OAUTH_GOOGLE_CONFIG['client_id'],
             response_type="code",
             scope="openid email profile",
             redirect_uri=self.session['oauth_redirect_uri'],
@@ -89,14 +89,14 @@ class LoginGoogleHandler(BasicHandler, AuthMixin):
             # to release the user’s email address to your app.
         )
         # help choosing domain name
-        if len(config.GOOGLE_OAUTH_ALLOWED_DOMAINS) == 1:
+        if len(config.OAUTH_GOOGLE_ALLOWED_DOMAINS) == 1:
             # Use the hd parameter to optimize the OpenID Connect flow for
             # users of a particular G Suite domain.
-            params['hd'] = config.GOOGLE_OAUTH_ALLOWED_DOMAINS[0]
-        elif config.GOOGLE_OAUTH_ALLOWED_DOMAINS:
+            params['hd'] = config.OAUTH_GOOGLE_ALLOWED_DOMAINS[0]
+        elif config.OAUTH_GOOGLE_ALLOWED_DOMAINS:
             params['hd'] = '*'
 
-        oauth_url = config.GOOGLE_OAUTH_CONFIG['auth_uri'] + '?' + urllib.urlencode(params)
+        oauth_url = config.OAUTH_GOOGLE_CONFIG['auth_uri'] + '?' + urllib.urlencode(params)
 
         # If user is already authenticated, redirect logged in user to `continue_url`,
         # else redirect to Google Apps OAuth Login.
@@ -129,19 +129,19 @@ class GoogleOAuth2Callback(BasicHandler, AuthMixin):
             # Redirect to try new login
             raise HTTP302_Found(location=continue_url)
 
-        if config.GOOGLE_OAUTH_ALLOWED_DOMAINS:
-            if self.request.get('hd') not in config.GOOGLE_OAUTH_ALLOWED_DOMAINS:
+        if config.OAUTH_GOOGLE_ALLOWED_DOMAINS:
+            if self.request.get('hd') not in config.OAUTH_GOOGLE_ALLOWED_DOMAINS:
                 raise HTTP403_Forbidden(
                     "Wrong domain: %r not in %r" % (
-                        self.request.get('hd'), config.GOOGLE_OAUTH_ALLOWED_DOMAINS))
+                        self.request.get('hd'), config.OAUTH_GOOGLE_ALLOWED_DOMAINS))
 
         # 4. Exchange code for access token and ID token by requesting data from Google
-        url = config.GOOGLE_OAUTH_CONFIG['token_uri']
+        url = config.OAUTH_GOOGLE_CONFIG['token_uri']
         # get token
         params = dict(
             code=self.request.get('code'),
-            client_id=config.GOOGLE_OAUTH_CONFIG['client_id'],
-            client_secret=config.GOOGLE_OAUTH_CONFIG['client_secret'],
+            client_id=config.OAUTH_GOOGLE_CONFIG['client_id'],
+            client_secret=config.OAUTH_GOOGLE_CONFIG['client_secret'],
             redirect_uri=self.session.pop('oauth_redirect_uri', ''),
             grant_type="authorization_code")
         # data = huTools.http.fetch_json2xx(url, method='POST', content=params)
@@ -169,9 +169,9 @@ class GoogleOAuth2Callback(BasicHandler, AuthMixin):
         #   u'hd': u'hudora.de',
         #   u'sub': u'114400842898019538607'}
         assert jwt['iss'] == 'accounts.google.com'
-        assert jwt['aud'] == config.GOOGLE_OAUTH_CONFIG['client_id']
-        if config.GOOGLE_OAUTH_ALLOWED_DOMAINS:
-            assert jwt['hd'] in config.GOOGLE_OAUTH_ALLOWED_DOMAINS
+        assert jwt['aud'] == config.OAUTH_GOOGLE_CONFIG['client_id']
+        if config.OAUTH_GOOGLE_ALLOWED_DOMAINS:
+            assert jwt['hd'] in config.OAUTH_GOOGLE_ALLOWED_DOMAINS
         # note that the user is logged in
 
         # hd FEDERATED_IDENTITY FEDERATED_PROVIDER

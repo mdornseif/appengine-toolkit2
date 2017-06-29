@@ -109,6 +109,10 @@ class AuthMixin(object):
         """
         # Example: ensure that users with empty password are never logged in
         # not really deeded, because `login_user()` ensures this.
+        sup = super(AuthMixin, self)
+        if hasattr(sup, 'authchecker'):
+            sup.authchecker(method, *args, **kwargs)
+
         if self.credential and not self.credential.secret:
             logging.debug('%r %r %r', method, args, kwargs)
             raise HTTP401_Unauthorized("Account disabled")
@@ -122,7 +126,7 @@ class AuthMixin(object):
             # Browser-Based Login
 
             if self._interactive_client():
-                logging.debug("404/302. headers: %r", self.request.headers)
+                logging.debug("302 headers: %r", self.request.headers)
                 # we assume the request came via a browser - redirect to the "nice" login page
                 # let login.py handle it from there
                 absolute_url = self.abs_url(
@@ -157,7 +161,7 @@ class AuthMixin(object):
         # this is helpful for things like `ndb.UserProperty(auto_current_user=True)`
         if not os.environ.get('USER_ID', None):
             os.environ['USER_ID'] = self.credential.uid
-            os.environ['AUTH_DOMAIN'] = 'auth.hudora.de'
+            os.environ['AUTH_DOMAIN'] = 'auth.gaetk2.23.nu'
             # os.environ['USER_IS_ADMIN'] = credential.admin
             if self.credential.email:
                 os.environ['USER_EMAIL'] = self.credential.email
@@ -176,7 +180,7 @@ class AuthMixin(object):
             uid = jwt['sub'] + '#google.' + jwt['hd']
         self.credential = NdbCredential.create(
             id=uid,
-            tenant=jwt['hd'],
+            tenant=jwt.get('hd', jwt['email'].split('@')[-1]),
             uid=uid,
             admin=True,
             text='created via OAuth2',
