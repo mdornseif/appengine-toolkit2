@@ -180,10 +180,9 @@ class AuthMixin(object):
             uid = jwt['sub'] + '#google.' + jwt['hd']
         self.credential = NdbCredential.create(
             id=uid,
-            tenant=jwt.get('hd', jwt['email'].split('@')[-1]),
             uid=uid,
             admin=True,
-            text='created via OAuth2',
+            text='created via OAuth2/JWT',
             email=jwt['email'])
         self.credential.put()
 
@@ -210,7 +209,6 @@ class NdbCredential(ndb.Expando):
     _default_indexed = True
     uid = ndb.StringProperty(required=True)  # == key.id()
     user = ndb.UserProperty(required=False)  # Google (?) User
-    tenant = ndb.StringProperty(required=False, default='_unknown', indexed=False)  # hudora.de
     email = ndb.StringProperty(required=False)
     secret = ndb.StringProperty(required=True, indexed=False)  # "Password" - NOT user-settable
     admin = ndb.BooleanProperty(default=False, indexed=False)
@@ -226,14 +224,14 @@ class NdbCredential(ndb.Expando):
         return 'Credential'
 
     @classmethod
-    def create(cls, uid=None, tenant='_unknown', user=None, admin=False, **kwargs):
+    def create(cls, uid=None, user=None, admin=False, **kwargs):
         """Creates a credential Object generating a random secret and a random uid if needed."""
         # secret hopfully contains about 40 bits of entropy - more than most passwords
         secret = guid128()[1:16]
         if not uid:
             uid = "u%s" % (cls.allocate_ids(1)[0])
         kwargs['permissions'] = ['generic_permission']
-        ret = cls.get_or_insert(uid, uid=uid, secret=secret, tenant=tenant,
+        ret = cls.get_or_insert(uid, uid=uid, secret=secret,
                                 user=user, admin=admin, **kwargs)
         return ret
 

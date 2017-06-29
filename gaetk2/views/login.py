@@ -134,7 +134,7 @@ class CredentialsHandler(JsonHandler):
 
         return dict(
             uid=credential.uid, admin=credential.admin, text=credential.text,
-            tenant=credential.tenant, email=credential.email,
+            email=credential.email,
             permissions=credential.permissions,
             created_at=credential.created_at, updated_at=credential.updated_at)
 
@@ -161,7 +161,6 @@ class CredentialsHandler(JsonHandler):
         text = data.get('text', '')
         uid = data.get('uid')
         email = data.get('email')
-        tenant = data.get('tenant')
         permissions = data.get('permissions', '')
         if isinstance(permissions, basestring):
             permissions = permissions.split(',')
@@ -175,7 +174,6 @@ class CredentialsHandler(JsonHandler):
             # if a credential already exists we only have to modify it
             credential.admin = admin
             credential.text = text
-            credential.tenant = tenant
             credential.email = email
             credential.permissions = []
             for permission in permissions:
@@ -186,15 +184,14 @@ class CredentialsHandler(JsonHandler):
         else:
             # if not, we generate a new one
             credential = NdbCredential.create(
-                admin=admin, text=text,
-                tenant=tenant, email=email)
+                admin=admin, text=text, email=email)
 
         self.response.headers["Content-Type"] = "application/json"
         self.response.set_status(201)
         self.response.out.write(huTools.hujson2.dumps(dict(
             uid=credential.uid, secret=credential.secret,
             admin=credential.admin, text=credential.text,
-            tenant=credential.tenant, email=credential.email,
+            email=credential.email,
             permissions=credential.permissions,
             created_at=credential.created_at,
             updated_at=credential.updated_at)))
