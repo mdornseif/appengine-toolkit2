@@ -17,6 +17,7 @@ config = lib_config.register(
     dict(
         TEMPLATE_DIRS=['./templates'],
         # auth
+        AUTH_DISABLE_SESSION_AUTH=False,
         CREDENTIAL_CACHE_TIMEOUT=600,
         JWT_SECRET_KEY='*unset*',
         OAUTH_GOOGLE_CONFIG={},  # see https://console.developers.google.com/apis/credentials?project=huwawi2

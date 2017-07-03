@@ -242,7 +242,11 @@ class BasicHandler(webapp2.RequestHandler):
             self.session = get_current_session()
         except AttributeError:
             # session handling not activated
-            self.session = {}  # pylint: disable=R0204
+            self.session = {}
+
+        # get_current_session() sometimes returns strange results
+        if self.session is None:
+            self.session = {}
 
         if hasattr(self, 'load_credential') and callable(self.load_credential):
             self.load_credential()

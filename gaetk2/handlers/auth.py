@@ -34,14 +34,7 @@ class AuthMixin(object):
         # 2) Authentication via JWT
         # 3) Authentication via Session
         # 4) Login via OAuth with speciffic domains registered at Google Apps
-
-        # TODO: X-Appengine-Cron: true
-        # x-appengine-user-is-admin
-        # x-appengine-auth-domain
-        # x-google-real-ip
-        # X-Appengine-Inbound-Appid
-        # X-AppEngine-QueueName
-        # https://cloud.google.com/appengine/docs/standard/python/taskqueue/push/creating-handlers
+        # 5) Login for Google Special Calls from Cron & TaskQueue
 
         self.credential = None
         uid, secret = None, None
@@ -90,7 +83,7 @@ class AuthMixin(object):
                 return self._login_user('Goole User OpenID Connect')
 
         # 4. Check for session based login
-        if self.session.get('uid'):
+        if self.session.get('uid') and not config.AUTH_DISABLE_SESSION_AUTH:
             self.credential = self.get_credential(self.session['uid'])
             if self.credential:
                 # We do not check the password because session storage is trusted
@@ -100,6 +93,16 @@ class AuthMixin(object):
                     "No Credential for Session: %s. Progressing unauthenticated",
                     self.session.get('uid'))
                 self._clear_session()
+
+        # 5. Login for Google Special Calls from Cron & TaskQueue
+        # TODO: X-Appengine-Cron: true
+        # x-appengine-user-is-admin
+        # x-appengine-auth-domain
+        # https://cloud.google.com/appengine/docs/standard/python/taskqueue/push/creating-handlers
+        if self.request.headers.get('X-AppEngine-QueueName'):
+            self.credential = self.get_credential('X-AppEngine-Taskqueue-{}@auth.gaetk2.23.nu'.format(
+                self.request.headers.get('X-AppEngine-QueueName')))
+            return self._login_user('AppEngine')
 
     def authchecker(self, method, *args, **kwargs):
         """Function to allow implementing authentication for all subclasses.
@@ -122,7 +125,7 @@ class AuthMixin(object):
         if not self.credential:
             # Login not successful
             # now we have to decide if we want ot enable HTTP-Login via a
-            # `HTTP401_Unauthorized` response og redirect and use
+            # `HTTP401_Unauthorized` response or redirect and use
             # Browser-Based Login
 
             if self._interactive_client():
@@ -187,10 +190,11 @@ class AuthMixin(object):
         self.credential.put()
 
     def _interactive_client(self):
-        if (self.request.is_xhr or
-            # ES6 Fetch API
-            'Fetch' in self.request.headers.get('X-Requested-With', '') or
-            # JSON only client
+        """Check if we cvan redirect the client for login."""
+        if (self.request.is_xhr or self.request.get('no401redirect') == '1' or
+                # ES6 Fetch API
+                'Fetch' in self.request.headers.get('X-Requested-With', '') or
+                # JSON only client
                 self.request.headers.get('Accept', '') == 'application/json'):
             return False
         return (
@@ -221,7 +225,7 @@ class NdbCredential(ndb.Expando):
 
     @classmethod
     def _get_kind(cls):
-        return 'Credential'
+        return 'gaetk_Credential'
 
     @classmethod
     def create(cls, uid=None, user=None, admin=False, **kwargs):
