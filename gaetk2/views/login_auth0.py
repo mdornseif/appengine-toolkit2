@@ -105,6 +105,16 @@ class Auth0OAuth2Callback(BasicHandler, AuthMixin):
         # u'email': u'm.dornseif@hudora.de',
         # u'name': u'Dr. Maximillian Dornseif'}
 
+        # { "admin": true,
+        #  "created_at": "2011-10-26 13:00:28.024000",
+        #  "created_by": "107704714638677207944/m.dornseif@hudora.de",
+        # "updated_at": "2017-06-30 08:05:50.997510",
+        # "updated_by": "107704714638677207944/m.dornseif@hudora.de",
+        # "env": { "AUTH_DOMAIN": "auth.gaetk2.23.nu",
+        # "FEDERATED_IDENTITY": null,
+        # "FEDERATED_PROVIDER": null,
+        # "USER_NICKNAME": "", "USER_ORGANIZATION": "" },
+
         self._login_user('OAuth2', user_info)
         logging.info("logging in with final destination %s", continue_url)
         raise HTTP302_Found(location=continue_url)

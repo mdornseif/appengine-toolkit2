@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-gaetk2/handlers/auth.py - Authentication MixIns for gaetk2.
+uthMixin( - Authentication MixIns for gaetk2.
 
 Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2010-2017 HUDORA. MIT licensed.
@@ -36,6 +36,7 @@ class AuthMixin(object):
         # 4) Login via OAuth with speciffic domains registered at Google Apps
         # 5) Login for Google Special Calls from Cron & TaskQueue
 
+        logging.info('AuthMixin.load_credential()')
         self.credential = None
         uid, secret = None, None
         # 1. Check for valid HTTP-Basic Auth Login
@@ -98,11 +99,16 @@ class AuthMixin(object):
         # TODO: X-Appengine-Cron: true
         # x-appengine-user-is-admin
         # x-appengine-auth-domain
+        # x-google-real-ip
+        # X-Appengine-Inbound-Appid
+        # X-AppEngine-QueueName
         # https://cloud.google.com/appengine/docs/standard/python/taskqueue/push/creating-handlers
         if self.request.headers.get('X-AppEngine-QueueName'):
             self.credential = self.get_credential('X-AppEngine-Taskqueue-{}@auth.gaetk2.23.nu'.format(
                 self.request.headers.get('X-AppEngine-QueueName')))
             return self._login_user('AppEngine')
+
+        logging.info('user unauthenticated')
 
     def authchecker(self, method, *args, **kwargs):
         """Function to allow implementing authentication for all subclasses.
@@ -112,6 +118,8 @@ class AuthMixin(object):
         """
         # Example: ensure that users with empty password are never logged in
         # not really deeded, because `login_user()` ensures this.
+        logging.info('AuthMixin.authchecker()')
+
         sup = super(AuthMixin, self)
         if hasattr(sup, 'authchecker'):
             sup.authchecker(method, *args, **kwargs)
@@ -122,6 +130,7 @@ class AuthMixin(object):
 
     def login_required(self):
         """Forces login."""
+        logging.info("AuthMixin.login_required() %s", self.credential)
         if not self.credential:
             # Login not successful
             # now we have to decide if we want ot enable HTTP-Login via a
@@ -174,6 +183,7 @@ class AuthMixin(object):
         logging.debug(
             "%s logged in via %s since %s sid:%s",
             self.credential.uid, self.session['login_via'], self.session['login_time'], self.session.sid)
+        self.response.headers.add_header("X-uid", str(self.credential.uid))
 
     def _create_credential_jwt(self, jwt):
         logging.debug('JWT: %s', jwt)

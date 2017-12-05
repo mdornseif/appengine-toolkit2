@@ -17,6 +17,7 @@ config = lib_config.register(
     dict(
         TEMPLATE_DIRS=['./templates'],
         # auth
+        AUTH_DISABLE_HTTPBASIC_AUTH=False,
         AUTH_DISABLE_SESSION_AUTH=False,
         CREDENTIAL_CACHE_TIMEOUT=600,
         JWT_SECRET_KEY='*unset*',
