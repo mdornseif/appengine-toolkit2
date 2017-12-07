@@ -7,7 +7,7 @@ Based on huTools/luids.py - Tools for generating various local unique IDs.
 Use guid128() if you are looking for a compact, URL-save representation of uuid output.
 See [shortuuid](https://github.com/stochastic-technologies/shortuuid) for an alternative aproach.
 
-Created by Maximillian Dornseif on 2006-11-08. BSD Licensed.
+Created by Maximillian Dornseif on 2006-11-08.
 Copyright 2006 2011-2015, 2017. MIT licensed.
 """
 

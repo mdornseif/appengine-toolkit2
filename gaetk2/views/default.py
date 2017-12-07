@@ -20,8 +20,9 @@ from .tools.config import is_production
 class RobotTxtHandler(DefaultHandler):
     """Handler for `robots.txt`.
 
-    Assumes that only the default version should be crawled. For the default version the contents of
-    the file `robots.txt` are sent. For all other versions `Disallow: /` is sent.
+    Assumes that only the default version should be crawled.
+    For the default version the contents of the file `robots.txt`
+    are sent. For all other versions `Disallow: /` is sent.
     """
 
     def get(self):

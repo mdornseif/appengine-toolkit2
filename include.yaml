@@ -5,6 +5,14 @@
 # * handlers
 # * skip_files
 
+builtins:
+- remote_api: off
+- appstats: on
+- deferred: on
+# See also https://github.com/freshplanet/AppEngine-Deferred
+# for an alternative
+
+
 includes:
 - lib/site-packages/mapreduce/include.yaml
 
@@ -16,14 +24,12 @@ handlers:
 - url: /_ah/queue/deferred(.*)
   script: google.appengine.ext.deferred.deferred.application
   login: admin
+
+# static files / bootstrap
 - url: /gaetk2/static
   static_dir: lib/appengine-toolkit2/static
   http_headers:
     Access-Control-Allow-Origin: "*"
-- url: /robots.txt
-  script: gaetk2.defaulviews.defaultthandlers.application
-- url: /version.txt
-  script: gaetk2.views.default.application
 
 - url: /favicon\.ico
   static_files: static/icons/favicon.ico
@@ -33,26 +39,51 @@ handlers:
   static_files: static/icons/\1.png
   upload: static/icons/apple-.*png
   expiration: "10d"
+# /browserconfig.xml
 
-# libraries unfortunately is ignored
+# Simple minded handlers for simple tasks
+- url: /(robots.txt|version.txt|_ah/warmup)
+  script: gaetk2.views.default.application
+
+#error_handlers:
+#  - file: templates/error_default.html
+#  - error_code: over_quota
+#    file: templates/error_over_quota.html
+#  - error_code: dos_api_denial
+#    file: templates/error_dos_api_denial.html
+#  - error_code: timeout
+#    file: templates/error_timeout.html
+
+# `libraries:` unfortunately is ignored
 
 skip_files:
-- ^(.*/)?.*~
-- ^(.*/)?.*\.py[co]
-- ^(.*/)?\.[^c].*
-- ^(.*/)?(CHANGES|LICENSE|AUTHORS)
-- ^(.*/)?Makefile
-- ^(.*/)?setup.py
-- ^.*/.*/(example|test|bin|tmp)s?/.*
-- ^(example|test|bin|tmp)s?/.*
-- ^.*/.*/doc/.*
-- ^.*/README.*
-- ^(.*/)?lib/CentralServices/keys/.*
-- ^(.*/)?lib/google_appengine/.*
-- ^(.*/)?lib/py2js/.*
-- .*\.graffle
 - .*/requirements.txt
+- .*\.graffle
+- .*\.jar
 - .*MANIFEST.in
 - .*PKG-INFO
-- js_src/.*
+- ^(.*/)?(CHANGES|LICENSE|AUTHORS)
+- ^(.*/)?.*\.py[co]
+- ^(.*/)?.*~
+- ^(.*/)?\..*
+- ^(.*/)?\.[^c].*
+- ^(.*/)?app\.yaml
+- ^(.*/)?index\.yaml
+- ^(.*/)?lib/.*/(tests|testsuite)/.*
+- ^(.*/)?lib/.*google_appengine/.*
+- ^(.*/)?lib/CentralServices/keys/.*
+- ^(.*/)?lib/fmtp/printclient/.*
+- ^(.*/)?lib/gae-sessions/(demo|demo-with-google-logins|docs|tests)/.*
+- ^(.*/)?lib/google_appengine/.*
+- ^(.*/)?lib/py2js/.*
+- ^(.*/)?Makefile
+- ^(.*/)?node_modules/.*
+- ^(.*/)?requirements\.txt
+- ^(.*/)?setup.py
+- ^.*/(bin)?/.*
+- ^.*/(doc|example|test|bin)s?/.*
+- ^.+/README.*
+- ^js_src/.*
+- ^tmp/.*
+- ^venv/.*
 - js_*/.*

@@ -26,6 +26,7 @@ warnings.filterwarnings('ignore', module='ssl_')  # SNIMissingWarning, InsecureP
 warnings.filterwarnings('ignore', message='decode_param_names is deprecated')
 warnings.filterwarnings('ignore', message='cgi.parse_qs is deprecated, use urlparse.parse_qs instead')
 warnings.filterwarnings('ignore', message='decode_param_names is deprecated and')
+warnings.filterwarnings('ignore', 'urllib3 is using URLFetch on Google App Engine sandbox')
 
 # Include libraries
 from google.appengine.ext import vendor

@@ -49,8 +49,34 @@ For every authenticated user the `uid` (E-Mail) of the `Credential` is safed
 in the session. You can assume that when `uid` exists in the session the user
 is authenticated.
 
+
+
+### Configure Auth0
+
+Create a new Client [at the Auth0 Dashboard](https://manage.auth0.com/). Should be "Regular Web Applications - Traditional web app (with refresh).". Note the "Domain", "Client ID" and "Client Secret" and put them into `appengine_config.py`.
+
+    GAETK2_AUTH0_DOMAIN='exam...ple.eu.auth0.com'
+    GAETK2_AUTH0_CLIENT_ID='QJ...um'
+    GAETK2_AUTH0_CLIENT_SECRET='mnttt-k0...supersecret'
+
+Now you have to list all allowed URLs where your App mal live = even for testing in "Allowed Callback URLs".
+
+
+### Configure Google
+
+Create at https://console.cloud.google.com/apis/credentials
+
 ## Authorisation
 
 Currently gaetk2 assumes each user which is authenticated is also authrized.
 
 
+# Generel Flow
+
+## Error Tracking: Sentry
+
+https://docs.sentry.io/learn/releases/
+https://blog.sentry.io/2017/05/01/release-commits.html
+https://github.com/blog/2388-how-to-fix-errors-in-production-with-github-and-sentry
+Dazu machen: `Fixes MYAPP-317`
+https://docs.sentry.io/learn/releases/#tell-sentry-about-deploys
