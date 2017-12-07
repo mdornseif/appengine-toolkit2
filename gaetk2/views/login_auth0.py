@@ -22,14 +22,18 @@ from ..tools.ids import guid128
 
 
 class LoginAuth0Handler(BasicHandler, AuthMixin):
-    """Login via GoogleApps OpenID Connect.
+    """Login via Auth0 OpenID Connect.
 
-    See https://developers.google.com/identity/protocols/OpenIDConnect#authenticatingtheuser
-    for an outline how this works.
+    This is done by sending the User to the `authorize`-URL. See
+    https://auth0.com/docs/api/authentication#authorization-code-grant
+
+    See https://auth0.com/docs/api-auth/tutorials/authorization-code-grant
+    and https://auth0.com/docs/quickstart/webapp/python
     """
 
     def get(self):
-        """Rdirect to google to initiate OpenID Connect Auth."""
+        """Reirect to Auth0 to initiate OpenID Connect Auth."""
+        # Where do we want to go after auth?
         continue_url = self.request.GET.get('continue', '/').encode('ascii', 'ignore')
         assert continue_url
 
@@ -38,10 +42,15 @@ class LoginAuth0Handler(BasicHandler, AuthMixin):
         if 'oauth_state' not in self.session:
             self.session['oauth_state'] = guid128()
 
+        # Location of Auth0OAuth2Callback
         callbackpath = '/gaetk2/auth/auth0/oauth2callback'
         callback_url = self.request.host_url + callbackpath
+        # This `callback_url` bust be provided in the Auth0
+        # Dashboard for yout client under "Allowed Callback URLs"
         self.session['oauth_redirect_uri'] = callback_url
 
+        assert config.AUTH0_DOMAIN != '*unset*'
+        assert config.AUTH0_CLIENT_ID != '*unset*'
         # see https://auth0.com/docs/api/authentication#implicit-grant
         # Construct OAuth Request.
         params = dict(
@@ -58,7 +67,9 @@ class LoginAuth0Handler(BasicHandler, AuthMixin):
         # redirect for google to get Authenticated
         logging.info(
             'redirecting with state %r to %s via %s',
-            self.session['oauth_state'], self.session['oauth_redirect_uri'], oauth_url)
+            self.session['oauth_state'],
+            self.session['oauth_redirect_uri'],
+            oauth_url)
         raise HTTP302_Found(location=oauth_url)
 
 
@@ -81,7 +92,6 @@ class Auth0OAuth2Callback(BasicHandler, AuthMixin):
             # Redirect to try new login
             raise HTTP302_Found(location=continue_url)
 
-        # 4. Exchange code for access token and ID token by requesting data from Google
         # 4. Exchange code for access token and ID token
         get_token = auth0.v3.authentication.GetToken(config.AUTH0_DOMAIN)
         auth0_users = auth0.v3.authentication.Users(config.AUTH0_DOMAIN)

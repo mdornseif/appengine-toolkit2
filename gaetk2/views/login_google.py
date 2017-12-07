@@ -55,6 +55,7 @@ class LoginGoogleHandler(BasicHandler, AuthMixin):
         # try to construct a valid callback URL
         # Callback URLs must be registered at Google to avoid nasty errors
         # so we try to find an URL which has ben registered
+        # edit at https://console.cloud.google.com/apis/credentials
         callbackpath = '/gaetk2/auth/google/oauth2callback'
 
         # First try the host the current request came from
@@ -65,11 +66,11 @@ class LoginGoogleHandler(BasicHandler, AuthMixin):
             # environment and enforce https
             callback_url = 'https://' + os.environ.get('SERVER_NAME') + callbackpath
             if callback_url not in config.OAUTH_GOOGLE_CONFIG['redirect_uris']:
-                logging.debug("%s not valid", callback_url)
+                logging.debug("%s no valid callback", callback_url)
                 # this did not work. Try to use the default version.
                 callback_url = 'https://' + os.environ.get('DEFAULT_VERSION_HOSTNAME') + callbackpath
                 if callback_url not in config.OAUTH_GOOGLE_CONFIG['redirect_uris']:
-                    logging.debug("%s not valid", callback_url)
+                    logging.debug("%s no valid fallback callback", callback_url)
                     # this also did not work. Just use the first available callback URL.
                     callback_url = config.OAUTH_GOOGLE_CONFIG['redirect_uris'][0]
             logging.info('using %s', callback_url)

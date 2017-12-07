@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-uthMixin( - Authentication MixIns for gaetk2.
+AuthMixin - Authentication MixIns for gaetk2.
 
 Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2010-2017 HUDORA. MIT licensed.
