@@ -15,13 +15,13 @@ import auth0.v3.authentication
 
 from ..application import make_app
 from ..exc import HTTP302_Found
-from ..handlers import AuthMixin
+from ..handlers import AuthenticationReaderMixin
 from ..handlers import BasicHandler
-from ..tools.config import config
+from ..tools.config import config as gaetk2config
 from ..tools.ids import guid128
 
 
-class LoginAuth0Handler(BasicHandler, AuthMixin):
+class LoginAuth0Handler(BasicHandler, AuthenticationReaderMixin):
     """Login via Auth0 OpenID Connect.
 
     This is done by sending the User to the `authorize`-URL. See
@@ -49,20 +49,20 @@ class LoginAuth0Handler(BasicHandler, AuthMixin):
         # Dashboard for yout client under "Allowed Callback URLs"
         self.session['oauth_redirect_uri'] = callback_url
 
-        assert config.AUTH0_DOMAIN != '*unset*'
-        assert config.AUTH0_CLIENT_ID != '*unset*'
+        assert gaetk2config.AUTH0_DOMAIN != '*unset*'
+        assert gaetk2config.AUTH0_CLIENT_ID != '*unset*'
         # see https://auth0.com/docs/api/authentication#implicit-grant
         # Construct OAuth Request.
         params = dict(
-            client_id=config.AUTH0_CLIENT_ID,
+            client_id=gaetk2config.AUTH0_CLIENT_ID,
             scope="openid email profile",
             response_type="code",
             redirect_uri=self.session['oauth_redirect_uri'],
             state=self.session['oauth_state'],
-            audience='https://' + config.AUTH0_DOMAIN + '/userinfo',
+            audience='https://' + gaetk2config.AUTH0_DOMAIN + '/userinfo',
         )
 
-        oauth_url = 'https://' + config.AUTH0_DOMAIN + '/authorize' + '?' + urllib.urlencode(params)
+        oauth_url = 'https://' + gaetk2config.AUTH0_DOMAIN + '/authorize' + '?' + urllib.urlencode(params)
 
         # redirect for google to get Authenticated
         logging.info(
@@ -73,7 +73,7 @@ class LoginAuth0Handler(BasicHandler, AuthMixin):
         raise HTTP302_Found(location=oauth_url)
 
 
-class Auth0OAuth2Callback(BasicHandler, AuthMixin):
+class Auth0OAuth2Callback(BasicHandler, AuthenticationReaderMixin):
     """Handles OpenID Connect Callback from Auth0."""
 
     def get(self):
@@ -93,39 +93,30 @@ class Auth0OAuth2Callback(BasicHandler, AuthMixin):
             raise HTTP302_Found(location=continue_url)
 
         # 4. Exchange code for access token and ID token
-        get_token = auth0.v3.authentication.GetToken(config.AUTH0_DOMAIN)
-        auth0_users = auth0.v3.authentication.Users(config.AUTH0_DOMAIN)
+        get_token = auth0.v3.authentication.GetToken(gaetk2config.AUTH0_DOMAIN)
+        auth0_users = auth0.v3.authentication.Users(gaetk2config.AUTH0_DOMAIN)
 
-        token = get_token.authorization_code(config.AUTH0_CLIENT_ID,
-                                             config.AUTH0_CLIENT_SECRET,
+        if self.request.get('error'):
+            logging.error(
+                'auth0 Error: %s %s',
+                self.request.get('error'),
+                self.request.get('error_description'))
+        token = get_token.authorization_code(gaetk2config.AUTH0_CLIENT_ID,
+                                             gaetk2config.AUTH0_CLIENT_SECRET,
                                              self.request.get('code'),
                                              self.request.url)
         user_info = json.loads(auth0_users.userinfo(token['access_token']))
-
         logging.info('user_info: %r', user_info)
 
-        # {u'family_name': u'Dornseif',
+        # u'sub': u'auth0|5a2694527afc143957e80671',
+        # u'email_verified': False,
+
         # u'sub': u'salesforce|005D0000001pai7IAA',
-        # u'picture': u'https://c.eu4.content.force.com/profilephoto/729D0000000CrOF/F',
-        # u'locale': u'de-DE_EURO',
         # u'email_verified': True,
-        # u'updated_at': u'2017-06-29T13:53:57.673Z',
-        # u'given_name': u'Dr. Maximillian',
-        # u'nickname': u'm.dornseif',
-        # u'email': u'm.dornseif@hudora.de',
-        # u'name': u'Dr. Maximillian Dornseif'}
 
         # { "admin": true,
-        #  "created_at": "2011-10-26 13:00:28.024000",
-        #  "created_by": "107704714638677207944/m.dornseif@hudora.de",
-        # "updated_at": "2017-06-30 08:05:50.997510",
-        # "updated_by": "107704714638677207944/m.dornseif@hudora.de",
         # "env": { "AUTH_DOMAIN": "auth.gaetk2.23.nu",
-        # "FEDERATED_IDENTITY": null,
-        # "FEDERATED_PROVIDER": null,
-        # "USER_NICKNAME": "", "USER_ORGANIZATION": "" },
-
-        self._login_user('OAuth2', user_info)
+        self._login_user('OAuth2', jwtinfo=user_info)
         logging.info("logging in with final destination %s", continue_url)
         raise HTTP302_Found(location=continue_url)
 
