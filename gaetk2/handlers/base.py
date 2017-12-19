@@ -7,6 +7,7 @@ Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2010-2017 HUDORA. All rights reserved.
 """
 
+import exceptions
 import logging
 import os
 import time
@@ -18,14 +19,20 @@ from google.appengine.api import users
 import jinja2
 import webapp2
 
-from .. import _jinja_filters
+from .. import jinja_filters
+from .._gaesessions import get_current_session
 from ..tools import hujson2
-from ..tools.config import config
+from ..tools.config import config as gaetkconfig
 from ..tools.config import is_production
-from gaetk.lib._gaesessions import get_current_session
 
 
 _jinja_env_cache = None
+
+# Your app usually will extend a `BasicHandler` or `DefaultHandler`
+# (for added authentication). These based on
+# [webapp2.RequestHandler](http://webapp2.readthedocs.io/en/latest/api/webapp2.html#webapp2.RequestHandler)
+# See [The webapp2 Guide](http://webapp2.readthedocs.io/en/latest/guide/handlers.html)
+# for an introduction.
 
 
 class BasicHandler(webapp2.RequestHandler):
@@ -39,6 +46,7 @@ class BasicHandler(webapp2.RequestHandler):
     """
 
     default_cachingtime = None
+    debug_hooks = False
 
     def __init__(self, *args, **kwargs):
         """Initialize RequestHandler."""
@@ -56,7 +64,7 @@ class BasicHandler(webapp2.RequestHandler):
         return urlparse.urljoin(os.environ.get('HTTP_ORIGIN', ''), url)
 
     def is_sysadmin(self):
-        """Returns if the currently logged in user is admin."""
+        """Returns if the currently logged in user is SysOp/SystemAdministrator."""
         # Google App Engine Administrators
         if users.is_current_user_admin():
             return True
@@ -69,6 +77,17 @@ class BasicHandler(webapp2.RequestHandler):
         elif self.credential is None:
             return False
         return getattr(self.credential, 'sysadmin', False)
+
+    def is_staff(self):
+        """Returns if the current user is considered internal.
+
+        This means he has access to not only his own but to all
+        settings pages, etc."""
+        if self.is_sysadmin():
+            return True
+        elif self.credential is None:
+            return False
+        return getattr(self.credential, 'staff', False)
 
     def has_permission(self, permission):
         """
@@ -99,14 +118,15 @@ class BasicHandler(webapp2.RequestHandler):
 
     # to be overwritten / extended
 
-    def default_template_vars(self, values):
-        """Helper to provide additional values to HTML Templates. To be overwritten in subclasses. E.g.
+    def build_context(self, values):
+        """Helper to provide additional request-specific values to HTML Templates.
 
-        def default_template_vars(self, values):
-            myval = dict(credential_empfaenger=self.credential_empfaenger,
-                         navsection=None)
-            myval.update(values)
-            return myval
+        Will be called on all Parents and MixIns, no `super()` needed.
+
+        def build_context(self, values):
+            myvalues = dict(navsection='kunden', ...)
+            myvalues.update(values)
+            return myvalues
         """
         ret = dict(
             request=self.request,
@@ -119,22 +139,38 @@ class BasicHandler(webapp2.RequestHandler):
         return ret
 
     def add_jinja2env_globals(self, env):
-        """To be everwritten  by subclasses.
+        """To be everwritten by subclasses.
 
+        This should be considered one time initialisation.
         Eg:
-
             env.globals['bottommenuurl'] = '/admin/'
             env.globals['bottommenuaddon'] = '<i class="fa fa-area-chart"></i> Admin'
             env.globals['profiler_includes'] = gae_mini_profiler.templatetags.profiler_includes
 
         """
-        super(BasicHandler, self).add_jinja2env_globals(env)
+        return env
 
-    def response_hook(self, response, method, *args, **kwargs):
+    # For MixIns:
+    # def pre_authentication_hook(self, method_name, *args, **kwargs):
+    #     return
+
+    # def authentication_hook(self, method_name, *args, **kwargs):
+    #     return
+
+    # def authorisation_hook(self, method_name, *args, **kwargs):
+    #     return
+
+    # def method_preperation_hook(self, method_name, *args, **kwargs):
+    #     """Called just before GEP, POST, PUT, DELETE etc. is called.
+
+    #     To be overwritten. E.g. to set up variables, load Date etc."""
+    #     return
+
+    def response_overwrite(self, response, method, *args, **kwargs):
         """Function to transform response. To be overwritten."""
         return response
 
-    def finished_hook(self, response, method, *args, **kwargs):
+    def finished_overwrite(self, response, method, *args, **kwargs):
         """Function to allow logging etc. To be overwritten."""
         # not called when exceptions are raised
 
@@ -159,13 +195,16 @@ class BasicHandler(webapp2.RequestHandler):
 
         if not _jinja_env_cache:
             env = jinja2.Environment(
-                loader=jinja2.FileSystemLoader(config.TEMPLATE_DIRS),
+                loader=jinja2.FileSystemLoader(gaetkconfig.TEMPLATE_DIRS),
                 auto_reload=False,  # unneeded on App Engine production
                 trim_blocks=True,  # first newline after a block is removed
                 # lstrip_blocks=True,
-                bytecode_cache=jinja2.MemcachedBytecodeCache(memcache, timeout=3600)
+                bytecode_cache=jinja2.MemcachedBytecodeCache(memcache, timeout=3600),
+                # This needs jinja2 > Version 2.8
+                autoescape=jinja2.select_autoescape(['html', 'xml']),
             )
-            _jinja_filters.register_custom_filters(env)
+            jinja_filters.register_custom_filters(env)
+            # TODO: MRO
             self.add_jinja2env_globals(env)
             _jinja_env_cache = env
 
@@ -187,18 +226,29 @@ class BasicHandler(webapp2.RequestHandler):
             # better logging
             logging.debug("env=%r", env)
             logging.debug("env.globals=%r", env.globals)
-            logging.debug("env.filters=%r", env.filtersx)
+            logging.debug("env.filters=%r", env.filters)
             raise
 
-        myval = self.default_template_vars(values)
+        # to collect template variables from all Parent-Classes and MisIns.
+        # this keeps parents from having all to implement the function and
+        #  use `super()`
+        values = self._reduce_all_inherited('build_context', values)
         try:
-            template.stream(myval).dump(self.response.out)
+            template.stream(values).dump(self.response.out)
         except jinja2.TemplateNotFound:
             # better error reporting
             # TODO: https://docs.sentry.io/clientdev/interfaces/template/
-            logging.info('jinja2 environment: %s', env)
-            logging.info('template dirs: %s', config.TEMPLATE_DIRS)
+            logging.info('jinja2 environment: %s', vars(env))
+            logging.info('template dirs: %s', gaetkconfig.TEMPLATE_DIRS)
             raise
+
+        # TODO: warn about undeclared variables
+        # http://jinja.pocoo.org/docs/dev/api/#the-meta-api
+        # from jinja2 import Environment, PackageLoader, meta
+        # env = Environment(loader=PackageLoader('gummi', 'templates'))
+        # template_source = env.loader.get_source(env,   'page_content.html')[0]
+        # parsed_content = env.parse(template_source)
+        # meta.find_undeclared_variables(parsed_content)
 
     def _set_cache_headers(self, caching_time=None):
         """Set Cache Headers.
@@ -217,6 +267,56 @@ class BasicHandler(webapp2.RequestHandler):
                 self.response.headers['Cache-Control'] = 'max-age=%d public' % ct
             elif ct <= 0:
                 self.response.headers['Cache-Control'] = 'no-cache public'
+
+    def _call_all_inherited(self, funcname, *args, **kwargs):
+        """In all SuperClasses call `funcname` - if it exists."""
+
+        # We don't want to burden all mixins with implementing
+        # the required methods and calling `super().meth()`
+        # so we don't use a call chain provided by the
+        # Parents and MixIns but instead work through them as a list.
+        # it also reverses the call order
+
+        # This code is based in ideas from Guido van Rossum, see
+        # https://www.python.org/download/releases/2.2/descrintro/#cooperation
+        for cls in reversed(self.__class__.__mro__):
+            if funcname in cls.__dict__:
+                x = cls.__dict__[funcname]
+                if hasattr(x, "__get__"):
+                    x = x.__get__(self)
+                if callable(x):
+                    if self.debug_hooks:
+                        logging.debug("calling %s.%s(*%r, **%r)", cls, funcname, args, kwargs)
+                    x(*args, **kwargs)
+                else:
+                    logging.warn("not clallable: %r", x)
+
+    def _reduce_all_inherited(self, funcname, initial):
+        """In all SuperClasses call `funcname` with the output of the previus call."""
+
+        # We don't want to burden all mixins with mplementing
+        # the required methods and calling `super().meth()`
+        # so we don't use a call chaon provided by the
+        # Parents and MixIns but instead work through them as a list.
+        # it also reverses the call order
+
+        ret = initial
+        # This code is based in ideas from Guido van Rossum, see
+        # https://www.python.org/download/releases/2.2/descrintro/#cooperation
+        for cls in reversed(self.__class__.__mro__):
+            if funcname in cls.__dict__:
+                x = cls.__dict__[funcname]
+                if hasattr(x, "__get__"):
+                    x = x.__get__(self)
+                if callable(x):
+                    if self.debug_hooks:
+                        logging.debug("reducing %s.%s(%r)", cls, funcname, ret)
+                    ret = x(ret)
+                else:
+                    logging.warn("not clallable: %r", x)
+                if ret is None:
+                    raise RuntimeError("%r did not provide a return value", x)
+        return ret
 
     def dispatch(self):
         """Dispatches the requested method."""
@@ -240,30 +340,30 @@ class BasicHandler(webapp2.RequestHandler):
         # bind session on dispatch (not in __init__)
         try:
             self.session = get_current_session()
-        except AttributeError:
+        except (exceptions.AttributeError, AttributeError):
             # session handling not activated
             self.session = {}
+            logging.info('Session handling not activated')
 
         # get_current_session() sometimes returns strange results
         if self.session is None:
             self.session = {}
 
-        if hasattr(self, 'load_credential') and callable(self.load_credential):
-            self.load_credential()
-        # Give authentication hooks opportunity to do their thing
-        if hasattr(self, 'authchecker') and callable(self.authchecker):
-            self.authchecker(method, *args, **kwargs)
-
         try:
+            self._call_all_inherited('pre_authentication_hook', method_name, *args, **kwargs)
+            self._call_all_inherited('authentication_preflight_hook', method_name, *args, **kwargs)
+            self._call_all_inherited('authentication_hook', method_name, *args, **kwargs)
+            self._call_all_inherited('authorisation_hook', method_name, *args, **kwargs)
+            self._call_all_inherited('method_preperation_hook', method_name, *args, **kwargs)
             response = method(*args, **kwargs)
+            response = self.response_overwrite(response, method, *args, **kwargs)
         except Exception, e:
             return self.handle_exception(e, self.app.debug)
-        response = self.response_hook(response, method, *args, **kwargs)
         if response:
             assert isinstance(response, webapp2.Response)
 
         self._set_cache_headers()
-        self.finished_hook(response, method, *args, **kwargs)
+        self.finished_overwrite(response, method, *args, **kwargs)
         return response
 
 
@@ -286,7 +386,7 @@ class JsonBasicHandler(BasicHandler):
         """convert content to JSON."""
         return hujson2.dumps(content)
 
-    def response_hook(self, response, method, *args, **kwargs):
+    def response_overwrite(self, response, method, *args, **kwargs):
         """Function to transform response. To be overwritten."""
         # do serialisation bef ore generating Content-Type Header so Errors will display nicely
         content = self.serialize(response) + '\n'

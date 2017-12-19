@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-gaetk2/views/login.py - generic logout & authentication views.
+gaetk2.views.login - generic logout & authentication views.
 
 based on EDIhub:login.py
 
@@ -28,7 +28,7 @@ from ..exc import HTTP403_Forbidden
 from ..exc import HTTP404_NotFound
 from ..handlers import DefaultHandler
 from ..handlers import JsonHandler
-from ..handlers.auth import NdbCredential
+from ..handlers.auth import gaetk_Credential
 from ..tools.config import config
 
 
@@ -117,7 +117,7 @@ class LogoutHandler(DefaultHandler):
 class CredentialsHandler(JsonHandler):
     """Credentials - show, generate or update."""
 
-    def authchecker(self, *args, **kwargs):
+    def authenticationchecker(self, *args, **kwargs):
         """Only admin users are allowed to access credentials."""
         if not self.is_sysadmin():
             raise HTTP403_Forbidden
@@ -183,7 +183,7 @@ class CredentialsHandler(JsonHandler):
             credential.put()
         else:
             # if not, we generate a new one
-            credential = NdbCredential.create(
+            credential = gaetk_Credential.create(
                 admin=admin, text=text, email=email)
 
         self.response.headers["Content-Type"] = "application/json"

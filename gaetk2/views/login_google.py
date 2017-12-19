@@ -18,14 +18,14 @@ import urllib
 from ..application import make_app
 from ..exc import HTTP302_Found
 from ..exc import HTTP403_Forbidden
-from ..handlers import AuthMixin
+from ..handlers import AuthenticationReaderMixin
 from ..handlers import BasicHandler
 from ..tools import http
 from ..tools.config import config
 from ..tools.ids import guid128
 
 
-class LoginGoogleHandler(BasicHandler, AuthMixin):
+class LoginGoogleHandler(BasicHandler, AuthenticationReaderMixin):
     """Login via GoogleApps OpenID Connect.
 
     See https://developers.google.com/identity/protocols/OpenIDConnect#authenticatingtheuser
@@ -37,15 +37,16 @@ class LoginGoogleHandler(BasicHandler, AuthMixin):
         continue_url = self.request.GET.get('continue', '/').encode('ascii', 'ignore')
         assert continue_url
 
-        # 1. AuthMixin already did HTTP basic Auth (see RFC 2617) if `Authorization: basic ` header
+        # 1. AuthenticationReaderMixin already did HTTP basic Auth
+        # (see RFC 2617) if `Authorization: basic ` header
         # has been provided.
         #
-        # 2. AuthMixin already did HTTP JWT/bearer Auth if `Authorization: bearer ` header
+        # 2. AuthenticationReaderMixin already did HTTP JWT/bearer Auth if `Authorization: bearer ` header
         # has been provided.
         #
-        # 3. AuthMixin already did App Engine / Google Apps based Authentication
+        # 3. AuthenticationReaderMixin already did App Engine / Google Apps based Authentication
         #
-        # 4. AuthMixin already did session based Authentication
+        # 4. AuthenticationReaderMixin already did session based Authentication
 
         # Create a state token to prevent request forgery.
         # Store it in the session for later validation.
@@ -111,7 +112,7 @@ class LoginGoogleHandler(BasicHandler, AuthMixin):
         raise HTTP302_Found(location=oauth_url)
 
 
-class GoogleOAuth2Callback(BasicHandler, AuthMixin):
+class GoogleOAuth2Callback(BasicHandler, AuthenticationReaderMixin):
     """Handles OpenID Connect  Callback from Google."""
 
     def get(self):

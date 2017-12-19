@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-AuthMixin - Authentication MixIns for gaetk2.
+gaetk2.handlers.authentication
+
+AuthenticationReaderMixin - Authentication MixIns for gaetk2.
 
 Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2010-2017 HUDORA. MIT licensed.
@@ -12,21 +14,21 @@ import os
 import urllib
 
 from google.appengine.api import users
-from google.appengine.ext import ndb
 
 from jose import jwt
+
+from .. import models
 
 from ..exc import HTTP302_Found
 from ..exc import HTTP400_BadRequest
 from ..exc import HTTP401_Unauthorized
 from ..tools.config import config
-from ..tools.ids import guid128
 
 
-class AuthMixin(object):
-    """Class which adds authentivation."""
+class AuthenticationReaderMixin(object):
+    """Class which adds authentication."""
 
-    def load_credential(self):
+    def authentication_preflight_hook(self, method, *args, **kwargs):
         """Find out if the User is authenticated in any sane way and if so load the credential."""
         # Automatically called by `dispatch`.
         # This funcion is somewhat involved. We accept
@@ -36,7 +38,6 @@ class AuthMixin(object):
         # 4) Login via OAuth with speciffic domains registered at Google Apps
         # 5) Login for Google Special Calls from Cron & TaskQueue
 
-        logging.info('AuthMixin.load_credential()')
         self.credential = None
         uid, secret = None, None
         # 1. Check for valid HTTP-Basic Auth Login
@@ -81,10 +82,11 @@ class AuthMixin(object):
             self.credential = self.get_credential(user.email())
             if self.credential:
                 # We do not check the password because get_current_user() is trusted
-                return self._login_user('Goole User OpenID Connect')
+                return self._login_user('Google User OpenID Connect')
 
         # 4. Check for session based login
-        if self.session.get('uid') and not config.AUTH_DISABLE_SESSION_AUTH:
+        logging.debug("session")
+        if self.session.get('uid'):
             self.credential = self.get_credential(self.session['uid'])
             if self.credential:
                 # We do not check the password because session storage is trusted
@@ -110,54 +112,17 @@ class AuthMixin(object):
 
         logging.info('user unauthenticated')
 
-    def authchecker(self, method, *args, **kwargs):
-        """Function to allow implementing authentication for all subclasses.
-
-        To be overwritten. Is called by BasicHandler before the HTTP-Method
-        is called. Must exit with a HTTP-Exception if the USer is unauthorized.
-        """
-        # Example: ensure that users with empty password are never logged in
-        # not really deeded, because `login_user()` ensures this.
-        logging.info('AuthMixin.authchecker()')
-
-        sup = super(AuthMixin, self)
-        if hasattr(sup, 'authchecker'):
-            sup.authchecker(method, *args, **kwargs)
-
-        if self.credential and not self.credential.secret:
-            logging.debug('%r %r %r', method, args, kwargs)
-            raise HTTP401_Unauthorized("Account disabled")
-
-    def login_required(self):
-        """Forces login."""
-        logging.info("AuthMixin.login_required() %s", self.credential)
-        if not self.credential:
-            # Login not successful
-            # now we have to decide if we want ot enable HTTP-Login via a
-            # `HTTP401_Unauthorized` response or redirect and use
-            # Browser-Based Login
-
-            if self._interactive_client():
-                logging.debug("302 headers: %r", self.request.headers)
-                # we assume the request came via a browser - redirect to the "nice" login page
-                # let login.py handle it from there
-                absolute_url = self.abs_url(
-                    "/_ah/login_required?continue=%s" % urllib.quote(self.request.url))
-                logging.info("enforcing interactive login as %s", absolute_url)
-                logging.info("session %r", self.session)
-                raise HTTP302_Found(location=absolute_url)
-            else:
-                # We assume the access came via cURL et al, request Auth via 401 Status code.
-                logging.info("requesting HTTP-Auth %s %s", self.request.remote_addr,
-                             self.request.headers.get('Authorization'))
-                raise HTTP401_Unauthorized(headers={'WWW-Authenticate': 'Basic realm="API Login"'})
-
-    def _login_user(self, via, jwt=None):
+    def _login_user(self, via, jwtinfo=None):
         """Ensure the system knows that a user has been logged in."""
         # user did not exist before but we have a validated jwt
-        if not self.credential and jwt:
+        if not self.credential and jwtinfo:
             # create credential from JWT
-            self._create_credential_jwt(jwt)
+            self.credential = allow_credential_from_jwt(jwtinfo)
+        if not self.credential:
+            # here we could redirect the user to a page
+            # explaining that we couldn't match the data
+            # given by him to our local database.
+            raise HTTP401_Unauthorized("Couldn't assign {} to a local user".format(jwtinfo))
 
         # ensure that users with empty password are never logged in
         if self.credential and not self.credential.secret:
@@ -182,22 +147,11 @@ class AuthMixin(object):
                 os.environ['USER_EMAIL'] = '%s@auth.gaetk2.23.nu' % self.credential.uid
         logging.debug(
             "%s logged in via %s since %s sid:%s",
-            self.credential.uid, self.session['login_via'], self.session['login_time'], self.session.sid)
+            self.credential.uid,
+            self.session.get('login_via'),
+            self.session.get('login_time'),
+            getattr(self.session, 'sid', '?'))
         self.response.headers.add_header("X-uid", str(self.credential.uid))
-
-    def _create_credential_jwt(self, jwt):
-        logging.debug('JWT: %s', jwt)
-        if jwt.get('email_verified'):
-            uid = jwt['email']
-        else:
-            uid = jwt['sub'] + '#google.' + jwt['hd']
-        self.credential = NdbCredential.create(
-            id=uid,
-            uid=uid,
-            admin=True,
-            text='created via OAuth2/JWT',
-            email=jwt['email'])
-        self.credential.put()
 
     def _interactive_client(self):
         """Check if we cvan redirect the client for login."""
@@ -214,43 +168,79 @@ class AuthMixin(object):
 
     def get_credential(self, username):
         """Read a credential from the database or return None."""
-        return NdbCredential.get_by_id(username)
+        logging.debug("get_credential()")
+        cred = models.gaetk_Credential.get_by_id(username)
+        if not cred:
+            # legacy, update from gaetk1
+            import gaetk.handler
+            cred1 = gaetk.handler._get_credential(username)
+            if cred1:
+                cred = models.gaetk_Credential.create(
+                    uid=cred1.uid, email=cred1.email, secret=cred1.secret,
+                    permissions=cred1.permissions, text=cred1.text,
+                    sysadmin=cred1.admin)
+                cred.put()
+                cred.populate(created_at=cred1.created_at, updated_at=cred1.updated_at)
+                if getattr(cred1, 'kundennr', None):
+                    cred.meta['designator'] = cred1.kundennr
+                    cred.org_designator = cred.meta['designator']
+                if getattr(cred1, 'source', None):
+                    cred.meta['designator'] = cred1.source.id()
+                    cred.org_designator = cred.meta['designator']
+                cred.put()
+        if cred.meta is None:
+            cred.meta = {}
+            cred.put()
+        if (not cred.staff) and cred.email:
+            if (cred.email.endswith('@hudora.de') or cred.email.endswith('@cyberlogi.de')):
+                cred.staff = True
+                cred.put()
+        return cred
 
 
-class NdbCredential(ndb.Expando):
-    """Encodes a user and his permissions."""
+def allow_credential_from_jwt(jwt):
+    # Tested with:
+    # * GitHub
+    # * Google-Apps
+    # * Salesforce
+    logging.debug('JWT: %s', jwt)
+    if jwt.get('email_verified') and jwt['email'].endswith('@hudora.de'):
+        return models.gaetk_Credential.create(
+            id=jwt['email'],
+            uid=jwt['email'],
+            text='created via OAuth2/JWT',
+            email=jwt['email'])
+    else:
+        return None
 
-    _default_indexed = True
-    uid = ndb.StringProperty(required=True)  # == key.id()
-    user = ndb.UserProperty(required=False)  # Google (?) User
-    email = ndb.StringProperty(required=False)
-    secret = ndb.StringProperty(required=True, indexed=False)  # "Password" - NOT user-settable
-    admin = ndb.BooleanProperty(default=False, indexed=False)
-    text = ndb.StringProperty(required=False, indexed=False)
-    permissions = ndb.StringProperty(repeated=True, indexed=False)
-    created_at = ndb.DateTimeProperty(auto_now_add=True)
-    updated_at = ndb.DateTimeProperty(auto_now=True)
-    created_by = ndb.UserProperty(required=False, indexed=False, auto_current_user_add=True)
-    updated_by = ndb.UserProperty(required=False, indexed=False, auto_current_user=True)
 
-    @classmethod
-    def _get_kind(cls):
-        return 'gaetk_Credential'
+class AuthenticationRequiredMixin(AuthenticationReaderMixin):
+    """Class which adds authentication."""
 
-    @classmethod
-    def create(cls, uid=None, user=None, admin=False, **kwargs):
-        """Creates a credential Object generating a random secret and a random uid if needed."""
-        # secret hopfully contains about 40 bits of entropy - more than most passwords
-        secret = guid128()[1:16]
-        if not uid:
-            uid = "u%s" % (cls.allocate_ids(1)[0])
-        kwargs['permissions'] = ['generic_permission']
-        ret = cls.get_or_insert(uid, uid=uid, secret=secret,
-                                user=user, admin=admin, **kwargs)
-        return ret
+    def authentication_hook(self, method, *args, **kwargs):
+        """Function to enforce that users `are authenticated."""
 
-    def __str__(self):
-        return str(self.uid)
+        if self.credential and not self.credential.secret:
+            logging.debug('%r %r %r', method, args, kwargs)
+            raise HTTP401_Unauthorized("Account disabled")
 
-    def __repr__(self):
-        return "<gaetk.NdbCredential %s>" % self.uid
+        if not self.credential:
+            # Login not successful
+            # now we have to decide if we want ot enable HTTP-Login via a
+            # `HTTP401_Unauthorized` response or redirect and use
+            # Browser-Based Login
+
+            if self._interactive_client():
+                logging.debug("302 headers: %r", self.request.headers)
+                # we assume the request came via a browser - redirect to the "nice" login page
+                # let login.py handle it from there
+                absolute_url = self.abs_url(
+                    "/_ah/login_required?continue=%s" % urllib.quote(self.request.url))
+                logging.info("enforcing interactive login as %s", absolute_url)
+                logging.info("session %r", self.session)
+                raise HTTP302_Found(location=absolute_url)
+            else:
+                # We assume the access came via cURL et al, request Auth via 401 Status code.
+                logging.info("requesting HTTP-Auth %s %s", self.request.remote_addr,
+                             self.request.headers.get('Authorization'))
+                raise HTTP401_Unauthorized(headers={'WWW-Authenticate': 'Basic realm="API Login"'})
