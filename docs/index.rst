@@ -16,15 +16,14 @@ what an Web Application might need.
 Features
 --------
 
-*  use :func:`forms.wtfbootstrap3` to teach a WTForm bootstrap rendering.
-
+* use :func:`gaetk2.forms.wtfbootstrap3` to teach a WTForm bootstrap rendering.
+* use :func:`gaetk2.helpers.check404` to save boilerplate on loading datastore entries etc.
 
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-.. automodule:: gaetk2.forms
 
 
 Indices and tables

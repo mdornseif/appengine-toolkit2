@@ -114,8 +114,14 @@ html_sidebars = {
     ]
 }
 
-
-
-
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
+
+
+# Hide Module Docstrings - they contain cruft in all out legacy code
+def remove_module_docstring(app, what, name, obj, options, lines):
+    if what == "module":
+        del lines[:]
+
+def setup(app):
+    app.connect("autodoc-process-docstring", remove_module_docstring)
