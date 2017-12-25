@@ -75,6 +75,7 @@ skip_files:
 - ^(.*/)?lib/fmtp/printclient/.*
 - ^(.*/)?lib/gae-sessions/(demo|demo-with-google-logins|docs|tests)/.*
 - ^(.*/)?lib/google_appengine/.*
+- ^(.*/)?lib/site-packages/lxml/.*
 - ^(.*/)?lib/py2js/.*
 - ^(.*/)?Makefile
 - ^(.*/)?node_modules/.*
