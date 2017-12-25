@@ -118,6 +118,8 @@ html_sidebars = {
 intersphinx_mapping = {'https://docs.python.org/': None}
 
 
+autodoc_member_order = 'bysource'
+
 # Hide Module Docstrings - they contain cruft in all out legacy code
 def remove_module_docstring(app, what, name, obj, options, lines):
     if what == "module":

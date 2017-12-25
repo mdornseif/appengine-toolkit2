@@ -1,5 +1,5 @@
-gaetk2\.forms package
-=====================
+gaetk2\.forms package - form handling via WTForms
+=================================================
 
 gaetk2.forms aims at making `Bootstrap 3 Forms <http://getbootstrap.com/docs/3.3/css/#forms>`_ 
 and `WTForms <https://wtforms.readthedocs.io/en/latest/>`_ play nice together.

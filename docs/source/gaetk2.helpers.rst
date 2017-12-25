@@ -1,4 +1,4 @@
-gaetk2\.helpers package
+gaetk2\.helpers module
 =======================
 
 gaetk2.helpers provides support for writing more concise, elegant

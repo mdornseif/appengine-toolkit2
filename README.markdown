@@ -2,7 +2,17 @@
 
 `gaetk2` is a modern approach to developing Python Code on Google App Engine. It is a reimplementation of [appengine-toolkit](https://github.com/mdornseif/appengine-toolkit). `appengine-toolkit` was a transfer of the techniques we used before in Django to the Google App Engine Plattform. It was different time when it was developed - back when XML was still cool and REST was all the rage.
 
-It most noteworthly contribution was that it integrated seamless authentication with GoogleInfrastructure - OpenID for Google Apps / Google Suite and Gmail.
+It most noteworthly contribution of gaetk was that it integrated seamless authentication with GoogleInfrastructure - OpenID for Google Apps / Google Suite and Gmail.
+
+
+See https://docs.pylonsproject.org/projects/webob/en/stable/api/request.html
+
+
+## Documentation
+
+Documentation is - as always - a work in progress. Check
+http://appengine-toolkit2.readthedocs.io/ for the current state of
+affairs.
 
 
 ## Authentication

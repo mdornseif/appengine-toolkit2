@@ -16,15 +16,15 @@ what an Web Application might need.
 Features
 --------
 
-* use :func:`gaetk2.forms.wtfbootstrap3` to teach a WTForm bootstrap rendering.
-* use :func:`gaetk2.helpers.check404` to save boilerplate on loading datastore entries etc.
-
+* :func:`gaetk2.forms.wtfbootstrap3` to teach a WTForm bootstrap rendering.
+* :func:`gaetk2.helpers.check404` to save boilerplate on loading datastore entries etc.
+* Lot's of Template-Filters we use day to day in :mod:`gaetk2.jinja_filters`.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
-
+   source/gaetk2.rst
 
 Indices and tables
 ==================
