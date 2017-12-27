@@ -16,6 +16,7 @@ import markdown2
 
 from jinja2.utils import Markup
 
+
 # Access Control
 
 @jinja2.contextfilter
@@ -61,6 +62,7 @@ def onlystaff(ctx, value):
     # if context.eval_ctx.autoescape:
     #     return Markup(value)
     return value
+
 
 # Encoding
 
@@ -112,9 +114,10 @@ def _to_json(value):
     warnings.warn("`to_json` is deprecated, use `tojson`", DeprecationWarning, stacklevel=2)
     return json.dumps(value)
 
+
 # Date-Formatting
 
-def dateformat(value, formatstring='%Y-%m-%d'):
+def dateformat(value, formatstring='%Y-%m-%d', nonchar=u''):
     """Formates a date.
 
     Tries to convert the given ``value`` to a ``date`` object and then formats
@@ -125,11 +128,11 @@ def dateformat(value, formatstring='%Y-%m-%d'):
     """
     from huTools.calendar.formats import convert_to_date
     if not value:
-        return ''
+        return nonchar
     return Markup(convert_to_date(value).strftime(formatstring).replace('-', '&#8209;'))
 
 
-def datetimeformat(value, formatstring='%Y-%m-%d %H:%M'):
+def datetimeformat(value, formatstring='%Y-%m-%d %H:%M', nonchar=u''):
     """Formates a datetime.
 
     Tries to convert the given ``value`` to a ``datetime`` object and then formats
@@ -140,15 +143,17 @@ def datetimeformat(value, formatstring='%Y-%m-%d %H:%M'):
     """
     from huTools.calendar.formats import convert_to_datetime
     if not value:
-        return ''
+        return nonchar
     return Markup(convert_to_datetime(value).strftime(formatstring).replace('-', '&#8209;'))
+
 
 def _datetime(value, formatstring='%Y-%m-%d %H:%M'):
     """Legacy function, to be removed."""
     warnings.warn("`datetime` is deprecated, use `datetimeformat`", DeprecationWarning, stacklevel=2)
-    return filter_datetimeformat(value, formatstring='%Y-%m-%d %H:%M')
+    return datetimeformat(value, formatstring='%Y-%m-%d %H:%M')
 
-def tertial(value):
+
+def tertial(value, nonchar=u'␀'):
     """Change a Date oder Datetime-Objekt into a Tertial-String.
 
     Tertials are third-years as opposed to quater years::
@@ -158,39 +163,40 @@ def tertial(value):
     """
     from huTools.calendar.formats import tertial
     if not value:
-        return ''
+        return nonchar
     return tertial(value)
+
 
 # Number-Formating
 
-def nicenum(value, spacer=u'\u202F'):
+def nicenum(value, spacer=u'\u202F', nonchar=u'␀'):
     """Format the given number with spacer as delimiter, e.g. `1 234 456`.
 
     Default spacer is NARROW NO-BREAK SPACE U+202F.
     Probably `style="white-space:nowrap; word-spacing:0.5em;"` would be an CSS based alternative.
     """
     if value is None:
-        return u'␀'
+        return nonchar
     rev_value = (u"%d" % int(value))[::-1]
     return spacer.join(reversed([rev_value[i:i + 3][::-1] for i in range(0, len(rev_value), 3)]))
 
 
-def intword(value):
+def intword(value, nonchar=u'␀'):
     """Converts a large integer to a friendly text representation.
 
     Works best for numbers over 1 million. For example,
     1000000 becomes '1.0 Mio', 1200000 becomes '1.2 Mio' and
     '1200000000' becomes '1200 Mio'.
     """
-    return _formatint(value)
+    return _formatint(value, nonchar)
 
 
-def _formatint(value):
+def _formatint(value, nonchar=u'␀'):
     """Format an Integer nicely with spacing."""
     # Inspired by Django
     # https://github.com/django/django/blob/master/django/contrib/humanize/templatetags/humanize.py
     if value is None:
-        return u'␀'
+        return nonchar
     value = int(value)
     if abs(value) < 1000000:
         rev_value = (u"%d" % int(value))[::-1]
@@ -201,7 +207,7 @@ def _formatint(value):
     return value
 
 
-def eurocent(value, spacer=u'\u202F', decimalplaces=2):
+def eurocent(value, spacer=u'\u202F', decimalplaces=2, nonchar=u'␀'):
     """Format the given cents as Euro with spacer as delimiter, e.g. '1 234 456.23'.
 
     Obviously works also with US$ and other 100-based. currencies.
@@ -212,7 +218,7 @@ def eurocent(value, spacer=u'\u202F', decimalplaces=2):
     Probably `style="white-space:nowrap; word-spacing:0.5em;"` would be an CSS based alternative.
     """
     if value is None:
-        return u'␀'
+        return nonchar
     tmp = str(int(value) / decimal.Decimal(100))
     # Cent anhängen
     if '.' not in tmp:
@@ -224,15 +230,17 @@ def eurocent(value, spacer=u'\u202F', decimalplaces=2):
     return u'%s.%s' % (euro_value, cent_value)
 
 
-def euroword(value, plain=False):
+def euroword(value, plain=False, nonchar=u'␀'):
     """Fomat Cents as pretty Euros."""
     if value is None:
-        return u'␀'
+        return nonchar
     return _formatint(value / 100)
 
 
-def g2kg(value, spacer=u'\u202F'):
+def g2kg(value, spacer=u'\u202F', nonchar=u'␀'):
     """Wandelt meist g in kg um, aber auch in andere Einheiten."""
+    if value is None:
+        return nonchar
     if not value:
         return value
     elif value < 100:
@@ -245,14 +253,14 @@ def g2kg(value, spacer=u'\u202F'):
         return "{:.1f}{}t".format(value / 1000.0 ** 2, spacer)
 
 
-def percent(value):
+def percent(value, nonchar=u'␀'):
     """Fomat Percent and handle None."""
     if value is None:
-        return u'␀'
+        return nonchar
     return '%.0f' % float(value)
 
 
-def iban(value, spacer=u'\u202F'):
+def iban(value, spacer=u'\u202F', nonchar=u'␀'):
     """Format the given string like an IBAN Account Number.
 
     Default spacer is NARROW NO-BREAK SPACE U+202F.
@@ -263,10 +271,9 @@ def iban(value, spacer=u'\u202F'):
         DE77 1234 1350 0000 5678 44
     """
     if value is None:
-        return u'␀'
+        return nonchar
     rev_value = (u"%d" % int(value))[::-1]
     return spacer.join(reversed([rev_value[i:i + 3][::-1] for i in range(0, len(rev_value), 3)]))
-
 
 
 # Text-Formatting
@@ -292,6 +299,7 @@ def nl2br(eval_ctx, value):
         return Markup(result)
     return result
 
+
 def left_justify(value, width):
     """Prefix the given string with spaces until it is width characters long."""
     return unicode(value or '').ljust(int(width))
@@ -301,6 +309,7 @@ def right_justify(value, width):
     """Postfix the given string with spaces until it is width characters long."""
     stripped = unicode(value or '')[0:width]
     return stripped.rjust(int(width))
+
 
 # Boolean-Formatting (and None)
 
@@ -336,14 +345,15 @@ def onoff(value):
         return Markup('<i class="fa fa-toggle-off" aria-hidden="true" style="color:gray"></i>')
 
 
-def none(value):
+def none(value, nonchar=u''):
     """Converts ``None`` to ``''``.
 
     Similar to ``|default('', true)`` in jinja2 but more explicit.
     """
     if value is None:
-        return u''
+        return nonchar
     return value
+
 
 # Misc
 
