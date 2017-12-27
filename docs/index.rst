@@ -14,6 +14,7 @@ Features
 * :func:`gaetk2.forms.wtfbootstrap3` to teach a WTForm bootstrap rendering.
 * :func:`gaetk2.helpers.check404` to save boilerplate on loading datastore entries etc.
 * Lot's of Template-Filters we use day to day in :mod:`gaetk2.jinja_filters`.
+* Common conventions for ndb/datastore usage in :mod:`gaetk2.datastore`.
 * Day-do-daty functionality in :mod:`gaetk2.tools` Most noteworty:
 
   * :mod:`gaetk2.tools.unicode` encode integers in base32, get rid of 😎 etc in strings.

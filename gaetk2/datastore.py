@@ -1,15 +1,43 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-infrastructure.py
+gaetk2.datastore - Helper for ndb datastore usage.
 
 Created by Maximillian Dornseif on 2011-01-07.
 Copyright (c) 2011, 2012, 2016, 2017 Cyberlogi/HUDORA. All rights reserved.
 """
-import re
-import zlib
+import warnings
 
 from google.appengine.ext import ndb
+
+
+class Model(ndb.Model):
+    """Generic fields to keep datastore organized."""
+
+    # these fields work only if the user was logges in via google infrastructure
+    created_at = ndb.DateTimeProperty(auto_now_add=True, indexed=True)
+    # `updated_at` is needed for replication
+    updated_at = ndb.DateTimeProperty(auto_now=True, indexed=True)
+
+    # see https://docs.python.org/2/glossary.html#term-hashable
+    def __hash__(self):
+        return hash(self.key.id())
+
+    def __eq__(self, other):
+        return self.key.id() == other.key.id()
+
+    def as_dict(self):
+        u"""Gibt eine Repräsentation des Objektes zurück."""
+        warnings.warn("`as_dict` is deprecated, use `to_dict)_`", DeprecationWarning, stacklevel=2)
+        return self.to_dict()
+
+
+class AuditedModel(Model):
+    """Fields to add an Audit-Trail to the Datastore."""
+
+    # these fields work only if the user was logges in via google infrastructure
+    created_by = ndb.UserProperty(required=False, auto_current_user_add=True, indexed=True)
+    updated_by = ndb.UserProperty(required=False, auto_current_user=True, indexed=True)
 
 
 def query_iterator(query, limit=50):
