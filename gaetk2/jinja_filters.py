@@ -10,6 +10,7 @@ import json
 import logging
 import re
 import urllib
+import warnings
 
 import jinja2
 import markdown2
@@ -270,10 +271,9 @@ def iban(value, spacer=u'\u202F', nonchar=u'␀'):
         {{ "DE77123413500000567844"|iban }}
         DE77 1234 1350 0000 5678 44
     """
-    if value is None:
+    if not value:
         return nonchar
-    rev_value = (u"%d" % int(value))[::-1]
-    return spacer.join(reversed([rev_value[i:i + 3][::-1] for i in range(0, len(rev_value), 3)]))
+    return spacer.join([value[i:i + 4] for i in range(0, len(value), 4)])
 
 
 # Text-Formatting
