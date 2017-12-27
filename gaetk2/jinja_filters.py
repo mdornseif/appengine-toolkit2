@@ -119,7 +119,7 @@ def dateformat(value, formatstring='%Y-%m-%d'):
 
     Tries to convert the given ``value`` to a ``date`` object and then formats
     it according to ``formatstring``::
-    
+
         {{ date.today()|dateformat }}
         {{ "20171224"|dateformat('%Y-%W') }}
     """
@@ -134,7 +134,7 @@ def datetimeformat(value, formatstring='%Y-%m-%d %H:%M'):
 
     Tries to convert the given ``value`` to a ``datetime`` object and then formats
     it according to ``formatstring``::
-    
+
         {{ datetime.now()|datetimeformat }}
         {{ "20171224T235959"|datetimeformat('%H:%M') }}
     """
@@ -165,8 +165,6 @@ def tertial(value):
 
 def nicenum(value, spacer=u'\u202F'):
     """Format the given number with spacer as delimiter, e.g. `1 234 456`.
-
-    Wraps the result in ``<span class="nicenum">``
 
     Default spacer is NARROW NO-BREAK SPACE U+202F.
     Probably `style="white-space:nowrap; word-spacing:0.5em;"` would be an CSS based alternative.
@@ -252,6 +250,24 @@ def percent(value):
     if value is None:
         return u'␀'
     return '%.0f' % float(value)
+
+
+def iban(value, spacer=u'\u202F'):
+    """Format the given string like an IBAN Account Number.
+
+    Default spacer is NARROW NO-BREAK SPACE U+202F.
+
+    Eg::
+
+        {{ "DE77123413500000567844"|iban }}
+        DE77 1234 1350 0000 5678 44
+    """
+    if value is None:
+        return u'␀'
+    rev_value = (u"%d" % int(value))[::-1]
+    return spacer.join(reversed([rev_value[i:i + 3][::-1] for i in range(0, len(rev_value), 3)]))
+
+
 
 # Text-Formatting
 
@@ -381,6 +397,7 @@ def register_custom_filters(jinjaenv):
     jinjaenv.filters['euroword'] = euroword
     jinjaenv.filters['percent'] = percent
     jinjaenv.filters['g2kg'] = g2kg
+    jinjaenv.filters['iban'] = iban
     jinjaenv.filters['markdown'] = markdown
     jinjaenv.filters['nl2br'] = nl2br
     jinjaenv.filters['ljustify'] = left_justify
