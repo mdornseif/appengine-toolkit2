@@ -25,14 +25,14 @@ provide authentication information. In addition gaetk2 can identifiy requests
 from AppEnine infrastructure coming via Task-Queues (`X-AppEngine-QueueName`)
 and other App Engine Applications (`X-Appengine-Inbound-Appid`).
 
-To activate Authentication, just inherit from `AuthMixin`. E.g.:
+To activate Authentication, just inherit from `AuthenticationReaderMixin`. E.g.:
 
 ```
-class DefaultHandler(BasicHandler, AuthMixin):
+class DefaultHandler(BasicHandler, AuthenticationReaderMixin):
 	pass
 ```
 
-Per default `AuthMixin` just decodes Authentication Information provided
+Per default `AuthenticationReaderMixin` just decodes Authentication Information provided
 by the browser on its own. But to log in you have to make the user to
 authenticate hinself. While gaetk2 can use username and pasword the main
 usage scenario is login via a third Party. gaetk2 currently supports
@@ -90,3 +90,10 @@ https://blog.sentry.io/2017/05/01/release-commits.html
 https://github.com/blog/2388-how-to-fix-errors-in-production-with-github-and-sentry
 Dazu machen: `Fixes MYAPP-317`
 https://docs.sentry.io/learn/releases/#tell-sentry-about-deploys
+
+
+# gaetk1 -> gaetk2 migration
+
+* Replace `default_template_vars()` with `build_context()` - no `super()` calls necessary anymore.
+* Authentication has changed significanty. `authchecker()` now handled by `pre_authentication_hook()`, `authentication_hook` and `authorisation_hook()`.
+* if you used the `get_impl()` pattern to wrap yor handler functions, you don't need that anymore. The often used `read_basedata()` can be moved into `method_preperation_hook()`.

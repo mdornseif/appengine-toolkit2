@@ -45,8 +45,9 @@ handlers:
 - url: /(robots.txt|version.txt|_ah/warmup)
   script: gaetk2.views.default.application
 
-#error_handlers:
-#  - file: templates/error_default.html
+# Unfortunately not allowed in includes
+# error_handlers:
+# - file: lib/appengine-toolkit2/templates/error/500.html
 #  - error_code: over_quota
 #    file: templates/error_over_quota.html
 #  - error_code: dos_api_denial
@@ -54,7 +55,7 @@ handlers:
 #  - error_code: timeout
 #    file: templates/error_timeout.html
 
-# `libraries:` unfortunately is ignored
+# `libraries:` unfortunately is ignored during including
 
 skip_files:
 - .*/requirements.txt

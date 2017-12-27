@@ -11,7 +11,6 @@ Copyright (c) 2010-2014, 2016-2017 HUDORA. MIT licnsed.
 
 import logging
 
-import gaetk2.boot  # noqa make sure requests ist configured for appengine
 import requests
 
 TIMEOUT = 30.0

@@ -4,7 +4,7 @@ gaetk2\.datastore module
 gaetk2.datastore tries to codify a common set of expectations and usages for
 gaetk2.
 
-Inherit from ``gaetk.datastore.gaetkModel`` instead of ndb.Model to get some
+Inherit from :class:`gaetk.datastore.gaetkModel` instead of ndb.Model to get some
 added functionality. The rationale there is that e common interface and thus
 admin- and programmer-time is more important than savings on space and and
 processing time. To we add possible unneded database fields. You can

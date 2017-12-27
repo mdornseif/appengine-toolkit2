@@ -15,6 +15,12 @@ Use them like this in your templates::
 If you use gaetk2.handlers these filters are made available automatically.
 If not youncan include them via :func:`register_custom_filters`.
 
+Spacing Issues
+~~~~~~~~~~~~~~
+
+We surrently use u'\u202F' NARROW NO-BREAK SPACE U+202F to separate numbers.
+Unfortunately this `is missing in most fonts and not well supported in browsers <https://stackoverflow.com/a/1570664/49407>`_.
+
 .. contents::
 
 

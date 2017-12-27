@@ -1,22 +1,29 @@
 """A fast, lightweight, and secure session WSGI middleware for use with GAE."""
-from Cookie import CookieError, SimpleCookie
-from base64 import b64decode, b64encode
+
+# pylint: skip-file
+# flake8: noqa
+
 import datetime
 import hashlib
 import hmac
 import logging
-import pickle
 import os
+import pickle
 import re
 import threading
 import time
+
+from Cookie import CookieError
+from Cookie import SimpleCookie
+from base64 import b64decode
+from base64 import b64encode
 
 from google.appengine.api import memcache
 from google.appengine.ext import db
 
 # Configurable cookie options
 # Identifies a cookie as being one used by gae-sessions (so you can set cookies too)
-COOKIE_NAME_PREFIX = "DgU"  
+COOKIE_NAME_PREFIX = "DgU"
 COOKIE_PATH = "/"
 DEFAULT_COOKIE_ONLY_THRESH = 10240  # 10KB: GAE only allows ~16000B in HTTP header - leave ~6KB for other info
 DEFAULT_LIFETIME = datetime.timedelta(days=7)

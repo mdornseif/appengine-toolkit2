@@ -7,7 +7,6 @@ Created by Maximillian Dornseif on 2011-01-07.
 Copyright (c) 2011, 2012, 2016, 2017 Cyberlogi/HUDORA. All rights reserved.
 """
 import logging
-import os
 import re
 import zlib
 
@@ -16,11 +15,14 @@ import google.appengine.ext.deferred.deferred
 from google.appengine.api import taskqueue
 from google.appengine.ext import deferred
 
+from .tools.config import is_production
 
-# Tasks
+
 
 def taskqueue_add_multi(qname, url, paramlist, **kwargs):
     """Adds more than one Task to the same Taskqueue/URL.
+
+    This helps to save API-Calls. Usage pattern::
 
     tasks = []
     for kdnnr in kunden.get_changed():
@@ -42,7 +44,7 @@ def taskqueue_add_multi(qname, url, paramlist, **kwargs):
 def taskqueue_add_multi_payload(name, url, payloadlist, **kwargs):
     """like taskqueue_add_multi() but transmit a json encoded payload instead a query parameter.
 
-    In the Task handler you can get the data via zdata = json.loads(self.request.body)`.
+    In the Task handler you can get the data via ``zdata = json.loads(self.request.body)``.
     See http://code.google.com/appengine/docs/python/taskqueue/tasks.html"""
 
     import huTools.hujson
@@ -88,23 +90,14 @@ def defer(obj, *args, **kwargs):
     suffix = re.sub(r'[^/A-Za-z0-9_,.:@&+$\(\)\-]+', '', suffix)
     url = google.appengine.ext.deferred.deferred._DEFAULT_URL + '/' + suffix[:1600]
     kwargs["_url"] = kwargs.pop("_url", url)
-    kwargs["_queue"] = kwargs.pop("_queue", 'workersq')
-    if _is_production():
+    # kwargs["_queue"] = kwargs.pop("_queue", 'workersq')
+    if is_production():
         # we only route to the workers backend/module on production machines
-        kwargs["_target"] = kwargs.pop("_target", 'workers')
+        pass
+        # kwargs["_target"] = kwargs.pop("_target", 'workers')
     try:
         return deferred.defer(obj, *args, **kwargs)
     except taskqueue.TaskAlreadyExistsError:
         logging.info('Task already exists')
     except taskqueue.TombstonedTaskError:
         logging.info('Task did already run')
-
-
-def _is_production():
-    """checks if we can assume to run on a development machine"""
-    if os.environ.get('SERVER_NAME', '').startswith('dev-'):
-        return False
-    elif os.environ.get('SERVER_SOFTWARE', '').startswith('Development'):
-        return False
-    else:
-        return True
