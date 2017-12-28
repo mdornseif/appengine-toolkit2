@@ -140,7 +140,7 @@ def num_decode(s):
 
 
 def num_encode_uppercase(n):
-    """Convert an integer to an base36 encoded string."""
+    """Convert an integer to an base36 (unly uppercase and numbers) encoded string."""
     if n < 0:
         return SIGN_CHARACTER + num_encode_uppercase(-n)
     s = []
