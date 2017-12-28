@@ -14,9 +14,9 @@ you are allowd to send only ASCII subsets.
 Data Cleanup
 ------------
 
-* :func:`deNoise` - removed Unicode Characters which normally have no place in buiseness documents (eg street names). This includes Emojii but also protected spaces unusual quotation marks etc. This data is usually included dut to cut and paste errors. Read source to see what is replaced.
-* :func:`deUmlaut` - converts data to plain ASCII while converting german Umlauts to something reasonable. 
-* :func:`deUTF8` - "repair" wrongly decoded UTF-8.
+* :func:`de_noise` - removed Unicode Characters which normally have no place in buiseness documents (eg street names). This includes Emojii but also protected spaces unusual quotation marks etc. This data is usually included dut to cut and paste errors. Read source to see what is replaced.
+* :func:`de_umlaut` - converts data to plain ASCII while converting german Umlauts to something reasonable.
+* :func:`de_utf8` - "repair" wrongly decoded UTF-8.
 
 
 Number Conversion

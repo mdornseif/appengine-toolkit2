@@ -16,7 +16,7 @@ from types import StringType
 import huTools.unicode_helper_latin1
 
 
-def deUTF8(data):
+def de_utf8(data):
     """This is meant to help with utf-8 data appearing where unicode should apperar."""
     # In particular my DB is returning the wrong thing.
     if isinstance(data, StringType):
@@ -39,7 +39,7 @@ _recodings = {'ae': ['ä', u'ä', '&auml;', '\u00E4', u'\u00E4', '\u0308a', '\xc
               }
 
 
-def deUmlaut(data):
+def de_umlaut(data):
     """Converts a text to ASCII acting smart about Umlauts.
 
     >>> deUmlaut('1 Über Hügel saß René äöüÄÖÜß')
@@ -91,18 +91,18 @@ DASHES = ""
 # en space   em space   SYMBOL FOR SPACE ␠ BLANK  see https://www.cs.tut.fi/~jkorpela/chars/spaces.html
 
 
-def deNoise(data):
+def de_noise(data):
     u"""Removes all stuff which should not appear in normal Western Text.
 
     >>> deNoise(u'Susie`s Giga\\Super-Markt®¿')
     u"Susie's Giga/Super-Markt?"
     >>> deNoise(u"ümlaut eins:\x01")
     u'\\xfcmlaut eins:'
-    >>> deNoise(u'«😎» `Umlaute kann doctest nicht so gut´ {®} ¿👩‍👩‍👧‍👦? „👨‍❤️‍💋‍👨“ ›🎅🏻🎅🏼🎅🏽🎅🏾🎅🏿‹')
-    u"() 'Umlaute kann doctest nicht so gut' () ??  "
+    >>> deNoise(u'«😎» `Umlaute kann doctest !gut´ {®} ¿👩‍👩‍👧‍👦? „👨‍❤️‍💋‍👨“ ›🎅🏻🎅🏼🎅🏽🎅🏾🎅🏿‹')
+    u"() 'Umlaute kann doctest !gut' () ??  "
     """
     data = unicodedata.normalize('NFC', data)
-    data = huTools.unicode_helper_latin1.deNoiseLatin1(data)
+    data = huTools.unicode_helper_latin1.de_noise_latin1(data)
     # data = unicodedata.normalize('NFKC', data) # decruft a little but keep umlauts
     return data
 
