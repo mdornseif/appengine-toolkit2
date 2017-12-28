@@ -10,6 +10,7 @@ Subpackages
     gaetk2.helpers
     gaetk2.jinja_filters
     gaetk2.tools.unicode
+    gaetk2.taskqueues
 
 Submodules
 ----------
