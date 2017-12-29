@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-jinja_filters.py - custom jinja2 filters.
+jinja_filters - custom jinja2 filters for gaetk2.
 
 Copyright (c) 2010, 2012, 2014, 2017 Maximillian Dornseif. MIT Licensed.
 """
@@ -45,24 +45,100 @@ def authorize(context, value, permission_types):
     return value
 
 
+BLOCKTAGS = """address article aside blockquote canvas div dl
+fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 header hgroup
+hr li main nav noscript ol output p pre section table tfoot ul video""".split()
+NOTAGS = """dd dt thead tfoot tbody tr td""".split()
+
 @jinja2.contextfilter
-def onlystaff(ctx, value):
+def onlystaff(ctx, value, tag=None):
     """Display content only if the current logged in user `is_staff()`.
 
-    Does not do autoescape."""
+    This tag generatyes HTML. If you don't wan't HTML use this construct::
+
+        {% if is_staff() %}Internal Info{% endif %}
+
+    The Tag encloses content in a ``<span>`` or ``<div>`` depending
+    on it's contents::
+
+        {{ "bla"|onlystaff }}
+        <!-- is rendered to: -->
+        <span class="gaetk_onlystaff">bla</span>
+
+        {% filter onlystaff %}
+            <form  ...></form>
+        {% endfilter %}
+        <!-- is rendered to: -->
+        <div class="gaetk_onlystaff">
+            <form ...></form>
+        </div>
+
+        {% filter onlystaff %}
+            <i>test text</i>
+        {% endfilter %}
+        <!-- is rendered to: -->
+        <span class="gaetk_onlystaff"><i>test text</i></span>
+
+    If you not happy with how the filter chooses between ``<span>`` and ``<div>``
+    you can provide a tag to be used. Or you can provide empty data to avoid
+    all markup::
+
+        {% filter onlystaff('p') %}
+            <i>test text</i>
+        {% endfilter %}
+        <!-- is rendered to: -->
+        <p class="gaetk_onlystaff">bla</p>
+
+        {% filter onlystaff('') %}
+            foo
+        {% endfilter %}
+        <!-- is rendered to: -->
+        foo
+
+    Automatic detection does not work perfectly within tables.
+    Your milage may vary.
+
+    If the user is not staff an empty tag is generated::
+
+        {% filter onlystaff %}
+            supersecret
+        {% endfilter %}
+        <!-- is rendered to: -->
+        <span class="gaetk_onlystaff-denied"><!-- !is_staff() --></span>
+
+        {% filter onlystaff('') %}
+            supersecret
+        {% endfilter %}
+        <!-- is rendered to: (nothing) -->
+    """
+
+    if tag is None:
+        tag = u'span'
+        m = re.search(r'$\s*<(%s)' % '|'.join(NOTAGS), value)
+        if m:
+            tag = u''
+        else:
+            m = re.search(r'<(%s)' % '|'.join(BLOCKTAGS), value)
+            if m:
+                tag = u'div'
+
     granted = False
     if ctx.get('credential') and ctx.get('credential').staff:
         granted = True
 
     if granted:
-        value = '<!-- Berechtigung.is_staff() -->%s<!-- /Berechtigung.is_staff() -->' % value
+        if not tag:
+            return value
+        value = u'<{tag} class="gaetk_onlystaff">{value}</{tag}>'.format(
+            tag=tag, value=jinja2.escape(value))
     else:
-        value = u'<!-- Berechtigung.is_staff() -->'
         if not ctx.get('credential'):
             logging.info('context has no credential!')
-    # if context.eval_ctx.autoescape:
-    #     return Markup(value)
-    return value
+        if not tag:
+            return u''
+        value = u'<{tag} class="gaetk_onlystaff-denied"><!-- !is_staff() --></{tag}>'.format(
+            tag=tag)
+    return Markup(value)
 
 
 # Encoding

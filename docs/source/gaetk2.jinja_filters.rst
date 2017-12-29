@@ -3,7 +3,7 @@ gaetk2.jinja_filters module - template filters
 
 .. py:module:: gaetk2.jinja_filters
 
-These filters do a lot of formatting and conversion. They are 
+These filters do a lot of formatting and conversion. They are
 Build with German localisation and HTML in mind to extend
 `Jinja's own filters <http://jinja.pocoo.org/docs/2.10/templates/#list-of-builtin-filters>`_
 
@@ -15,13 +15,19 @@ Use them like this in your templates::
 If you use gaetk2.handlers these filters are made available automatically.
 If not youncan include them via :func:`register_custom_filters`.
 
+
 Spacing Issues
-~~~~~~~~~~~~~~
+--------------
 
 We surrently use u'\u202F' NARROW NO-BREAK SPACE U+202F to separate numbers.
 Unfortunately this `is missing in most fonts and not well supported in browsers <https://stackoverflow.com/a/1570664/49407>`_.
 
+
 .. contents::
+
+
+Services provided
+=================
 
 
 Access Control
@@ -29,11 +35,17 @@ Access Control
 
 These Access Control filters are somewhat more involved because they need the cooperation of the rest of gaetk2. They are meant to show certain parts of a template only to certain users.
 
-.. todo:: 
+See :meth:`gaetk2.handler.base.is_staff` and
+:class:`gaetk.models.gaetk_Credential` for further Reference.
+
+* :func:`onlystaff` - display content only if the currently logged in user :meth:`~gaetk2.handler.base.is_staff`.
+
+.. todo::
     This functionality is not finalized so far.
 
-    * :func:`onlystaff`
     * :func:`authorize`
+    * Write Authorisation tutorial.
+
 
 Encoding
 --------
@@ -70,7 +82,7 @@ User-Readable Number formatting. All of these assume you are outputting HTML.
 Text-Formatting
 ---------------
 
-Many of these functions are most relevant for settings where you 
+Many of these functions are most relevant for settings where you
 have ``<pre>>`` or want to reach a similar effect in HTML.
 
 * :func:`markdown` - convert Markdown to HTML.
@@ -105,11 +117,11 @@ GAETK1 Compability
 * ``urlencode`` is gone, use `urlencode <http://jinja.pocoo.org/docs/2.10/templates/#urlencode>`_ in jinja2 2.7. the `urlencode <http://jinja.pocoo.org/docs/2.10/templates/#urlencode>`_ provided by jinja has much more features than we had.
 * ``attrencode`` is gone, use `xmlattr <http://jinja.pocoo.org/docs/2.10/templates/#xmlattr>`_ in jinja2 2.9.
 * generally we now return only Unicode Plain Text, no HTML. ``nicenum``, ``eurocent``and ``g2kg`` are changed by that.
-* the `urlencode <http://jinja.pocoo.org/docs/2.10/templates/#urlencode>`_ provided by jinja2 
+* the `urlencode <http://jinja.pocoo.org/docs/2.10/templates/#urlencode>`_ provided by jinja2
 
 
 Module contents
----------------
+===============
 
 .. automodule:: gaetk2.jinja_filters
     :members:
