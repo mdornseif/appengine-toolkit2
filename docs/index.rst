@@ -23,6 +23,7 @@ Features
   * :func:`gaetk2.tools.datetools.convert_to_date()` might be the most used function in our whole codebase.
   * :mod:`gaetk2.tools.caching` provides cache decorators.
   * :mod:`gaetk2.tools.unicode` encode integers in base32, get rid of 😎 etc in strings.
+  * :class:`gaetk2.tools.structured_xls.XLSwriter` - :class:`csv.writer` compatible interface to generate XLS-Files.
 
 
 .. toctree::
