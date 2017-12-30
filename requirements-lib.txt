@@ -3,6 +3,7 @@ cryptography
 google-auth==1.1.1
 GoogleAppEngineCloudStorageClient==1.9.22.1
 GoogleAppEngineMapReduce==1.9.22.0
+jinja2==2.10
 markdown2
 python-jose
 requests
