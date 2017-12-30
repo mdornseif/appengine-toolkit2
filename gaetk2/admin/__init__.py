@@ -4,7 +4,7 @@
 gaetk2/admin/__init__.py
 
 Created by Christian Klein on 2011-08-19.
-Copyright (c) 2011 HUDORA GmbH. All rights reserved.
+Copyright (c) 2011 HUDORA GmbH. MIT Licensed.
 """
 import logging
 import os

@@ -18,8 +18,6 @@ Subpackages
     gaetk2.modelexporter
     gaetk2.admin
     gaetk2.tools
-    gaetk2.tools.structured_xls
-
 
 
 gaetk2\.exc module
