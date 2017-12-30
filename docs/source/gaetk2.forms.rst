@@ -1,7 +1,7 @@
 gaetk2\.forms package - form handling via WTForms
 =================================================
 
-gaetk2.forms aims at making `Bootstrap 3 Forms <http://getbootstrap.com/docs/3.3/css/#forms>`_ 
+gaetk2.forms aims at making `Bootstrap 3 Forms <http://getbootstrap.com/docs/3.3/css/#forms>`_
 and `WTForms <https://wtforms.readthedocs.io/en/latest/>`_ play nice together.
 This means for the normal form you don't have to write any HTML.
 
@@ -10,7 +10,7 @@ you can get a very smooth form handling experience.
 
 .. py:function:: wtfbootstrap3(form)
 
-    Takes a form instance and changes the widgets within to conform to 
+    Takes a form instance and changes the widgets within to conform to
     bootstrap / HTML5 layout including labels, error-messages, etc.
 
     So usage would look like this::
@@ -62,11 +62,14 @@ you can get a very smooth form handling experience.
           </div>
         </form>
 
+.. |Sample Form generated| image:: https://d3vv6lp55qjaqc.cloudfront.net/items/2N0b3h3B0r0v2l0M0j1b/Image%202017-12-24%20at%2011.59.31%20AM.jpg
+
+
 .. todo::
 
     * Add validation. Use https://validators.readthedocs.io/en/latest/
     * Add some standard way to render a complete Form not just fields.
-    
+
 
 Module contents
 ---------------

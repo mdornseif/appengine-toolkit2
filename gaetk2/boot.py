@@ -17,10 +17,8 @@ The most robust approach in `appengine_config.py` would be:
 Created by Maximillian Dornseif on 2017-06-24.
 Copyright (c) 2017 Maximillian Dornseif. MIT Licensed.
 """
-
 # pylint: skip-file
 # flake8: noqa
-
 import logging
 import os.path
 import warnings
