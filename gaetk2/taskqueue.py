@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-infrastructure.py
+gaetk2.taskqueue
 
 Created by Maximillian Dornseif on 2011-01-07.
 Copyright (c) 2011, 2012, 2016, 2017 Cyberlogi/HUDORA. All rights reserved.
@@ -16,7 +16,6 @@ from google.appengine.api import taskqueue
 from google.appengine.ext import deferred
 
 from .tools.config import is_production
-
 
 
 def taskqueue_add_multi(qname, url, paramlist, **kwargs):
