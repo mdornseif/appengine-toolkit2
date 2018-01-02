@@ -18,7 +18,60 @@ class PaginateMixin(object):
     """Show data in a paginated fashion."""
 
     def paginate(self, query, defaultcount=25, datanodename='objects', calctotal=False, formatter=None):
-        """Pagination. Somewhat obsoleted by `listviewer`.
+        """Add NDB-based pagination to Views.
+
+        Set up template environment by calling ``self.paginate()``. Eg::
+
+            from ..handlers import AuthenticatedHandler
+            from ..handlers.mixins import PaginateMixin
+
+            class MyView(AuthenticatedHandler, PaginateMixin):
+                def get(self):
+                    query = MyModel.query().order('-created_at)
+                    template_values = self.paginate(query)
+                    self.render(template_values, 'template.html')
+
+
+        Your ``template.html`` should then look like this::
+
+            <ul>
+              {% for obj in object_list %}
+                <li>{{ obj }}</li>
+              {% endfor %}
+            </ul>
+
+            <nav>
+              <ul class="pager">
+                <li class="previous {% if not prev_objects %}disabled{% endif %}"><a href="?{{ prev_qs }}"><span aria-hidden="true">&larr;</span> Zurück</a></li>
+                <li class="next {% if not more_objects %}disabled{% endif %}"><a href="?{{ next_qs }}">Vor <span aria-hidden="true">&rarr;</span></a></li>
+              </ul>
+            </nav>
+
+
+        PaginateMixin the additional query parameters ``start``, ``cursor``,
+        ``cursor_start`` to note what is currently displayed. ``limit`` can be used
+        to overwrite ``defaultcount``.
+
+        Parameters:
+            * query
+            * defaultcount=25
+            * datanodename='objects'
+            * calctotal
+            * formatter
+
+        Template Variables:
+
+        * more_objects
+        * prev_objects
+        * prev_start
+        * next_start
+        * limit
+        * next_qs
+        * prev_qs
+        * total
+        * objects
+
+        Somewhat obsoleted by `listviewer`.
 
         See http://mdornseif.github.com/2010/10/02/appengine-paginierung.html
 

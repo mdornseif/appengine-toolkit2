@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-<<<<<<< HEAD
-helpers.py - small view-helper-functions
-=======
 helpers.py - smal view-helper-functions
->>>>>>> ⭐️ check404-Helper
 
 Created by Maximillian Dornseif on 2016-12-15.
 Copyright (c) 2016 Cyberlogi. All rights reserved.
