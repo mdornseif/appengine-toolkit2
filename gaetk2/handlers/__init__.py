@@ -8,11 +8,13 @@ Copyright (c) 2017 HUDORA. All rights reserved.
 """
 
 from .authentication import AuthenticationReaderMixin
+from .authentication import AuthenticationRequiredMixin
 from .base import BasicHandler
 from .base import JsonBasicHandler
+from .mixins.messages import MessagesMixin
 
 
-class DefaultHandler(BasicHandler, AuthenticationReaderMixin):
+class DefaultHandler(BasicHandler, MessagesMixin, AuthenticationReaderMixin):
     """Handle Requests and load self.credential if Authentication is provided."""
 
     pass
@@ -21,4 +23,8 @@ class DefaultHandler(BasicHandler, AuthenticationReaderMixin):
 class JsonHandler(JsonBasicHandler, AuthenticationReaderMixin):
     """Send JSON data to client and load self.credential if Authentication is provided."""
 
+    pass
+
+
+class AuthenticatedHandler(DefaultHandler, AuthenticationRequiredMixin):
     pass
