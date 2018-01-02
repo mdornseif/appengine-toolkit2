@@ -72,6 +72,30 @@ def copy_entity(e, **extra_args):
     return klass(**props)
 
 
+@ndb.transactional
+def get_or_insert_if_new(cls, id, **kwds):
+    """Like ndb.get_or_insert()` but returns `(entity, new)`.
+
+    This allows you to see if something has been created or if there was an
+    already existing entity::
+
+    >>> get_or_insert_if_new(Model, 'newid')
+    (<instance>, True)
+    >>> get_or_insert_if_new(Model, 'newid')
+    (<instance>, False)
+    """
+    # from https://stackoverflow.com/a/14549493/49407
+    # See https://cloud.google.com/appengine/docs/standard/python/ndb/modelclass#Model_get_or_insert
+    key = ndb.Key(cls, id)
+    ent = key.get()
+    if ent is not None:
+        return (ent, False)  # False meaning "not created"
+    ent = cls(**kwds)
+    ent.key = key
+    ent.put()
+    return (ent, True)  # True meaning "created"
+
+
 def write_on_change2(instance, data):
     """Apply new data to an entity and write to datastore if anything changed.
 

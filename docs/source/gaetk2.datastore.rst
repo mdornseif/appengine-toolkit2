@@ -11,6 +11,7 @@ processing time. To we add possible unneded database fields. You can
 remove them on a case by case basis in derivered classes.
 
 * :func:`query_iterator` - helps to iterate over big query results
+* :func:`get_or_insert_if_new` helps you to see if a new Entity was created.
 * :func:`copy_entity` - can write an entity with a different key to the datastore
 * :func:`write_on_change2` - basically implements conditional ``put()``
 * :func:`reload_obj` - forces an object to be re-read from disk
