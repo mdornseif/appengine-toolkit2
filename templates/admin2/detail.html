@@ -7,8 +7,8 @@
 
 {% block breadcrumbs %}
 <ol class="breadcrumb">
-  <li><a href="/admin/">Administration</a></li>
-  <li><a href="/admin/{{ app }}/{{ model }}/">{{ model }}</a></li>
+  <li><a href="/admin2/">Administration</a></li>
+  <li><a href="/admin2/{{ app }}/{{ model }}/">{{ model }}</a></li>
   <li class="active">{% if obj is defined %}{{ display_id(object)|e }}{% else %}Neu{% endif %}</li>
 </ol>
 {% endblock %}

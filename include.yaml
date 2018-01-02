@@ -45,6 +45,10 @@ handlers:
 - url: /(robots.txt|version.txt|_ah/warmup)
   script: gaetk2.views.default.application
 
+# Out Django-Inspired Admin Interface
+- url: /admin2/.*
+  script: gaetk2.admin.views.application
+
 # Unfortunately not allowed in includes
 # error_handlers:
 # - file: lib/appengine-toolkit2/templates/error/500.html

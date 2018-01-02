@@ -9,9 +9,9 @@ Copyright (c) 2011-2015 HUDORA GmbH. All rights reserved.
 import mimetypes
 
 import cloudstorage
-import config
+# import config
 
-from gaetk.compat import xdb_kind
+# from gaetk.compat import xdb_kind
 from google.appengine.api import app_identity
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
@@ -20,8 +20,10 @@ from huTools.calendar.formats import convert_to_date
 from huTools.calendar.formats import convert_to_datetime
 
 
-def get_app_name(model):
-    """Django-like...
+def get_topic_name(model):
+    """Try to extract the Name of an Admin Topic from the path.
+
+    Still somewhat like Django App-Names.
 
     >>> get_app_name('frontend.news.models.NewsItem')
     'news'
@@ -95,7 +97,7 @@ def upload_to_blobstore(obj, key_name, blob):
     """
     mime_type, _ = mimetypes.guess_type(blob.filename)
     bucket = getattr(config, 'GCS_BUCKET_NAME', app_identity.get_default_gcs_bucket_name())
-    file_name = '/%s/admin/%s/%s/%s' % (bucket, xdb_kind(obj), key_name, blob.filename)
+    file_name = '/%s/admin/%s/%s/%s' % (bucket, obj._Get_kind(), key_name, blob.filename)
     with cloudstorage.open(file_name, 'w', content_type=mime_type) as fileobj:
         while blob.file:
             data = blob.file.read(8192)

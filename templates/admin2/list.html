@@ -11,7 +11,7 @@
 
 {% block breadcrumbs %}
 <ol class="breadcrumb">
-  <li><a href="/admin/">Administration</a></li>
+  <li><a href="/admin2/">Administration</a></li>
   <li class="active">{{ model }}</li>
 </ol>
 {% endblock %}
@@ -20,7 +20,7 @@
 
 <form class="form-inline" method="GET" action="search/">
   {% if not read_only %}
-  <a href="add/" type="button" class="btn btn-default">Neu</a>
+    <a href="add/" type="button" class="btn btn-default">Neu</a>
   {% endif %}
   <div class="btn-group">
     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Export <span class="caret"></span></button>
@@ -32,23 +32,20 @@
 
   <div class="form-group form-group-sm">&nbsp;</div>
 
+  <!--
   <div class="form-group form-group-sm">
     <label class="control-label" for="q">Suche</label>
     <input type="search" class="form-control input-sm" id="q" placeholder="Suchbegriffe" {% if term is defined %}value="{{ term }}"{% endif %}>
   </div>
+-->
 </form>
 
 <p>&nbsp;</p>
-
-{% if not admin_class.read_only %}
-<form action="delete/" method="POST">
-{% endif %}
 
   <div class="form-group form-group-sm">
   <table class="table table-bordered table-condensed table-striped">
     <thead>
       <tr>
-        {% if not admin_class.read_only %}<th>&nbsp;</th>{% endif %}
         <th>Key/ID</th>
         {% for field in admin_class.list_fields %}
         {# This is a little bit hackish. Django now uses a class ChangeList to display this table #}
@@ -59,15 +56,12 @@
     <tbody>
       {% for obj in object_list %}
       <tr>
-        {% if not read_only %}
-        <td><input name="object_id" type="checkbox" value="{{ display_key(obj) }}"></td>
-        {% endif %}
         <td>
-        {% if not read_only %}
-          <a href="/admin/{{ app }}/{{ model }}/{{ display_key(obj) }}/">{{ display_id(obj)|e }}</a>
-        {% else %}
-          {{ display_id(obj)|e }}
-        {%- endif %}
+          {% if not read_only %}
+            <a href="/admin2/e/{{ model }}/{{ display_key(obj) }}/">{{ display_id(obj)|e }}</a>
+          {% else %}
+            {{ display_id(obj)|e }}
+          {%- endif %}
         </td>
         {% for field in admin_class.list_fields %}<td>{{ obj|attr(field)|e }}</td>{% endfor %}
       </tr>
@@ -75,13 +69,6 @@
     </tbody>
   </table>
   </div>
-
-{% if not admin_class.read_only and admin_class.deletable %}
-  <div class="form-group form-group-sm">
-    <button class="btn btn-danger" type="submit">Löschen</button>
-  </div>
-</form>
-{% endif %}
 
 <nav>
   <ul class="pager">

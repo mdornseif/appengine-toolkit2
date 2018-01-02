@@ -69,7 +69,6 @@ in like this to :file:`admin_gaetk2.py`::
 
 
 
-
 .. todo::
 
     * rename ``application_id`` to topic everywhere

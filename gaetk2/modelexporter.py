@@ -41,7 +41,7 @@ class ModelExporter(object):
         self.uid = uid
         self.maxseconds = maxseconds
         if query is None:
-            self.query = compat.xdb_queryset(model)
+            self.query = model.query()
         else:
             self.query = query
 
@@ -56,17 +56,17 @@ class ModelExporter(object):
         Can be overwritten. Current implementation is cached."""
         if not hasattr(self, '_fields'):
             fields = []
-            props = compat.xdb_properties(self.model)
+            props = self.model._properties
             for prop in props.values():
-                name = compat.xdb_prop_name(prop)
+                name = prop._name
                 if self.only:
                     if name in self.only:
-                        fields.append((compat.xdb_prop_creation_counter(prop), name))
+                        fields.append((prop._creation_counter, name))
                 elif self.ignore:
                     if name not in self.ignore:
-                        fields.append((compat.xdb_prop_creation_counter(prop), name))
+                        fields.append((prop._creation_counter, name))
                 else:
-                    fields.append((compat.xdb_prop_creation_counter(prop), name))
+                    fields.append((prop._creation_counter, name))
 
             if self.additional_fields:
                 fields.extend((999, n) for n in self.additional_fields)
