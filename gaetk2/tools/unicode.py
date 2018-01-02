@@ -13,7 +13,7 @@ import unicodedata
 
 from types import StringType
 
-import huTools.unicode_helper_latin1
+from gaetk2.tools import unicode_helper_latin1
 
 
 def de_utf8(data):
@@ -42,7 +42,7 @@ _recodings = {'ae': ['ä', u'ä', '&auml;', '\u00E4', u'\u00E4', '\u0308a', '\xc
 def de_umlaut(data):
     """Converts a text to ASCII acting smart about Umlauts.
 
-    >>> deUmlaut('1 Über Hügel saß René äöüÄÖÜß')
+    >>> de_umlaut('1 Über Hügel saß René äöüÄÖÜß')
     '1 Ueber Huegel sass Rene aeoeueAeOeUess'
     """
 
@@ -75,36 +75,77 @@ except re.error:
 DASHES = ""
 # Crap from Windows-1250: ‚„…‰Š‹ŚŤŽŹ‘’“”•–—™›ˇ¦©«®·»śťžźĄąĽľ
 # Crap fom Unicode: …
-# !¡‼❕
-# ¿⁇❓ ❔؟‽
-# ‘’“”
-# ‹ › « »
-# -‐‑–‒—― see https://www.cs.tut.fi/~jkorpela/dashes.html
-# _﹏
-# ~〜
-# ′″‴〃
-# 'ʻˮ՚Ꞌꞌ
-# /\⁄¦|
-# &＆⅋﹠
-# ·•◦‣⦿⦾⁃◘
-# ※⁕⁜*⁎∗
-# en space   em space   SYMBOL FOR SPACE ␠ BLANK  see https://www.cs.tut.fi/~jkorpela/chars/spaces.html
+REPLACRS = {
+    u' ': # see https://www.cs.tut.fi/~jkorpela/chars/spaces.html
+        # '\u0020'  # SPACE   foo bar Depends on font, typically 1/4 em, often adjusted
+        u'\u00A0'  # NO-BREAK SPACE  foo bar As a space, but often not adjusted
+        u'\u2000'  # EN QUAD foo bar 1 en (= 1/2 em)
+        u'\u2001'  # EM QUAD foo bar 1 em (nominally, the height of the font)
+        u'\u2002'  # EN SPACE    foo bar 1 en (= 1/2 em)
+        u'\u2003'  # EM SPACE    foo bar 1 em
+        u'\u2007'  # FIGURE SPACE    foo bar “Tabular width”, the width of digits
+        u'\u2004'  # THREE-PER-EM SPACE  foo bar 1/3 em
+        u'\u2005'  # FOUR-PER-EM SPACE   foo bar 1/4 em
+        u'\u2006'  # SIX-PER-EM SPACE    foo bar 1/6 em
+        u'\u2008'  # PUNCTUATION SPACE   foo bar The width of a period “.”
+        u'\u2009'  # THIN SPACE  foo bar 1/5 em (or sometimes 1/6 em)
+        u'\u200A'  # HAIR SPACE  foo bar Narrower than THIN SPACE
+        u'\u205F'  # MEDIUM MATHEMATICAL SPACE   foo bar 4/18 em
+        u'\u3000'  # IDEOGRAPHIC SPACE   foo　bar The width of ideographic (CJK) characters.
+    ,
+    u'':
+        u'\u1680'  # OGHAM SPACE MARK    foo bar Unspecified; usually not really a space but a dash
+        u'\u180E'  # MONGOLIAN VOWEL SEPARATOR   foo᠎bar No width
+        u'\u200B'  # ZERO WIDTH SPACE    foo​bar Nominally no width, but may expand
+        u'\u202F'  # NARROW NO-BREAK SPACE   foo bar Narrower than NO-BREAK SPACE (or SPACE)
+        u'\uFEFF'  # ZERO WIDTH NO-BREAK SPACE   foo﻿bar No width (the character is invisible)
+    ,
+    u'-': u'-‐‑–‒—―_﹏', # see https://www.cs.tut.fi/~jkorpela/dashes.html
+    u'_': u'_﹏',
+    u'*': u'※⁕⁜*⁎∗·•◦‣⦿⦾⁃◘',
+    u'!': u'!¡‼❕',
+    u'?': u'¿⁇❓❔؟‽',
+    u'~': u'~〜',
+    u'&': u'&＆⅋﹠',
+    u"'": u'ʻˮ՚Ꞌꞌ‘’′',
+    u'"': u'“”″‴〃„',
+    u'/': u'/\⁄\\',
+    u'|': u'¦|',
+    u'<': u'‹«',
+    u'>': u'›»',
+}
+# this could be an one liner
+REVERSEREPLACRS = {}
+for result, inputs in REPLACRS.iteritems():
+    for c in inputs:
+        REVERSEREPLACRS[c] = result
+REPLACE_RE = re.compile(u'[%s]' % ''.join([re.escape(x) for x in REVERSEREPLACRS.keys()]))
 
 
 def de_noise(data):
     u"""Removes all stuff which should not appear in normal Western Text.
 
-    >>> deNoise(u'Susie`s Giga\\Super-Markt®¿')
-    u"Susie's Giga/Super-Markt?"
-    >>> deNoise(u"ümlaut eins:\x01")
+    >>> de_noise(u'»Susie`s Giga\\Super-Markt®¿«')
+    u">Susie's Giga/Super-Markt(R)?<"
+    >>> de_noise(u"ümlaut eins:\x01")
     u'\\xfcmlaut eins:'
-    >>> deNoise(u'«😎» `Umlaute kann doctest !gut´ {®} ¿👩‍👩‍👧‍👦? „👨‍❤️‍💋‍👨“ ›🎅🏻🎅🏼🎅🏽🎅🏾🎅🏿‹')
-    u"() 'Umlaute kann doctest !gut' () ??  "
+    >>> de_noise(u'«A» {C} ¿D? „E“ ›F‹')
+    u'<A> (C) ?D? "E" >F<'
+    >>> de_noise(u'`A´')
+    u"'A'"
+    >>> de_noise(u'«😎» Umlaute kann doctest !gut {®} ¿👩‍👩‍👧‍👦? „👨‍❤️‍💋‍👨“ ›🎅🏻🎅🏼🎅🏽🎅🏾🎅🏿‹')
+    u'<> Umlaute kann doctest !gut ((R)) ?? "" ><'
+    >>> de_noise(u'DE37  330 5 13 50 0 010  4414  22')
+    u'DE37330513500010441422'
     """
     data = unicodedata.normalize('NFC', data)
-    data = huTools.unicode_helper_latin1.de_noise_latin1(data)
+    def noiserepl(matchobj):
+        return REVERSEREPLACRS.get(matchobj.group(0), '_')
+    data = REPLACE_RE.sub(noiserepl, data)
+    data = unicode_helper_latin1.de_noise_latin1(data)
     # data = unicodedata.normalize('NFKC', data) # decruft a little but keep umlauts
     return data
+
 
 # from http://stackoverflow.com/questions/561486
 ALPHABET = string.digits + string.ascii_uppercase + string.ascii_lowercase
@@ -152,7 +193,7 @@ def num_encode_uppercase(n):
     return u''.join(reversed(s))
 
 if __name__ == '__main__':
-    # print deNoise(u"`Iñtërnâtiônàlizætiøn!'")
-    # print deNoise(u'«😎» `Iñtërnâtiônàlizætiøn´ {®} ¿👩‍👩‍👧‍👦? „👨‍❤️‍💋‍👨“ ›🎅🏻🎅🏼🎅🏽🎅🏾🎅🏿‹')
+    print de_noise(u"`Iñtërnâtiônàlizætiøn!'")
+    print de_noise(u'«😎» `Iñtërnâtiônàlizætiøn´ {®} ¿👩‍👩‍👧‍👦? „👨‍❤️‍💋‍👨“ ›🎅🏻🎅🏼🎅🏽🎅🏾🎅🏿‹')
     failure_count, test_count = doctest.testmod()
     sys.exit(failure_count)
