@@ -76,31 +76,29 @@ DASHES = ""
 # Crap from Windows-1250: ‚„…‰Š‹ŚŤŽŹ‘’“”•–—™›ˇ¦©«®·»śťžźĄąĽľ
 # Crap fom Unicode: …
 REPLACRS = {
-    u' ': # see https://www.cs.tut.fi/~jkorpela/chars/spaces.html
-        # '\u0020'  # SPACE   foo bar Depends on font, typically 1/4 em, often adjusted
-        u'\u00A0'  # NO-BREAK SPACE  foo bar As a space, but often not adjusted
-        u'\u2000'  # EN QUAD foo bar 1 en (= 1/2 em)
-        u'\u2001'  # EM QUAD foo bar 1 em (nominally, the height of the font)
-        u'\u2002'  # EN SPACE    foo bar 1 en (= 1/2 em)
-        u'\u2003'  # EM SPACE    foo bar 1 em
-        u'\u2007'  # FIGURE SPACE    foo bar “Tabular width”, the width of digits
-        u'\u2004'  # THREE-PER-EM SPACE  foo bar 1/3 em
-        u'\u2005'  # FOUR-PER-EM SPACE   foo bar 1/4 em
-        u'\u2006'  # SIX-PER-EM SPACE    foo bar 1/6 em
-        u'\u2008'  # PUNCTUATION SPACE   foo bar The width of a period “.”
-        u'\u2009'  # THIN SPACE  foo bar 1/5 em (or sometimes 1/6 em)
-        u'\u200A'  # HAIR SPACE  foo bar Narrower than THIN SPACE
-        u'\u205F'  # MEDIUM MATHEMATICAL SPACE   foo bar 4/18 em
-        u'\u3000'  # IDEOGRAPHIC SPACE   foo　bar The width of ideographic (CJK) characters.
-    ,
-    u'':
-        u'\u1680'  # OGHAM SPACE MARK    foo bar Unspecified; usually not really a space but a dash
-        u'\u180E'  # MONGOLIAN VOWEL SEPARATOR   foo᠎bar No width
-        u'\u200B'  # ZERO WIDTH SPACE    foo​bar Nominally no width, but may expand
-        u'\u202F'  # NARROW NO-BREAK SPACE   foo bar Narrower than NO-BREAK SPACE (or SPACE)
-        u'\uFEFF'  # ZERO WIDTH NO-BREAK SPACE   foo﻿bar No width (the character is invisible)
-    ,
-    u'-': u'-‐‑–‒—―_﹏', # see https://www.cs.tut.fi/~jkorpela/dashes.html
+    # see https://www.cs.tut.fi/~jkorpela/chars/spaces.html
+    u' ': u'\u00A0'   # NO-BREAK SPACE  foo bar As a space, but often not adjusted
+          u'\u2000'   # EN QUAD foo bar 1 en (= 1/2 em)
+          u'\u2001'   # EM QUAD foo bar 1 em (nominally, the height of the font)
+          u'\u2002'   # EN SPACE    foo bar 1 en (= 1/2 em)
+          u'\u2003'   # EM SPACE    foo bar 1 em
+          u'\u2007'   # FIGURE SPACE    foo bar “Tabular width”, the width of digits
+          u'\u2004'   # THREE-PER-EM SPACE  foo bar 1/3 em
+          u'\u2005'   # FOUR-PER-EM SPACE   foo bar 1/4 em
+          u'\u2006'   # SIX-PER-EM SPACE    foo bar 1/6 em
+          u'\u2008'   # PUNCTUATION SPACE   foo bar The width of a period “.”
+          u'\u2009'   # THIN SPACE  foo bar 1/5 em (or sometimes 1/6 em)
+          u'\u200A'   # HAIR SPACE  foo bar Narrower than THIN SPACE
+          u'\u205F'   # MEDIUM MATHEMATICAL SPACE   foo bar 4/18 em
+          u'\u3000',  # IDEOGRAPHIC SPACE   foo　bar The width of ideographic (CJK) characters.
+
+    u'': u'\u1680'   # OGHAM SPACE MARK    foo bar Unspecified; usually not really a space but a dash
+         u'\u180E'   # MONGOLIAN VOWEL SEPARATOR   foo᠎bar No width
+         u'\u200B'   # ZERO WIDTH SPACE    foo​bar Nominally no width, but may expand
+         u'\u202F'   # NARROW NO-BREAK SPACE   foo bar Narrower than NO-BREAK SPACE (or SPACE)
+         u'\uFEFF',  # ZERO WIDTH NO-BREAK SPACE   foo﻿bar No width (the character is invisible)
+
+    u'-': u'-‐‑–‒—―',  # see https://www.cs.tut.fi/~jkorpela/dashes.html
     u'_': u'_﹏',
     u'*': u'※⁕⁜*⁎∗·•◦‣⦿⦾⁃◘',
     u'!': u'!¡‼❕',

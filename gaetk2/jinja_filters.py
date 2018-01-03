@@ -50,6 +50,7 @@ fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 header hgroup
 hr li main nav noscript ol output p pre section table tfoot ul video""".split()
 NOTAGS = """dd dt thead tfoot tbody tr td""".split()
 
+
 @jinja2.contextfilter
 def onlystaff(ctx, value, tag=None):
     """Display content only if the current logged in user `is_staff()`.

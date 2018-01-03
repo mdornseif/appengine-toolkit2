@@ -42,8 +42,13 @@ class PaginateMixin(object):
 
             <nav>
               <ul class="pager">
-                <li class="previous {% if not prev_objects %}disabled{% endif %}"><a href="?{{ prev_qs }}"><span aria-hidden="true">&larr;</span> Zurück</a></li>
-                <li class="next {% if not more_objects %}disabled{% endif %}"><a href="?{{ next_qs }}">Vor <span aria-hidden="true">&rarr;</span></a></li>
+                <li class="previous {% if not prev_objects %}disabled{% endif %}">
+                  <a href="?{{ prev_qs }}"><span aria-hidden="true">&larr;</span> Zurück</a>
+                </li>
+
+                <li class="next {% if not more_objects %}disabled{% endif %}">
+                  <a href="?{{ next_qs }}">Vor <span aria-hidden="true">&rarr;</span></a>
+                </li>
               </ul>
             </nav>
 
