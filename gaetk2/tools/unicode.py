@@ -138,7 +138,8 @@ def de_noise(data):
     >>> de_noise(u'DE37  330 5 13 50 0 010  4414  22')
     u'DE37330513500010441422'
     """
-    data = unicodedata.normalize('NFC', data)
+    data = unicodedata.normalize('NFC', unicode(data))
+
     def noiserepl(matchobj):
         return REVERSEREPLACRS.get(matchobj.group(0), '_')
     data = REPLACE_RE.sub(noiserepl, data)
