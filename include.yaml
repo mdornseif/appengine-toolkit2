@@ -66,6 +66,8 @@ skip_files:
 - ^(.*/)?(CHANGES|LICENSE|AUTHORS)
 - ^(.*/)?.*\.py[co]
 - ^(.*/)?.*~
+- ^(.*/)?.*\.bak
+- ^(.*/)?.*\.so
 - ^(.*/)?\..*
 - ^(.*/)?\.[^c].*
 - ^(.*/)?app\.yaml
@@ -89,3 +91,5 @@ skip_files:
 - ^tmp/.*
 - ^venv/.*
 - js_*/.*
+- lib/.*/site-packages
+- lib/site-packages/.*\.dist-info

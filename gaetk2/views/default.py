@@ -6,8 +6,6 @@ gaetk2/views/default.py - handlers implementing common views for gaetk2.
 Created by Maximillian Dornseif on 2011-01-09.
 Copyright (c) 2011, 2015, 2017 HUDORA. MIT licensed.
 """
-import datetime
-
 import google.appengine.api.app_identity
 import google.appengine.api.memcache
 
@@ -54,12 +52,14 @@ class WarmupHandler(DefaultHandler):
 
     def warmup(self):
         """Common warmup functionality. Loads big/slow Modules."""
+        import datetime.datetime
         import tools.http
         import jinja2
-        # _strptime importieren. defend against
+        import gaetk2.admin
+        import gaetk2.moduleexporter
         # http://groups.google.com/group/google-appengine-python/browse_thread/thread/efbcffa181c32f33
         datetime.datetime.strptime('2000-01-01', '%Y-%m-%d').date()
-        return repr([tools.http, jinja2])
+        return repr([tools.http, jinja2, gaetk2.admin, gaetk2.moduleexporter])
 
     def get(self):
         """Handle warm up requests."""
