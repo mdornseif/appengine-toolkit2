@@ -23,6 +23,7 @@ from .. import jinja_filters
 from .._gaesessions import get_current_session
 from ..tools import hujson2
 from ..tools.config import config as gaetkconfig
+from ..tools.config import get_version
 from ..tools.config import is_production
 
 
@@ -38,11 +39,65 @@ _jinja_env_cache = None
 class BasicHandler(webapp2.RequestHandler):
     """Generic Handler functionality.
 
-    provides
+    You usually overwrite :meth:`get()` or :meth:`post()` and call
+    :meth:`render()` in there. See :ref:`gaetk2.handlers` for examples.
 
-    * `self.session` which is based on https://github.com/dound/gae-sessions.
-    * `abs_url()` ensures URLs are absolute
-    * `is_production()` checks if running in development mode
+    For Returning Data to the user you can access the `self.response` object
+    or use :meth:`return_text` and :meth:`render`. See :meth:`_create_jinja2env`
+    to understand the jinja2 context being used.
+
+    Helper functions are :meth:`abs_url()` and :meth:`is_production`.
+
+    See Also:
+        :meth:`is_sysadmin`, :meth:`is_staff` and :meth:`has_permission`
+        are meant to work with
+        :class:`~gaetk2.handlers.authentication.AuthenticationReaderMixin`
+
+    Attributes:
+        credential: authenticated user, see :class:`~gaetk2.handlers.authentication.AuthenticationReaderMixin`
+        session: current session which is based on https://github.com/dound/gae-sessions.
+        default_cachingtime (None or int): Class Variable. Which cache headers to generate,
+            see :meth:`_set_cache_headers`.
+        debug_hooks (boolean): Class Variable. If set to ``True`` the order in which
+            hooks are called is logged.
+
+    Note:
+        gaetk2 adds various variables to the template context. Other mixins provide
+        additional template variables. See the Index :ref:`genindex` under "Template Context"
+        to get an overview.
+
+        These :index:`Template Variables <Template Context>` are provided:
+
+        * :index:`request <Template Context; request>`
+        * :index:`credential <Template Context; credential>`
+        * :index:`gaetk_production <Template Context; gaetk_production>`
+        * :index:`gaetk_app_name <Template Context; gaetk_app_name>`
+        * :index:`gaeth_version <Template Context; gaeth_version>`
+        * :index:`gaetk_logout_url <Template Context; gaetk_logout_url>`
+
+    Warning:
+        :class:`BasicHandler` implements a rathe unusual way to implement
+        Multi-Inherance/Mix-Ins. Instead of insisting that every parent class
+        and everty Mix-In implements all possible methods and calls super on them
+        :class:`BasicHandler` uses a custom dispatch mechanism which calls all
+        methods in all parent and sibling classes.
+
+        The following functions are called on all parent and sibling classes:
+
+        * meth:`pre_authentication_hook`.
+        * meth:`authentication_preflight_hook`.
+        * meth:`authentication_hook`.
+        * meth:`authorisation_hook`.
+        * meth:`method_preperation_hook`.
+
+        :meth:`build_context` is special because the output is "chained".
+        So the rendering is done with something like the output of
+        ``Child.build_context(Parent.build_context(MixIn.build_context({})))``
+
+    :meth:`response_overwrite` and :meth:`finished_overwrite` can be overwritten
+    to provide special functionality like in :class:`JsonBasicHandler`.
+
+    You are encouraged to study the source code of :class:`BasicHandler`!
     """
 
     default_cachingtime = None
@@ -51,20 +106,42 @@ class BasicHandler(webapp2.RequestHandler):
     def __init__(self, *args, **kwargs):
         """Initialize RequestHandler."""
         self.credential = None
-        self.session = {}   # session is only available later in `dispatch()`.
+        self.session = {}
         # Careful! `webapp2.RequestHandler` does not call super()!
         super(BasicHandler, self).__init__(*args, **kwargs)
 
     # helper methods
 
     def abs_url(self, url):
-        """Converts an relative into an absolute URL."""
+        """Converts an relative into an qualified absolute URL.
+
+        Args:
+            url (str): an path to a web resource.
+
+        Returns:
+            str: A fully qualified url.
+
+        Example:
+                >>> BasicHandler().abs_url('/foo')
+                'http://server.example.com/foo'
+        """
         if self.request:
             return urlparse.urljoin(self.request.uri, url)
         return urlparse.urljoin(os.environ.get('HTTP_ORIGIN', ''), url)
 
     def is_sysadmin(self):
-        """Returns if the currently logged in user is SysOp/SystemAdministrator."""
+        """Checks if the current user is logged in as a SysOp/SystemAdministrator.
+
+        We use various souces to deterine the Status of the user.
+        Returns `True` if:
+
+        * google.appengine.api.users.is_current_user_admin()
+        * the request came from `127.0.0.1` local address
+        * `self.credential.sysadmin == True`
+
+        Returns:
+            boolean: the status of the currently logged in user.
+        """
         # Google App Engine Administrators
         if users.is_current_user_admin():
             return True
@@ -82,7 +159,14 @@ class BasicHandler(webapp2.RequestHandler):
         """Returns if the current user is considered internal.
 
         This means he has access to not only his own but to all
-        settings pages, etc."""
+        settings pages, etc.
+
+        * :meth:`is_sysadmin`
+        * `self.credential.staff == True`
+
+        Returns:
+            boolean: the status of the currently logged in user is considered internal.
+        """
         if self.is_sysadmin():
             return True
         elif self.credential is None:
@@ -90,17 +174,26 @@ class BasicHandler(webapp2.RequestHandler):
         return getattr(self.credential, 'staff', False)
 
     def has_permission(self, permission):
-        """
-        Checks if user has a given permission.
-
-        Returns False, if no user is logged in.
-        """
+        """Checks if user has a given permission."""
         if self.credential:
             return permission in self.credential.permissions
         return False
 
     def render(self, values, template_name):
-        """Render a Jinja2 Template and write it to the client."""
+        """Render a Jinja2 Template and write it to the client.
+
+        If rendering takes an unusual long time this is logged.
+
+        Parameters:
+            values (dict): variables for template context.
+            template_name (str): name of the template to render.
+
+        See also:
+            :meth:`add_jinja2env_globals()` and :meth:`build_context()`
+            both also provide data to the template context and are often
+            extended by plugins. See :class:`BasicHandler` docsting for
+            standard template variables.
+        """
         start = time.time()
         self._render_to_client(values, template_name)
         delta = time.time() - start
@@ -108,7 +201,14 @@ class BasicHandler(webapp2.RequestHandler):
             logging.warn("rendering took %d ms", (delta * 1000.0))
 
     def return_text(self, text, status=200, content_type='text/plain', encoding='utf-8'):
-        """Quick and dirty sending of some plaintext to the client."""
+        """Quick and dirty sending of some plaintext to the client.
+
+        Parameters:
+            text (str or unicode): Data to be sent to the cliend. A ``\\n`` is appended.
+            status (int): status code to be sent to the client. Defaults to 200.
+            content_type: to be sent to the client in respective header.
+            encoding: to be used when sending to the client.
+        """
         self.response.set_status(status)
         self.response.headers['Content-Type'] = content_type
         if isinstance(text, unicode):
@@ -131,8 +231,9 @@ class BasicHandler(webapp2.RequestHandler):
         ret = dict(
             request=self.request,
             credential=self.credential,
-            is_sysadmin=self.is_sysadmin,
             gaetk_production=is_production(),
+            gaeth_version=get_version(),
+            gaetk_app_name=gaetkconfig.APP_NAME,
             gaetk_logout_url='/gaetk2/auth/logout',
         )
         ret.update(values)
@@ -142,7 +243,8 @@ class BasicHandler(webapp2.RequestHandler):
         """To be everwritten by subclasses.
 
         This should be considered one time initialisation.
-        Eg:
+
+        Example::
             env.globals['bottommenuurl'] = '/admin/'
             env.globals['bottommenuaddon'] = '<i class="fa fa-area-chart"></i> Admin'
             env.globals['profiler_includes'] = gae_mini_profiler.templatetags.profiler_includes
@@ -151,20 +253,42 @@ class BasicHandler(webapp2.RequestHandler):
         return env
 
     # For MixIns:
-    # def pre_authentication_hook(self, method_name, *args, **kwargs):
-    #     return
 
-    # def authentication_hook(self, method_name, *args, **kwargs):
-    #     return
+    def pre_authentication_hook(self, method_name, *args, **kwargs):
+        """Might do redirects before even authentication data is loaded.
 
-    # def authorisation_hook(self, method_name, *args, **kwargs):
-    #     return
+        Called on all parent and sibling classes.
+        """
+        return
 
-    # def method_preperation_hook(self, method_name, *args, **kwargs):
-    #     """Called just before GEP, POST, PUT, DELETE etc. is called.
+    def authentication_preflight_hook(self, method_name, *args, **kwargs):
+        """Might load Authentication data from Headers.
 
-    #     To be overwritten. E.g. to set up variables, load Date etc."""
-    #     return
+        Called on all parent and sibling classes.
+        """
+        return
+
+    def authentication_hook(self, method_name, *args, **kwargs):
+        """Might verify Authentication data.
+
+        Called on all parent and sibling classes.
+        """
+        return
+
+    def authorisation_hook(self, method_name, *args, **kwargs):
+        """Might check if authenticated user is authorized.
+
+        Called on all parent and sibling classes.
+        """
+        return
+
+    def method_preperation_hook(self, method_name, *args, **kwargs):
+        """Is Called just before GEP, POST, PUT, DELETE etc. is called.
+
+        Used to provide common data in child classes.
+        E.g. to set up variables, load Date etc.
+        """
+        return
 
     def response_overwrite(self, response, method, *args, **kwargs):
         """Function to transform response. To be overwritten."""
@@ -180,14 +304,15 @@ class BasicHandler(webapp2.RequestHandler):
                 logging.error("Header names and values must be strings: {%r: %r} in %s(%r, %r) => %r",
                               name, val, method, args, kwargs, response)
 
-    # internal stuff
-
-    def _clear_session(self):
+    def clear_session(self):
+        """Terminate the session reliably."""
         logging.info("clearing session")
         self.session['uid'] = None
         if self.session.is_active():
             self.session.terminate()
         self.session.regenerate_id()
+
+    # internal stuff
 
     def _create_jinja2env(self):
         """Initialise and return a jinja2 Environment instance."""
@@ -204,7 +329,6 @@ class BasicHandler(webapp2.RequestHandler):
                 autoescape=jinja2.select_autoescape(['html', 'xml']),
             )
             jinja_filters.register_custom_filters(env)
-            # TODO: MRO
             self.add_jinja2env_globals(env)
             _jinja_env_cache = env
 
@@ -213,8 +337,7 @@ class BasicHandler(webapp2.RequestHandler):
     def _render_to_client(self, values, template_name):
         """Sends the rendered content of a Jinja2 Template to Output.
 
-        Per default the template is provided with contents of `default_template_vars()` plus everything
-        which is given in `values`.
+        Per default the template is provided with output of ``build_context(values)``.
         """
         env = self._create_jinja2env()
         try:
@@ -231,7 +354,7 @@ class BasicHandler(webapp2.RequestHandler):
 
         # to collect template variables from all Parent-Classes and MisIns.
         # this keeps parents from having all to implement the function and
-        #  use `super()`
+        # use `super()`
         values = self._reduce_all_inherited('build_context', values)
         try:
             template.stream(values).dump(self.response.out)
@@ -253,10 +376,11 @@ class BasicHandler(webapp2.RequestHandler):
     def _set_cache_headers(self, caching_time=None):
         """Set Cache Headers.
 
-        The parameter `caching_time` describes the number of seconds,
-        the result should be cachet at frontend caches.
-        None means no Caching-Headers. Se also `default_cachingtime`
-        0 or negative Values generate an comand to disable all caching.
+        Parameters:
+            caching_time (None or int): the number of seconds, the result should
+                be  cachetd at frontend caches. ``None`` means no Caching-Headers.
+                See also :any:`default_cachingtime`. `0` or negative Values generate
+                an comand to disable all caching.
         """
         ct = self.default_cachingtime
         if caching_time is not None:
@@ -319,7 +443,9 @@ class BasicHandler(webapp2.RequestHandler):
         return ret
 
     def dispatch(self):
-        """Dispatches the requested method."""
+        """Dispatches the requested method fom the WSGI App.
+
+        Meant for internal use by the stack."""
         request = self.request
         method_name = request.route.handler_method
         if not method_name:

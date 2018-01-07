@@ -6,9 +6,10 @@ Subpackages
 
 .. toctree::
 
+    gaetk2.handlers.rst
+    gaetk2.jinja_filters
     gaetk2.forms
     gaetk2.helpers
-    gaetk2.jinja_filters
     gaetk2.tools.unicode
     gaetk2.taskqueue
 

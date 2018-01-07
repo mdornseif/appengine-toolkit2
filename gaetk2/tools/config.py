@@ -4,12 +4,13 @@
 gaetk2/tools/config.py - Configuration via appengine_config.py.
 
 Created by Maximillian Dornseif on 2017-05-25.
-Copyright (c) 2017 HUDORA. MIT licensed.
+Copyright (c) 2017, 2018 HUDORA. MIT licensed.
 """
-
 import os
+import time
 
 from google.appengine.api import lib_config
+from google.appengine.api.app_identity import get_application_id
 
 
 config = lib_config.register(
@@ -31,6 +32,7 @@ config = lib_config.register(
         BACKUP_FILESYSTEM='gs',
         BACKUP_QUEUE='default',
         BACKUP_BLACKLIST=[],
+        APP_NAME='{}'.format(get_application_id).capitalize()
     )
 )
 
@@ -47,7 +49,7 @@ def get_version():
         version = open("version.txt").readline().strip()
     except IOError:
         # if there is no version.txt file we return something fom the environment.
-        version = os.environ.get('CURRENT_VERSION_ID', '?')
+        version = '{}-{}'.format(os.environ.get('CURRENT_VERSION_ID', 'dev'), time.time())
     return version
 
 
