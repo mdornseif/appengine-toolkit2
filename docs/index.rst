@@ -17,15 +17,17 @@ Features
 * Common conventions for ndb/datastore usage in :mod:`gaetk2.datastore`.
 * Day-do-daty functionality in :mod:`gaetk2.tools` Most noteworty:
 
+  * :mod:`gaetk2.tools.caching` provides cache decorators.
   * :mod:`gaetk2.tools.unicode` encode integers in base32, get rid of 😎 etc in strings.
-
 
 
 .. toctree::
    :maxdepth: 3
    :caption: Contents:
 
+   frontend.rst
    source/gaetk2.rst
+
 
 Indices and tables
 ==================

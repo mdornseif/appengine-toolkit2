@@ -33,7 +33,7 @@ class MessagesMixin(object):
         self.session['_gaetk_messages'] = messages
 
     def build_context(self, uservalues):
-        u"""Default variablen für Breadcrumbs etc."""
+        u"""Add Messages to context."""
         myvalues = dict(_gaetk_messages=self.session.get('_gaetk_messages', []))
         myvalues.update(uservalues)
         self._expire_messages()

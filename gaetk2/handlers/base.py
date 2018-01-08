@@ -358,7 +358,7 @@ class BasicHandler(webapp2.RequestHandler):
         values = self._reduce_all_inherited('build_context', values)
         try:
             template.stream(values).dump(self.response.out)
-        except jinja2.TemplateNotFound:
+        except jinja2.TemplateNotFound:  # can happen for includes etc.
             # better error reporting
             # TODO: https://docs.sentry.io/clientdev/interfaces/template/
             logging.info('jinja2 environment: %s', vars(env))

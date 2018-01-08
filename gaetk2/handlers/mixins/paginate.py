@@ -1,26 +1,25 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-gaetk2/handlers/mixins.py - misc functionality to be added to gaetk handlers.
+gaetk2.handlers.mixins.paginate - Paginate NDB Queries.
 
 Created by Maximillian Dornseif on 2010-10-03.
-Copyright (c) 2010-2017 HUDORA. MIT licensed.
+Copyright (c) 2010-2018 HUDORA. MIT licensed.
 """
 
 import urllib
 
 from google.appengine.datastore.datastore_query import Cursor
-from google.appengine.ext import db
 from google.appengine.ext import ndb
 
 
 class PaginateMixin(object):
-    """Show data in a paginated fashion."""
+    """Show data in a paginated fashion.
 
-    def paginate(self, query, defaultcount=25, datanodename='objects', calctotal=False, formatter=None):
-        """Add NDB-based pagination to Views.
+    Call :meth:`paginate` in your Request-Method handler.
 
-        Set up template environment by calling ``self.paginate()``. Eg::
+    Example:
+        Build a view function like this::
 
             from ..handlers import AuthenticatedHandler
             from ..handlers.mixins import PaginateMixin
@@ -31,8 +30,7 @@ class PaginateMixin(object):
                     template_values = self.paginate(query)
                     self.render(template_values, 'template.html')
 
-
-        Your ``template.html`` should then look like this::
+        Your ``template.html`` could look like this::
 
             <ul>
               {% for obj in object_list %}
@@ -40,52 +38,34 @@ class PaginateMixin(object):
               {% endfor %}
             </ul>
 
-            <nav>
-              <ul class="pager">
-                <li class="previous {% if not prev_objects %}disabled{% endif %}">
-                  <a href="?{{ prev_qs }}"><span aria-hidden="true">&larr;</span> Zurück</a>
-                </li>
+            {{ paginator }}
 
-                <li class="next {% if not more_objects %}disabled{% endif %}">
-                  <a href="?{{ next_qs }}">Vor <span aria-hidden="true">&rarr;</span></a>
-                </li>
-              </ul>
-            </nav>
+        The ``{{ paginator }}`` expression renders a Bootstrap 4 Paginator object.
+        If you dont want that you can add your own links::
+
+            {% if prev_objects %}
+              <a href="?{{ prev_qs }}">&larr; Prev</a>
+            {% endif %}
+            {% if more_objects %}
+              <a href="?{{ next_qs }}">Next &rarr;</a>
+            {% endif %}
 
 
-        PaginateMixin the additional query parameters ``start``, ``cursor``,
-        ``cursor_start`` to note what is currently displayed. ``limit`` can be used
-        to overwrite ``defaultcount``.
+    """
+
+    def paginate(self, query, defaultcount=25, datanodename='objects', calctotal=False, formatter=None):
+        """Add NDB-based pagination to Views.
+
+        Provides a template environment by calling ``self.paginate()``.
 
         Parameters:
-            * query
-            * defaultcount=25
-            * datanodename='objects'
-            * calctotal
-            * formatter
+            query: a ndb query object
+            defaultcount (int): how many items to display per page
+            datanodename (string): name of template variable to hold the entties
+            calctotal (boolean): do you want to provide the total number of entities
+            formatter: function to transform entities for output.
 
-        Template Variables:
-
-        * more_objects
-        * prev_objects
-        * prev_start
-        * next_start
-        * limit
-        * next_qs
-        * prev_qs
-        * total
-        * objects
-
-        Somewhat obsoleted by `listviewer`.
-
-        See http://mdornseif.github.com/2010/10/02/appengine-paginierung.html
-
-        Returns something like
-            {more_objects=True, prev_objects=True,
-             prev_start=10, next_start=30,
-             objects: [...], cursor='ABCDQWERY'}
-
-        `formatter` is called for each object and can transfor it into something suitable.
+        `formatter` is called for each object and can transform it into something suitable.
         If no `formatter` is given and objects have a `as_dict()` method, this is used
         for formating.
 
@@ -97,17 +77,43 @@ class PaginateMixin(object):
         `defaultcount` is the default number of results returned. It can be overwritten with the
         HTTP-parameter `limit`.
 
+        We handle the additional query parameters ``start``, ``cursor``,
+        ``cursor_start`` from the HTTP-Request to note what is currently displayed.
+        ``limit`` can be used to overwrite ``defaultcount``.
+
         The `start` HTTP-parameter can skip records at the beginning of the result set.
 
         If the `cursor` HTTP-parameter is given we assume this is a cursor returned from an earlier query.
-        See http://blog.notdot.net/2010/02/New-features-in-1-3-1-prerelease-Cursors and
-        http://code.google.com/appengine/docs/python/datastore/queryclass.html#Query_cursor for
-        further Information.
+
+        Returns:
+            A dict like this to be used in the template::
+
+                {more_objects=True, prev_objects=True,
+                 prev_start=10, next_start=30, limit=10, total=None,
+                 objects=[...], cursor='ABCDQWERY',
+                 prev_qs='?start=10', next_qs='?start=30&cursor=ABCDQWERY',
+                 paginator='<html ...>'
+                }
+
+        `paginator` is generated by rendering `gaetk_fragments/PaginateMixin.paginator.html`
+        with the other return values. You can overwrite the output by
+        providing your own `gaetk_fragments/PaginateMixin.paginator.html`
+        in your search path.
+
+        See Also:
+            http://mdornseif.github.com/2010/10/02/appengine-paginierung.html
+
+            http://blog.notdot.net/2010/02/New-features-in-1-3-1-prerelease-Cursors
+
+            http://code.google.com/appengine/docs/python/datastore/queryclass.html#Query_cursor
+
+        Note:
+            Somewhat obsoleted by `listviewer`.
         """
         if calctotal:
-            # We count up to maximum of 10000. Counting is a somewhat expensive operation on AppEngine
-            # doing thhis asyncrounously would be smart
-            total = query.count(10000)  # has to happen before `_paginate_query()`
+            # We count up to maximum of 10000. Counting is a somewhat expensive
+            # operation on AppEngine doing thhis asyncrounously would be smart
+            total = query.count(10000)  # has to happen before `_paginate_query()`!
 
         clean_qs = dict([(k, self.request.get(k)) for k in self.request.arguments()
                          if k not in ['start', 'cursor', 'cursor_start']])
@@ -139,6 +145,7 @@ class PaginateMixin(object):
             ret[datanodename] = []
             for obj in objects:
                 ret[datanodename].append(obj)
+        ret['paginator'] = self.get_paginator_template(ret)
         return ret
 
     def _paginate_query(self, query, defaultcount):
@@ -166,34 +173,22 @@ class PaginateMixin(object):
                    limit=limit)
         return objects, cursor, start, ret
 
+    def get_paginator_template(self, values):
+        env = self._create_jinja2env()
+        template = env.get_template('gaetk_fragments/PaginateMixin.paginator.html')
+        values = self._reduce_all_inherited('build_context', values)
+        return template.render(values)
+
 
 def _xdb_fetch_page(query, limit, offset=None, start_cursor=None):
-    """Pagination-ready fetching a some entities in a cross plattform way (db and ndb)."""
-    if isinstance(query, ndb.Query):
-        if start_cursor:
-            if isinstance(start_cursor, basestring):
-                start_cursor = Cursor(urlsafe=start_cursor)
-            objects, cursor, more_objects = query.fetch_page(limit, start_cursor=start_cursor)
-        else:
-            objects, cursor, more_objects = query.fetch_page(limit, offset=offset)
-    elif isinstance(query, db.Query) or isinstance(query, db.GqlQuery):
-        if start_cursor:
-            if isinstance(start_cursor, Cursor):
-                start_cursor = start_cursor.urlsafe()
-            query.with_cursor(start_cursor)
-            objects = query.fetch(limit)
-            cursor = Cursor(urlsafe=query.cursor())
-            more_objects = len(objects) == limit
-        else:
-            objects = query.fetch(limit, offset=offset)
-            # MultiQuery kann keine Cursor
-            if len(getattr(query, '_Query__query_sets', [])) < 2:
-                _cursor = query.cursor()
-                more_objects = query.with_cursor(_cursor).count(1) > 0
-                cursor = Cursor(urlsafe=_cursor)
-            else:
-                more_objects = len(objects) == limit
-                cursor = None
+    """Pagination-ready fetching a some entities.
+
+    Returns:
+        (objects, cursor, more_objects)
+    """
+    if start_cursor:
+        if isinstance(start_cursor, basestring):
+            start_cursor = Cursor(urlsafe=start_cursor)
+        return query.fetch_page(limit, start_cursor=start_cursor)
     else:
-        raise RuntimeError('unknown query class: %s' % type(query))
-    return objects, cursor, more_objects
+        return query.fetch_page(limit, offset=offset)

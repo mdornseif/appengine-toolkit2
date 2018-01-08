@@ -36,6 +36,8 @@ config = lib_config.register(
     )
 )
 
+# add our own template directory
+config.TEMPLATE_DIRS.append(os.path.join(os.path.dirname(__file__), '../..', 'templates'))
 
 def get_version():
     """Get GIT-Version.

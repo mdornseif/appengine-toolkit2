@@ -11,6 +11,7 @@ Subpackages
     gaetk2.forms
     gaetk2.helpers
     gaetk2.tools.unicode
+    gaetk2.tools.caching
     gaetk2.taskqueue
 
 Submodules
