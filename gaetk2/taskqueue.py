@@ -60,6 +60,9 @@ def taskqueue_add_multi_payload(name, url, payloadlist, **kwargs):
         taskqueue.Queue(name=name).add(tasks)
     logging.debug(u'%d tasks queued to %s', len(payloadlist), url)
 
+# See also https://github.com/freshplanet/AppEngine-Deferred
+# and https://medium.com/the-infinite-machine/problems-with-deferred-bad13cac3216
+# and https://pypi.python.org/pypi/appenginetaskutils
 
 def defer(obj, *args, **kwargs):
     """Defers a callable for execution later.

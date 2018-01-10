@@ -1,0 +1,21 @@
+<nav aria-label="Page navigation">
+  <ul class="pagination justify-content-center">
+    <li class="page-item {% if not prev_objects %} disabled{% endif %}">
+      <a class="page-link" href="?{{ prev_qs|e }}" aria-label="Previous">
+        <span aria-hidden="true">&laquo;</span>
+        <span class="sr-only">previous</span>
+      </a>
+    </li>
+{#
+    <li class="page-item"><a class="page-link" href="#">1</a></li>
+    <li class="page-item"><a class="page-link" href="#">2</a></li>
+    <li class="page-item"><a class="page-link" href="#">3</a></li>
+#}
+     <li class="page-item {% if not more_objects %} disabled{% endif %}">
+      <a class="page-link" href="?{{ next_qs|e }}" aria-label="Next">
+        <span aria-hidden="true">&raquo;</span>
+        <span class="sr-only">next</span>
+      </a>
+    </li>
+  </ul>
+</nav>

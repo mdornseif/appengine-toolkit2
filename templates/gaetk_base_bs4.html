@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>{{ title }}</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <style>
+html {
+  position: relative;
+  min-height: 100%;
+}
+#bs4container {
+  padding: 65px 15px 0;
+}
+body {
+  /* Margin bottom by footer height */
+  /* margin-bottom: 60px; */
+}
+    </style>
+  </head>
+
+  <body>
+    <div class="gaetk_page">{% block page %}
+    <header class="gaetk_header">{% block header %}
+      <!-- Fixed navbar -->
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top">
+        <a class="navbar-brand" href="/mk/"><i class="fa fa-cubes"></i> <span class="d-none d-sm-inline">Express Marketplace</span></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item active d-none d-xl-block">
+              <a class="nav-link" href="/mk">Marketplace</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
+                Produkte
+              </a>
+              <div class="dropdown-menu">
+                <a class="dropdown-item" href="/angebote.html"><i class="fa fa-cube"></i> <mark>Angebote</mark></a>
+                <a class="dropdown-item" href="/topseller.html"><i class="fa fa-cube"></i> HUDORA Topseller</a>
+                <a class="dropdown-item" href="/neuheiten.html"><i class="fa fa-cube"></i> Neu verfügbar am HUDORA Lager</a>
+                <a class="dropdown-item" href="/sitemap.html#bereiche"><i class="fa fa-cube"></i> HUDORA Produktbereiche</a>
+                <a class="dropdown-item" href="/sitemap.html#kategorien"><i class="fa fa-cube"></i> HUDORA Katalogkategorien</a>
+                <a class="dropdown-item" href="/sitemap.html#warenklassen"><i class="fa fa-cube"></i> HUDORA Warenklassifikationen</a>
+                <a class="dropdown-item" href="/k/{{ kundennr }}/artikel"><i class="fa fa-cube"></i> Ihre bisherigen Express Artikel</a>
+                <a class="dropdown-item" href="/masterdata/"><i class="fa fa-cube"></i> HUDORA Produktstammdaten</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="/mk/p"><i class="fa fa-cubes"></i> Marketplace Produkte</a>
+              </div>
+            </li>
+
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
+                Marken
+              </a>
+              <div class="dropdown-menu">
+                <a class="dropdown-item" href="/sitemap.html#bereiche"><i class="fa fa-cube"></i> HUDORA Express Sortiment</a>
+                {% for brand in brands %}
+                <a class="dropdown-item" href="/mk/b/{{ brand|urlencode }}/p"><i class="fa fa-cubes"></i> {{ brand|e }}</a>
+                {% endfor %}
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="/mk/s"><i class="fa fa-cubes"></i> Bezugsquellen</a>
+              </div>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">
+                {% if kundennr %}{{ kundennr }}{% else %}Konto{% endif %}
+              </a>
+              <div class="dropdown-menu">
+                <a class="dropdown-item" href="/mk/k/{{ kundennr }}/auftraege"><i class="fa fa-cubes"></i> Ihre Marketplace Aufträge</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="/k/{{ kundennr }}/auftraege"><i class="fa fa-cube"></i> Ihre Express Aufträge</a>
+                <a class="dropdown-item" href="/k/{{ kundennr }}/artikel"><i class="fa fa-cube"></i> Ihre Express Artikel</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="#">Einstellungen</a>
+                <a class="dropdown-item" href="/gaetk/auth/logout">Abmelden</a>
+              </div>
+            </li>
+            <li class="nav-item d-none d-lg-block">
+              <a class="nav-link" href="/angebote.html">zu <i class="fa fa-cube"></i> Express</a>
+            </li>
+          </ul>
+
+          <form class="form-inline mt-2 mt-md-0" action="/mk/suche/">
+            <input class="form-control mr-sm-2" style="width: 6em;" type="text" placeholder="Suchen" aria-label="Suchen">
+          </form>
+          <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="badge badge-pill badge-primary" id="cartlink4">
+                  <i class="fa fa-shopping-cart carticon"></i>
+                  <span class="cartcount">0</span>
+                </a>
+              </li>
+          </ul>
+        </div>
+      </nav>
+    {% endblock header %}</header>
+
+    <!-- Begin page content -->
+    <div id="bs4container" class="container-fluid gaetk_content">{% block content %}
+      <header class="row">
+        {% block title %}<div class="col"><h1>{{ title }}</h1></div>{% endblock title %}
+      </header>
+      <div class="row">
+        <main role="main" class="col">{% block maincontent -%}
+          {% if content is defined -%}
+            {{ content }}
+          {%- else -%}
+            <!-- Main maincontent -->
+          {%- endif %}
+        {%- endblock maincontent %}</main>
+
+        <aside class="col-lg-auto">{% block secondarycontent %}
+        {% endblock secondarycontent %}</aside>
+      </div>
+    {% endblock content %}</div>
+    {% endblock page %}</div>
+
+    <footer class="footer">
+      {% block footer -%}<div class="container"></div>{%- endblock footer %}
+    </footer>
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4" crossorigin="anonymous"></script>
+  </body>
+</html>

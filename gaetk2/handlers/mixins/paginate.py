@@ -6,11 +6,11 @@ gaetk2.handlers.mixins.paginate - Paginate NDB Queries.
 Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2010-2018 HUDORA. MIT licensed.
 """
-
 import urllib
 
+import jinja2
+
 from google.appengine.datastore.datastore_query import Cursor
-from google.appengine.ext import ndb
 
 
 class PaginateMixin(object):
@@ -38,9 +38,9 @@ class PaginateMixin(object):
               {% endfor %}
             </ul>
 
-            {{ paginator }}
+            {{ paginator4 }}
 
-        The ``{{ paginator }}`` expression renders a Bootstrap 4 Paginator object.
+        The ``{{ paginator4 }}`` expression renders a Bootstrap 4 Paginator object.
         If you dont want that you can add your own links::
 
             {% if prev_objects %}
@@ -145,7 +145,7 @@ class PaginateMixin(object):
             ret[datanodename] = []
             for obj in objects:
                 ret[datanodename].append(obj)
-        ret['paginator'] = self.get_paginator_template(ret)
+        ret['paginator4'] = jinja2.Markup(self.get_paginator_template(ret))
         return ret
 
     def _paginate_query(self, query, defaultcount):
