@@ -146,6 +146,28 @@ def de_noise(data):
     return data
 
 
+# from http://code.activestate.com/recipes/577257/
+_SLUGIFY_STRIP_RE = re.compile(r'[^\w\s-]')
+_SLUGIFY_HYPHENATE_RE = re.compile(r'[-\s]+')
+
+
+def slugify(value):
+    """Converts a string to be usable in URLs without excaping.
+
+    Normalizes string, converts to lowercase, removes non-alpha characters,
+    and converts spaces to hyphens.
+
+    Inspired by Django's "django/template/defaultfilters.py".
+    """
+    if value is None:
+        return ''
+
+    value = de_noise(de_umlaut(value))
+    value = unicodedata.normalize('NFKD', unicode(value)).encode('ascii', 'ignore')
+    value = unicode(_SLUGIFY_STRIP_RE.sub('', value).strip().lower())
+    return _SLUGIFY_HYPHENATE_RE.sub('-', value)
+
+
 # from http://stackoverflow.com/questions/561486
 ALPHABET = string.digits + string.ascii_uppercase + string.ascii_lowercase
 ALPHABET_REVERSE = dict((c, i) for (i, c) in enumerate(ALPHABET))
