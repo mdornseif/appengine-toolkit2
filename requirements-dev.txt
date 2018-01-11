@@ -1,0 +1,6 @@
+Pillow
+flake8==2.6.2
+pylint
+nose
+NoseGAE
+prospector

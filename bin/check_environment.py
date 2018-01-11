@@ -6,6 +6,7 @@ Check if the stuff needed to develop with appengine toolkit is available.
 Created by Maximillian Dornseif on 2018-01-11.
 Copyright (c) 2018 Cyberlogi. MIT licensed.
 """
+import collections
 import os
 import subprocess
 import sys
@@ -19,16 +20,17 @@ config = dict(
 # tools which have to be installed and how to install them
 # key is command to check
 # value should be installation on how to install
-tools = {
-    'pip --version': 'https://pip.pypa.io/en/stable/installing/',
-    'python --version': 'Irgendwas ist ganz fishy, weenn Python nicht gefunden wird',
-    'make --version': 'https://developer.apple.com/downloads/index.action',
-    'git --version': 'brew install git',
-    'npm bin': 'https://nodejs.org/en/',
-    'yarn --version': 'brew install yarn',
-    'brew --version': 'https://docs.brew.sh/Installation.html',
-    'gcloud --version': 'https://cloud.google.com/sdk/downloads',
-}
+tools = collections.OrderedDict([
+    ('python --version', 'Irgendwas ist ganz fishy, weenn Python nicht gefunden wird'),
+    ('pip --version', 'https://pip.pypa.io/en/stable/installing/'),
+    ('brew --version', 'https://docs.brew.sh/Installation.html'),
+    ('git --version', 'brew install git'),
+    ('make --version', 'https://developer.apple.com/downloads/index.action'),
+    ('npm bin', 'https://nodejs.org/en/'),
+    ('yarn --version', 'brew install yarn'),
+    ('grunt --version', 'https://gruntjs.com/installing-grunt'),
+    ('gcloud --version', 'https://cloud.google.com/sdk/downloads'),
+])
 
 for command, doc in tools.items():
     output = ''
@@ -69,3 +71,8 @@ for target, commands in targets.items():
                     print returncode, cmd
 
 
+# install required libraries
+requirements = os.path.abspath(os.path.join(__file__, '../../requirements-dev.txt'))
+cmd = 'pip --quiet install -r {}'.format(requirements)
+print "->", cmd
+subprocess.check_call(cmd, shell=True)
