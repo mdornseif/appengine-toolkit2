@@ -20,17 +20,17 @@ config = dict(
 taskrunners = collections.OrderedDict([
     ('package.json', 'yarn --global'),
     ('Gruntfile.js', 'grunt'),
-    ('js_src/package.json', '(cd js_src; yarn)'),
+    ('js_src/package.json', '(cd js_src; yarn build)'),
 ])
 
 
 def main():
-       """Main Entry Point."""
+    """Main Entry Point."""
     parser = optparse.OptionParser()
     parser.add_option('-p', '--production', default=False, action='store_true', help=u'build production version')
     options, args = parser.parse_args()
 
-    if optparse.production:
+    if options.production:
         os.environ['NODE_ENV'] = 'production'
         os.environ['GAETK_PRODUCTION'] = 1
 
