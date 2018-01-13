@@ -66,3 +66,5 @@ google.appengine.api.urlfetch.set_default_fetch_deadline(50)
 # requests_log = logging.getLogger("requests.packages.urllib3")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
+
+# TODO: add sentry: https://docs.sentry.io/clients/python/integrations/logging/

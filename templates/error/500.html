@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>500 - Internal Server Error</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//maxcdn.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet" integrity="sha384-4FeI0trTH/PCsLWrGCD1mScoFu9Jf2NdknFdFoJhXZFwsvzZ3Bo5sAh7+zL8Xgnd" crossorigin="anonymous">
+    <style type="text/css">
+      .center {text-align: center; margin-left: auto; margin-right: auto; margin-bottom: auto; margin-top: auto;}
+    </style>
+    <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js" integrity="sha384-vOWIrgFbxIPzY09VArRHMsxned7WiY6hzIPtAIIeTFuii9y3Cr6HE6fcHXy5CFhc" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+  <div class="row">
+    <div class="span12">
+      <div class="hero-unit center">
+          <h1>Internal Server Error <small><font face="Tahoma" color="red">Error 500</font></small></h1>
+          <br />
+          <p>Es ist ein interner Fehler in unserem Server aufgetreten.</p>
+
+          <p>Entweder haben Sie dem armen Gerät irgendetwas grausames zugemutet<br>
+            oder ein externer Dienst will nicht, wie er soll<br>
+            oder wir haben etwas durcheinander gebracht.</p>
+
+          <p>
+            <code>{{exception_text}}</code>
+          </p>
+
+          <a href="/" class="btn btn-large btn-info">
+            <i class="icon-home icon-white"></i> zurück zur Homepage</a>
+        </div>
+    </div>
+  </div>
+</div>
+  <script src="https://cdn.ravenjs.com/3.20.0/raven.min.js"></script>
+  <script>
+    // remove on static handler
+    if ( '{{sentry_public_dsn}}' ) {
+      Raven.showReportDialog({
+        eventId: '{{sentry_event_id}}',
+        // use the public DSN (dont include your secret!)
+        dsn: '{{sentry_public_dsn}}'
+      })
+    }
+  // add in static handler
+  /*
+    Raven.config(gaetk_sentry_dsn, {}).install()
+  */
+  </script>
+</body>
+</html>

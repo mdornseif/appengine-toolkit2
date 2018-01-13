@@ -32,12 +32,17 @@ config = lib_config.register(
         BACKUP_FILESYSTEM='gs',
         BACKUP_QUEUE='default',
         BACKUP_BLACKLIST=[],
-        APP_NAME='{}'.format(get_application_id).capitalize()
+        APP_NAME='{}'.format(get_application_id).capitalize(),
+        SECRET='*changeme"*',
+        SENTRY_DSN='',
+        SENTRY_PUBLIC_DSN='',
     )
 )
 
+
 # add our own template directory
 config.TEMPLATE_DIRS.append(os.path.join(os.path.dirname(__file__), '../..', 'templates'))
+
 
 def get_version():
     """Get GIT-Version.

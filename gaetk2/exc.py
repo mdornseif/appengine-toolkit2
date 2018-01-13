@@ -11,6 +11,7 @@ Copyright (c) 2017 HUDORA. MIT licnsed.
 
 from webob.exc import HTTPBadRequest as HTTP400_BadRequest
 from webob.exc import HTTPConflict as HTTP409_Conflict
+from webob.exc import HTTPException
 from webob.exc import HTTPForbidden as HTTP403_Forbidden
 from webob.exc import HTTPFound as HTTP302_Found
 from webob.exc import HTTPGone as HTTP410_Gone
@@ -28,6 +29,7 @@ from webob.exc import HTTPUnauthorized as HTTP401_Unauthorized
 from webob.exc import HTTPUnsupportedMediaType as HTTP415_UnsupportedMediaType
 
 __all__ = [
+    'HTTPException',
     'HTTP301_Moved',
     'HTTP302_Found',
     'HTTP303_SeeOther',

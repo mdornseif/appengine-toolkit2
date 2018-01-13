@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-handlers/base.py - default Request Handler for gaetk2.
+gaetk2.handlers.base - default Request Handler for gaetk2.
 
 Created by Maximillian Dornseif on 2010-10-03.
-Copyright (c) 2010-2017 HUDORA. All rights reserved.
+Copyright (c) 2010-2018 HUDORA. All rights reserved.
 """
 
 import exceptions
@@ -75,8 +75,10 @@ class BasicHandler(webapp2.RequestHandler):
         * :index:`gaeth_version <Template Context; gaeth_version>`
         * :index:`gaetk_logout_url <Template Context; gaetk_logout_url>`
 
+    .. _handler-hook-mechanism:
+
     Warning:
-        :class:`BasicHandler` implements a rathe unusual way to implement
+        :class:`BasicHandler` implements a rather unusual way to implement
         Multi-Inherance/Mix-Ins. Instead of insisting that every parent class
         and everty Mix-In implements all possible methods and calls super on them
         :class:`BasicHandler` uses a custom dispatch mechanism which calls all
@@ -231,9 +233,6 @@ class BasicHandler(webapp2.RequestHandler):
         ret = dict(
             request=self.request,
             credential=self.credential,
-            gaetk_production=is_production(),
-            gaeth_version=get_version(),
-            gaetk_app_name=gaetkconfig.APP_NAME,
             gaetk_logout_url='/gaetk2/auth/logout',
         )
         ret.update(values)
@@ -250,6 +249,12 @@ class BasicHandler(webapp2.RequestHandler):
             env.globals['profiler_includes'] = gae_mini_profiler.templatetags.profiler_includes
 
         """
+        env.globals.update(dict(
+            gaetk_production=is_production(),
+            gaetk_version=get_version(),
+            gaetk_app_name=gaetkconfig.APP_NAME,
+            gaetk_sentry_dsn=gaetkconfig.SENTRY_PUBLIC_DSN,
+        ))
         return env
 
     # For MixIns:
@@ -483,7 +488,7 @@ class BasicHandler(webapp2.RequestHandler):
             self._call_all_inherited('method_preperation_hook', method_name, *args, **kwargs)
             response = method(*args, **kwargs)
             response = self.response_overwrite(response, method, *args, **kwargs)
-        except Exception, e:
+        except BaseException, e:
             return self.handle_exception(e, self.app.debug)
         if response:
             assert isinstance(response, webapp2.Response)
@@ -491,6 +496,21 @@ class BasicHandler(webapp2.RequestHandler):
         self._set_cache_headers()
         self.finished_overwrite(response, method, *args, **kwargs)
         return response
+
+    def handle_exception(self, exception, debug):
+        """Called if this handler throws an exception during execution.
+
+        The default behavior is to re-raise the exception to be handled by
+        :meth:`WSGIApplication.handle_exception`.
+
+        Parameters:
+            exception: The exception that was thrown.
+            debug_mode: True if the web application is running in debug mode.
+
+        Returns:
+            response to be sent to the client.
+        """
+        raise
 
 
 class JsonBasicHandler(BasicHandler):

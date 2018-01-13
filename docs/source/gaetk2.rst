@@ -9,34 +9,20 @@ Subpackages
     gaetk2.handlers.rst
     gaetk2.jinja_filters
     gaetk2.forms
+    gaetk2.application
+    gaetk2.wsgi
     gaetk2.helpers
     gaetk2.tools.unicode
     gaetk2.tools.caching
     gaetk2.taskqueue
+    gaetk2.datastore
 
-Submodules
-----------
 
-gaetk2\.application module
---------------------------
-
-.. automodule:: gaetk2.application
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 gaetk2\.exc module
 ------------------
 
 .. automodule:: gaetk2.exc
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gaetk2\.helpers module
-----------------------
-
-.. automodule:: gaetk2.helpers
     :members:
     :undoc-members:
     :show-inheritance:

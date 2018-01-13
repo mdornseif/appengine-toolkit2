@@ -1,5 +1,5 @@
-gaetk2 - Frontend Guidelines
-============================
+Frontend Guidelines
+===================
 
 Frontends are assumed to be generated using Jinja2 and Bootstrap 4.
 All displayed content is based in ``templates/gaetk_base_bs4.html``

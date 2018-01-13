@@ -1,8 +1,7 @@
 GAETK2 - Google App Engine Toolkit 2
 ====================================
 
-`gaetk2` is a modern approach to developing Python Code on Google App Engine. It is a reimplementation of `appengine-toolkit <https://github.com/mdornseif>`_appengine-toolkit). `appengine-toolkit` was a transfer of the techniques we used before in Django to the Google App Engine Plattform. It was different time when it was developed - back then XML was still cool and REST was all the rage.
-`webapp2 <https://webapp2.readthedocs.io/>`_ had not been developed.
+`gaetk2` is a modern approach to developing Python Code on Google App Engine. It is a reimplementation of `appengine-toolkit <https://github.com/mdornseif/appengine-toolkit)`. `appengine-toolkit` was a transfer of the techniques we used before in Django to the early Google App Engine Plattform. It was different time when it was developed - back then XML was still cool and REST was all the rage and App Engine was nearly feature free. Even `webapp2 <https://webapp2.readthedocs.io/>`_ had not been developed.
 
 `gaetk2` is used in some big internal projects and tries to cover most of
 what an Web Application might need.
@@ -27,6 +26,7 @@ Features
    :caption: Contents:
 
    frontend.rst
+   errorhandling.rst
    source/gaetk2.rst
 
 

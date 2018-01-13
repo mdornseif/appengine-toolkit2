@@ -128,9 +128,13 @@ body {
     <footer class="footer">
       {% block footer -%}<div class="container"></div>{%- endblock footer %}
     </footer>
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
+{% if gaetk_production and gaetk_sentry_dsn %}
+    <script src="https://cdn.ravenjs.com/3.20.1/raven.min.js" crossorigin="anonymous"></script>
+    Raven.config(gaetk_sentry_dsn, {
+      release: '{{ gaetk_version }}',
+      ignoreUrls: [/http:\/\/dev-.*\.appspot\.com\/.*/]
+    }).install()
+{% endif %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4" crossorigin="anonymous"></script>
   </body>
