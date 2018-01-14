@@ -16,6 +16,7 @@ Subpackages
     gaetk2.tools.caching
     gaetk2.taskqueue
     gaetk2.datastore
+    gaetk2.resttestlib
 
 
 
