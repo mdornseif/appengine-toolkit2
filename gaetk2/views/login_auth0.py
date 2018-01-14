@@ -86,7 +86,7 @@ class Auth0OAuth2Callback(BasicHandler, AuthMixin):
         if self.request.get('state') != oauth_state:
             logging.error(
                 "wrong state: %r != %r", self.request.get('state'), oauth_state)
-            logging.debug("session: %s", vars(self.session))
+            logging.debug("session: %s", self.session)
             logging.debug("request: %s", self.request.GET)
             self.session.terminate()
             # Redirect to try new login

@@ -6,8 +6,6 @@ gaetk2.wsgi - WSGI Middlewares.
 Created by Maximillian Dornseif on 2018-01-11.
 Copyright (c) 2018 Maximillian Dornseif. MIT Licensed.
 """
-import logging
-
 try:
     # if mixing gaetk1 and gaetk2 we need to use the same module
     # to get the rifght thread local storage
@@ -35,7 +33,6 @@ def wrap_errorhandling(application):
 
 def wrap_session(application):
     """Put gaesession around the app."""
-    logging.debug('SessionMiddleware %r', gaetkconfig.SECRET)
     return gaesessions.SessionMiddleware(
         application,
         cookie_key=gaetkconfig.SECRET,
@@ -53,7 +50,6 @@ def webapp_add_wsgi_middleware(application):
     """
 
     application = wrap_session(application)
-    logging.debug('SessionMiddleware added %s', application)
     # if ist_entwicklungsversion():
     #     app = gae_mini_profiler.profiler.ProfilerWSGIMiddleware(app)
     if is_production():

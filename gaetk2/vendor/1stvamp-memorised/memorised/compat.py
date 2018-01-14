@@ -2,6 +2,9 @@
 Compatibility utilities for running Python 2 and 3 from the same codebase.
 """
 
+# pylint: skip-file
+# flake8: noqa
+
 import operator
 import sys
 

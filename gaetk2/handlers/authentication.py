@@ -56,10 +56,11 @@ class AuthenticationReaderMixin(object):
                 return self._login_user('HTTP')
             else:
                 logging.error(
-                    "failed HTTP-Login from %s/%s %s", uid, self.request.remote_addr,
-                    self.request.headers.get('Authorization'))
+                    "failed HTTP-Login from %s/%s %s %s %r %r", uid, self.request.remote_addr,
+                    self.request.headers.get('Authorization'),
+                    self.credential, self.credential.secret, secret.strip())
                 raise HTTP401_Unauthorized(
-                    "Invalid HTTP-Auth",
+                    "Invalid HTTP-Auth Infomation",
                     headers={'WWW-Authenticate': 'Basic realm="API Login"'})
 
         # 2. Check for valid Authentication via JWT
@@ -168,7 +169,6 @@ class AuthenticationReaderMixin(object):
 
     def get_credential(self, username):
         """Read a credential from the database or return None."""
-        logging.debug("get_credential()")
         cred = models.gaetk_Credential.get_by_id(username)
         if not cred:
             # legacy, update from gaetk1
@@ -188,13 +188,14 @@ class AuthenticationReaderMixin(object):
                     cred.meta['designator'] = cred1.source.id()
                     cred.org_designator = cred.meta['designator']
                 cred.put()
-        if cred.meta is None:
-            cred.meta = {}
-            cred.put()
-        if (not cred.staff) and cred.email:
-            if (cred.email.endswith('@hudora.de') or cred.email.endswith('@cyberlogi.de')):
-                cred.staff = True
+        if cred:
+            if cred.meta is None:
+                cred.meta = {}
                 cred.put()
+            if (not cred.staff) and cred.email:
+                if (cred.email.endswith('@hudora.de') or cred.email.endswith('@cyberlogi.de')):
+                    cred.staff = True
+                    cred.put()
         return cred
 
 

@@ -23,10 +23,10 @@ def taskqueue_add_multi(qname, url, paramlist, **kwargs):
 
     This helps to save API-Calls. Usage pattern::
 
-    tasks = []
-    for kdnnr in kunden.get_changed():
-        tasks.append(dict(kundennr=kdnnr))
-    taskqueue_add_multi('softmq', '/some/path', tasks)
+        tasks = []
+        for kdnnr in kunden.get_changed():
+            tasks.append(dict(kundennr=kdnnr))
+        taskqueue_add_multi('softmq', '/some/path', tasks)
     """
 
     tasks = []
@@ -59,6 +59,7 @@ def taskqueue_add_multi_payload(name, url, payloadlist, **kwargs):
     if tasks:
         taskqueue.Queue(name=name).add(tasks)
     logging.debug(u'%d tasks queued to %s', len(payloadlist), url)
+
 
 # See also https://github.com/freshplanet/AppEngine-Deferred
 # and https://medium.com/the-infinite-machine/problems-with-deferred-bad13cac3216

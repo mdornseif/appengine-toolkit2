@@ -1,5 +1,8 @@
 """memorised module - container for the memorise python-memcache decorator"""
 
+# pylint: skip-file
+# flake8: noqa
+
 import inspect
 import itertools
 import os

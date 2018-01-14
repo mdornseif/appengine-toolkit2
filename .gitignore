@@ -3,3 +3,4 @@ appengine-generated/
 *.pyc
 site-packages/
 docs/_build/
+lib/

@@ -46,12 +46,14 @@ class WSGIApplication(webapp2.WSGIApplication):
                     if request.method not in self.allowed_methods:
                         # 501 Not Implemented.
                         raise exc.HTTP501_NotImplemented()
-
                     rv = self.router.dispatch(request, response)
                     if rv is not None:
                         response = rv
                 # webapp2 conly catches `Exception` not `BaseException`
                 except BaseException as e:
+                    logging.debug(
+                        "Exception %r via %s %s %s", e, request.route,
+                        request.route_args, request.route_kwargs)
                     try:
                         # Try to handle it with a custom error handler.
                         rv = self.handle_exception(request, response, e)
@@ -103,10 +105,13 @@ class WSGIApplication(webapp2.WSGIApplication):
         if handler:
             return handler(request, response, e)
         else:
-            if code == 500:
+            if code >= 500:
                 # Our default handler
                 self.default_exception_handler(request, response, e)
-            # Alternatively: raise
+            else:
+                # This should be mostly `exc.HTTPException`s < 500
+                # which will be rendered directly to the client
+                raise
 
     def default_exception_handler(self, request, response, exception):
         status, level, fingerprint, tags = self.classify_exception(request, exception)
