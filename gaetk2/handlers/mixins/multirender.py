@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-gaetk2/handlers/mixins.py - misc functionality to be added to gaetk handlers.
+gaetk2.handlers.mixins.multirender - render youtput in different formats
 
 Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2010-2017 HUDORA. MIT licensed.
 """
-
+import cStringIO
 import functools
 
 import huTools.hujson
@@ -14,9 +14,13 @@ import huTools.structured
 
 
 class MultirenderMixin(object):
-    """Multirender is meant to provide rendering for a variety of formats with minimal code.
+    """Provide rendering for a variety of formats with minimal code.
 
-    For the three major formats HTML, XML und JSON you can get away with virtually no code.
+    For the three major formats HTML, JSON, CSV and XML und you can get away
+    with virtually no code.
+
+    Still nowadays we discourage the habit of massaging a single view into
+    providing different formats of the same data.
     """
 
     def multirender(self, fmt, data, mappers=None, contenttypes=None, filename='download',
@@ -95,7 +99,9 @@ class MultirenderMixin(object):
             htmldata = data.copy()
             if html_addon:
                 htmldata.update(html_addon)
-            return self.rendered(htmldata, html_template)
+            buf = cStringIO.StringIO()
+            self._render_to_fd(htmldata, html_template, buf)
+            return buf.getvalue()
 
         mymappers = dict(
             xml=functools.partial(

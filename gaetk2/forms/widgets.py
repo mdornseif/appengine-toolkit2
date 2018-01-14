@@ -208,7 +208,7 @@ default_widgets = {
 
     # Input Types
     'DateField': DateInput(),
-    'TextField': TextInput(),
+    # 'TextField': TextInput(),
     'StringField': TextInput(),
     'PasswordField': PasswordInput(),
 

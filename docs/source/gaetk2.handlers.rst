@@ -37,3 +37,5 @@ gaetk2\.handlers package
     :members:
 .. automodule:: gaetk2.handlers.mixins.messages
     :members:
+.. automodule:: gaetk2.handlers.mixins.multirender
+    :members:

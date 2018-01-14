@@ -6,8 +6,7 @@ gaetk2.handlers.base - default Request Handler for gaetk2.
 Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2010-2018 HUDORA. All rights reserved.
 """
-
-import exceptions
+import inspect
 import logging
 import os
 import time
@@ -19,8 +18,14 @@ from google.appengine.api import users
 import jinja2
 import webapp2
 
+try:
+    # if mixing gaetk1 and gaetk2 we need to use the same module
+    # to get the rifght thread local storage
+    from gaetk import gaesessions
+except:
+    from gaetk2 import _gaesessions as gaesessions
+
 from .. import jinja_filters
-from .._gaesessions import get_current_session
 from ..tools import hujson2
 from ..tools.config import config as gaetkconfig
 from ..tools.config import get_version
@@ -197,7 +202,7 @@ class BasicHandler(webapp2.RequestHandler):
             standard template variables.
         """
         start = time.time()
-        self._render_to_client(values, template_name)
+        self._render_to_fd(values, template_name, self.response.out)
         delta = time.time() - start
         if delta > 500:
             logging.warn("rendering took %d ms", (delta * 1000.0))
@@ -257,6 +262,23 @@ class BasicHandler(webapp2.RequestHandler):
         ))
         return env
 
+    def debug(self, message, *args):
+        """Detailed logging for development.
+
+        This logging will only happen, if :class:`WSGIApplication` was
+        initialized with ``debug=True``. Is meant for local inspection
+        of the stack during development.
+        Messages are prefixed with the method name from where they are called.
+        """
+        if self.app.debug:
+            curframe = inspect.currentframe()
+            calframe = inspect.getouterframes(curframe, 2)
+            callfile = calframe[1][1].split('/')[-1]
+            callfunc = calframe[1][3]
+            message = "{} {}(): {}".format(callfile, callfunc, message)
+            logging.debug(message, *args)
+            # filename, lineno, function, code_context, index).
+
     # For MixIns:
 
     def pre_authentication_hook(self, method_name, *args, **kwargs):
@@ -313,7 +335,7 @@ class BasicHandler(webapp2.RequestHandler):
         """Terminate the session reliably."""
         logging.info("clearing session")
         self.session['uid'] = None
-        if self.session.is_active():
+        if self.session and self.session.is_active():
             self.session.terminate()
         self.session.regenerate_id()
 
@@ -339,7 +361,7 @@ class BasicHandler(webapp2.RequestHandler):
 
         return _jinja_env_cache
 
-    def _render_to_client(self, values, template_name):
+    def _render_to_fd(self, values, template_name, fd):
         """Sends the rendered content of a Jinja2 Template to Output.
 
         Per default the template is provided with output of ``build_context(values)``.
@@ -361,8 +383,10 @@ class BasicHandler(webapp2.RequestHandler):
         # this keeps parents from having all to implement the function and
         # use `super()`
         values = self._reduce_all_inherited('build_context', values)
+        values['gaetk_localcontext'] = values
         try:
-            template.stream(values).dump(self.response.out)
+            template.stream(values).dump(fd, encoding='utf-8')
+            # we do not want to rely on webob.Response magically transforming unicode
         except jinja2.TemplateNotFound:  # can happen for includes etc.
             # better error reporting
             # TODO: https://docs.sentry.io/clientdev/interfaces/template/
@@ -457,28 +481,31 @@ class BasicHandler(webapp2.RequestHandler):
             method_name = webapp2._normalize_handler_method(request.method)
 
         method = getattr(self, method_name, None)
+        if not is_production():
+            if hasattr(self, '__class__'):
+                logging.debug(
+                    "%s %s(%s, %s)",
+                    method_name, self.__class__.__name__,
+                    ', '.join(request.route_args), request.route_kwargs)
+            else:
+                logging.debug("%s %s", method, self)
+
         if method is None:
             # 405 Method Not Allowed.
             valid = ', '.join(webapp2._get_handler_methods(self))
             self.abort(405, headers=[('Allow', valid)])
 
         # The handler only receives *args if no named variables are set.
-        # TODO: Warum?
         args, kwargs = request.route_args, request.route_kwargs
         if kwargs:
             args = ()
 
         # bind session on dispatch (not in __init__)
-        try:
-            self.session = get_current_session()
-        except (exceptions.AttributeError, AttributeError):
-            # session handling not activated
-            self.session = {}
-            logging.info('Session handling not activated')
+        self.session = gaesessions.get_current_session()
 
         # get_current_session() sometimes returns strange results
         if self.session is None:
-            self.session = {}
+            self.session = object()
 
         try:
             self._call_all_inherited('pre_authentication_hook', method_name, *args, **kwargs)
