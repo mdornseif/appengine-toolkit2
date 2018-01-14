@@ -1,7 +1,7 @@
 .. _error-handling:
 
-Error Handling
-==============
+Error Handling Guide
+====================
 
 **td;dr:** See `Installing Error Handling`_ how to just get started.
 
@@ -252,3 +252,9 @@ And don't forget to add ``GAETK2_SENTRY_DSN`` to ``appengine_config.py``!
     * Describe how to add front end logging via Sentry to Low Level Error Handling
     * gaetk2.wsgi Documentation
     * Manual Logging
+
+.. note::
+
+* in gaetk2 the ``debug`` Parameter to :class:`WSGIApplication` is not used
+for enabling reporting of trackbacks to the client. Instead it is used for
+configuring :meth:`~gaetk2.handlers.base.BasicHandler.debug()`
