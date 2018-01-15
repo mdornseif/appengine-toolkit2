@@ -32,7 +32,7 @@ config = lib_config.register(
         BACKUP_FILESYSTEM='gs',
         BACKUP_QUEUE='default',
         BACKUP_BLACKLIST=[],
-        APP_NAME='{}'.format(get_application_id).capitalize(),
+        APP_NAME='{}'.format(get_application_id()).capitalize(),
         SECRET='*changeme"*',
         SENTRY_DSN='',
         SENTRY_PUBLIC_DSN='',
@@ -61,10 +61,23 @@ def get_version():
 
 
 def is_production():
-    """checks if we can assume to run on a development machine"""
-    if os.environ.get('SERVER_NAME', '').startswith('dev-'):
+    """checks if we can assume to run on a production version machine"""
+    if is_development:
         return False
-    elif os.environ.get('SERVER_SOFTWARE', '').startswith('Development'):
+    elif os.environ.get('SERVER_NAME', '').startswith('production'):
+        return True
+    elif os.environ.get('SERVER_NAME', '').startswith('staging'):
+        return False
+    elif (os.environ.get('SERVER_NAME', '').startswith('v') and
+        os.environ.get('SERVER_NAME', '').endswith('appspot.com')):
         return False
     else:
         return True
+
+def is_development():
+    """Checks if we are running on a development system.
+
+    See :term:`development version` what this means."""
+    return (os.environ.get('SERVER_SOFTWARE', '').startswith('Development') or
+            os.environ.get('SERVER_NAME', '').startswith('dev-'))
+

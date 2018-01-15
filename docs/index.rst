@@ -26,11 +26,14 @@ Features
    :maxdepth: 3
    :caption: Contents:
 
-   frontend.rst
+   concepts.rst
    errorhandling.rst
+   frontend.rst
    howto.rst
    source/gaetk2.rst
 
+
+.. todolist::
 
 Indices and tables
 ==================

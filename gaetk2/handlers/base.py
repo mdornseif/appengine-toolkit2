@@ -29,6 +29,7 @@ from .. import jinja_filters
 from ..tools import hujson2
 from ..tools.config import config as gaetkconfig
 from ..tools.config import get_version
+from ..tools.config import is_development
 from ..tools.config import is_production
 
 
@@ -76,6 +77,7 @@ class BasicHandler(webapp2.RequestHandler):
         * :index:`request <Template Context; request>`
         * :index:`credential <Template Context; credential>`
         * :index:`gaetk_production <Template Context; gaetk_production>`
+        * :index:`gaetk_development <Template Context; gaetk_development>`
         * :index:`gaetk_app_name <Template Context; gaetk_app_name>`
         * :index:`gaeth_version <Template Context; gaeth_version>`
         * :index:`gaetk_logout_url <Template Context; gaetk_logout_url>`
@@ -97,7 +99,8 @@ class BasicHandler(webapp2.RequestHandler):
         * meth:`authorisation_hook`.
         * meth:`method_preperation_hook`.
 
-        :meth:`build_context` is special because the output is "chained".
+        :meth:`build_context` and `add_jinja2env_globals` are special
+        because the output is "chained".
         So the rendering is done with something like the output of
         ``Child.build_context(Parent.build_context(MixIn.build_context({})))``
 
@@ -244,9 +247,10 @@ class BasicHandler(webapp2.RequestHandler):
         return ret
 
     def add_jinja2env_globals(self, env):
-        """To be everwritten by subclasses.
+        """Helper to provide additional Globals to Jinja2 Environment.
 
         This should be considered one time initialisation.
+        Will be called on all Parents and MixIns, no `super()` needed.
 
         Example::
             env.globals['bottommenuurl'] = '/admin/'
@@ -256,6 +260,7 @@ class BasicHandler(webapp2.RequestHandler):
         """
         env.globals.update(dict(
             gaetk_production=is_production(),
+            gaetk_development=is_development(),
             gaetk_version=get_version(),
             gaetk_app_name=gaetkconfig.APP_NAME,
             gaetk_sentry_dsn=gaetkconfig.SENTRY_PUBLIC_DSN,
