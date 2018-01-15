@@ -361,7 +361,7 @@ class BasicHandler(webapp2.RequestHandler):
                 autoescape=jinja2.select_autoescape(['html', 'xml']),
             )
             jinja_filters.register_custom_filters(env)
-            self.add_jinja2env_globals(env)
+            env = self._reduce_all_inherited('add_jinja2env_globals', env)
             _jinja_env_cache = env
 
         return _jinja_env_cache
@@ -476,7 +476,7 @@ class BasicHandler(webapp2.RequestHandler):
                 else:
                     logging.warn("not clallable: %r", x)
                 if ret is None:
-                    raise RuntimeError("%r did not provide a return value", x)
+                    raise RuntimeError("%s.%s did not provide a return value", cls, funcname)
         return ret
 
     def dispatch(self):
