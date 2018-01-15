@@ -33,7 +33,8 @@ Features
    source/gaetk2.rst
 
 
-.. todolist::
+.. This makes readthedocs fail: todolist::
+
 
 Indices and tables
 ==================

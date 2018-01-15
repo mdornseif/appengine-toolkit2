@@ -1,7 +1,10 @@
+doit<0.30
 flake8==2.6.2
 futures
+glob2
 nose
 NoseGAE
 Pillow
 prospector
 pylint
+PyYAML

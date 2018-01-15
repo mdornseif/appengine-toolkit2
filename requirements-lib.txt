@@ -1,0 +1,14 @@
+auth0-python
+cryptography
+google-auth==1.1.1
+GoogleAppEngineCloudStorageClient==1.9.22.1
+GoogleAppEngineMapReduce==1.9.22.0
+markdown2
+python-jose
+requests
+requests_toolbelt
+urllib3
+webapp2==2.5.2
+webob==1.1.1
+wtforms-appengine
+wtforms==2.0.2
