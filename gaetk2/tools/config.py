@@ -10,8 +10,6 @@ import os
 import time
 
 from google.appengine.api import lib_config
-from google.appengine.api.app_identity import get_application_id
-
 
 config = lib_config.register(
     'GAETK2',
@@ -32,8 +30,8 @@ config = lib_config.register(
         BACKUP_FILESYSTEM='gs',
         BACKUP_QUEUE='default',
         BACKUP_BLACKLIST=[],
-        APP_NAME='{}'.format(get_application_id()).capitalize(),
         SECRET='*changeme"*',
+        APP_NAME='',
         SENTRY_DSN='',
         SENTRY_PUBLIC_DSN='',
     )
