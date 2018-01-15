@@ -388,7 +388,10 @@ class BasicHandler(webapp2.RequestHandler):
         # this keeps parents from having all to implement the function and
         # use `super()`
         values = self._reduce_all_inherited('build_context', values)
-        values['gaetk_localcontext'] = values
+        # for debugging provide access to all variables in gaetk_localcontext
+        if is_development():
+            values['gaetk_localcontext_json'] = hujson2.dumps(values)
+            values['gaetk_globalcontext_json'] = hujson2.dumps(env.globals)
         try:
             template.stream(values).dump(fd, encoding='utf-8')
             # we do not want to rely on webob.Response magically transforming unicode

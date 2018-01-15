@@ -65,6 +65,8 @@ def _unknown_handler(value):
     #    retdict = dict()
     #    value._get_value(retdict)
     #    return retdict
+    else:
+        return str(value)
     raise TypeError("%s(%s)" % (type(value), value))
 
 
