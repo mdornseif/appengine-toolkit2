@@ -21,10 +21,6 @@ import sys
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../site-packages'))
-# in practice normally we live below a project
-sys.path.insert(0, os.path.abspath('../../appengine-toolkit'))
-sys.path.insert(0, os.path.abspath('../../huTools-checkout'))
-sys.path.insert(0, os.path.abspath('../../google_appengine'))
 
 
 # -- General configuration ------------------------------------------------

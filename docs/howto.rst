@@ -47,4 +47,4 @@ to ``False``.
 
 .. todo::
 
-* How to implement nice error pages
+    * How to implement nice error pages
