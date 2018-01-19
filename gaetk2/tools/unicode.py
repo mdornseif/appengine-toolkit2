@@ -46,6 +46,7 @@ def de_umlaut(data):
     '1 Ueber Huegel sass Rene aeoeueAeOeUess'
     """
 
+    # maybe https://pypi.python.org/pypi/Unidecode is a nice addition?
     for to_char, from_chars in _recodings.items():
         for from_char in from_chars:
             try:

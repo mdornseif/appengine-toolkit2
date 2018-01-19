@@ -72,10 +72,10 @@ def is_production():
     else:
         return True
 
+
 def is_development():
     """Checks if we are running on a development system.
 
     See :term:`development version` what this means."""
     return (os.environ.get('SERVER_SOFTWARE', '').startswith('Development') or
             os.environ.get('SERVER_NAME', '').startswith('dev-'))
-

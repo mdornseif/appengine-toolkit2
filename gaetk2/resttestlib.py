@@ -115,7 +115,7 @@ class TestClient(object):
         self.authdict[auth] = creds
         self.sessions[auth] = requests.Session()
 
-    def GET(self, path, auth=None, accept=None, headers={}, **kwargs): # pylint: disable=N0802
+    def GET(self, path, auth=None, accept=None, headers={}, **kwargs):  # NOQA pylint: disable=N0802
         """Führt einen HTTP-GET auf den gegebenen [path] aus.
         Nutzt dabei ggf. die credentials zu [auth] und [accept]."""
         if isinstance(auth, list):

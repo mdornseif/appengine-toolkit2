@@ -1,6 +1,9 @@
 """Installer for memorised
 """
 
+# pylint: skip-file
+# flake8: noqa
+
 import os
 cwd = os.path.dirname(__file__)
 

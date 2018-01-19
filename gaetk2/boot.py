@@ -61,10 +61,24 @@ urllib3.disable_warnings()
 # incerase global HTTP-Timeout from 5 to 50 seconds
 google.appengine.api.urlfetch.set_default_fetch_deadline(50)
 
+
+# ensure we can see the funcname for convinience and the logger name for selective supression
+# see https://docs.python.org/2/library/logging.html#logrecord-attributes
+fr = logging.Formatter('%(funcName)s(): %(message)s [%(name)s]')
+logging.getLogger().handlers[0].setFormatter(fr)
+# make certain libraries log less
+logging.getLogger('raven').setLevel(logging.WARNING)
+
 # import httplib
 # httplib.HTTPConnection.debuglevel = 1
 # requests_log = logging.getLogger("requests.packages.urllib3")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
+# import logging
+# urllib3_logger = logging.getLogger('urllib3')
+# urllib3_logger.setLevel(logging.CRITICAL)
+# logging.getLogger('requests').setLevel(logging.CRITICAL)
+# Could also use the dictionary directly:
+# logging.Logger.manager.loggerDict['requests'].setLevel(logging.CRITICAL)
 
 # TODO: add sentry: https://docs.sentry.io/clients/python/integrations/logging/

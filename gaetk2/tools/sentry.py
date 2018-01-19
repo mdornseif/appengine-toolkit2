@@ -32,6 +32,12 @@ class _Dummy(object):
     def captureException(*args, **kwargs):  # noqa: N802
         return 'dummy-id'
 
+    def user_context(*args, **kwargs):  # noqa: N802
+        return
+
+    def tags_context(*args, **kwargs):  # noqa: N802
+        return
+
 
 if gaetkconfig.SENTRY_DSN:
     import raven
@@ -44,9 +50,24 @@ if gaetkconfig.SENTRY_DSN:
             gaetkconfig.SENTRY_DSN,
             # inform the client which parts of code are yours
             release=get_version(),
-            # exclude_paths=['cs.gaetk_common'],
             transport=HTTPTransport,
-            tags=dict(module=os.environ.get('CURRENT_MODULE_ID')),
+            tags={
+                'MODULE_ID': os.environ.get('CURRENT_MODULE_ID'),
+                'VERSION_ID': os.environ.get('CURRENT_VERSION_ID'),
+                'APPLICATION_ID': os.environ.get('APPLICATION_ID'),
+                'GAE_RUNTIME': os.environ.get('GAE_RUNTIME'),
+                'GAE_ENV': os.environ.get('GAE_ENV'),
+                },
+            exclude_paths=['cs', 'google'],
+            # environment = 'staging'
+            # https://docs.sentry.io/clientdev/interfaces/repos/
+            repos={
+                'lib/appengine-toolkit2': {
+                    # the name of the repository as registered in Sentry
+                    'name': 'mdornseif/appengine-toolkit2',
+                }
+            }
+            # ignore_exceptions = ['Http404', ValueError, ]
         )
         sentry_client.is_active = True
 
