@@ -44,6 +44,7 @@ class WSGIApplication(webapp2.WSGIApplication):
     @ndb.toplevel
     def __call__(self, environ, start_response):
         with self.request_context_class(self, environ) as (request, response):
+            self.setup_logging(request, response)
             try:
                 try:
                     if request.method not in self.allowed_methods:
@@ -113,7 +114,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         else:
             if code >= 500:
                 # Our default handler
-                self.default_exception_handler(request, response, e)
+                return self.default_exception_handler(request, response, e)
             else:
                 # This should be mostly `exc.HTTPException`s < 500
                 # which will be rendered directly to the client
@@ -130,6 +131,15 @@ class WSGIApplication(webapp2.WSGIApplication):
         if is_production():
             event_id = ''
             logger.info("pushing to sentry: %s", event_id)
+
+            if sentry_client:
+                event_id = sentry_client.captureException(
+                    level=level,
+                    extra=self.get_sentry_addon(request),
+                    fingerprint=fingerprint,
+                    tags=tags,
+                )
+
             # render error page for the client
             # we do not use jinja2 here to avoid an additional error source.
             with open(os.path.join(__file__, '..', 'templates/error/500.html')) as fileobj:
@@ -140,14 +150,6 @@ class WSGIApplication(webapp2.WSGIApplication):
                 template = template.replace(u"{{exception_text}}", jinja2.escape(u"%s" % exception))
                 response.clear()
                 response.out.body = template.encode('utf-8')
-
-            if sentry_client:
-                event_id = sentry_client.captureException(
-                    level=level,
-                    extra=self.get_sentry_addon(request),
-                    fingerprint=fingerprint,
-                    tags=tags,
-                )
         else:
             # On development servers display a nice traceback via `cgitb`.
             logger.info(u"not pushing to sentry, cgitb()")
@@ -180,20 +182,14 @@ class WSGIApplication(webapp2.WSGIApplication):
             # request.path(self): The path of the request, without host or query string
             # request.path_qs: The path of the request, without host but with query string
 
-            # copy environment variables of interest
+            # interesting environment variables - see https://david-buxton-test.appspot.com/env#:
             for attr in ('REQUEST_ID_HASH INSTANCE_ID REQUEST_LOG_ID HTTP_X_CLOUD_TRACE_CONTEXT '
-                         'USER_IS_ADMIN USER_ORGANIZATION USER_ID USER_EMAIL USER_NICKNAME SERVER_SOFTWARE'
-                         'AUTH_DOMAIN HTTP_REFERER APPENGINE_RUNTIME DATACENTER REQUEST_METHOD'
-                         'APPLICATION_ID CURRENT_MODULE_ID CURRENT_VERSION_ID PATH_TRANSLATED'
+                         'USER_IS_ADMIN USER_ORGANIZATION SERVER_SOFTWARE'
+                         'AUTH_DOMAIN HTTP_REFERER HTTP_USER_AGENT REQUEST_METHOD'
+                         'PATH_TRANSLATED DEFAULT_VERSION_HOSTNAME'
                          'HTTP_X_GOOGLE_APPS_METADATA SCRIPT_NAME PATH_INFO').split():
                 if attr in request.environ:
                     addon[attr] = request.environ.get(attr)
-
-            # further analysis needed:
-            # CURRENT_MODULE_ID
-            # 'DEFAULT_VERSION_HOSTNAME': 'xxx.appspot.com',
-            # 'HTTP_ACCEPT': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            # tags: {git_commit: 'c0deb10c4'}
 
             # Its not well documented how to structure the data for sentry
             # https://gist.github.com/cgallemore/4507616
@@ -205,11 +201,6 @@ class WSGIApplication(webapp2.WSGIApplication):
             #     login_time=current_session.get('login_time', ''),
             #     uid=current_session.get('uid', ''),
             # )
-
-            # if request.environ.get('USER_EMAIL'):
-            #     SENTRY_CLIENT.user_context({
-            #         'email': request.environ.get('USER_EMAIL')
-            #     })
 
             # try:
             #     if 'cart' in current_session:
@@ -299,3 +290,66 @@ class WSGIApplication(webapp2.WSGIApplication):
             tags['api'] = 'Dropbox'
 
         return status, level, fingerprint, tags
+
+    def setup_logging(self, request, response):
+        """Provide sentry early on with information from the context."""
+        sentry_client.user_context({
+            'ip_address': os.environ.get('REMOTE_ADDR'),
+            'email': os.environ.get('USER_EMAIL'),
+            'id': os.environ.get('USER_ID'),
+            'username': os.environ.get('USER_NICKNAME', os.environ.get('HTTP_X_APPENGINE_INBOUND_APPID')),
+            # USER_ORGANIZATION
+        })
+        # HTTP_X_APPENGINE_CRON   true
+
+        # http_context
+        # 'cookies': dict(request.COOKIES),
+        # 'data': data,
+        # 'data': {},
+        # 'env': dict(get_environ(environ)
+        # 'env': dict(get_environ(request.environ)),
+        # 'headers': dict(get_headers(environ)),
+        # 'headers': dict(get_headers(request.environ)),
+        # 'method': request.method,
+        # 'method': request.method,
+        # 'query_string': '...',
+        # 'query_string': urlparts.query,
+        # 'url': '%s://%s%s' % (urlparts.scheme, urlparts.netloc, urlparts.path),
+        # 'url': '...',
+
+        # extra_context
+        # server_name => INSTANCE_ID,
+        # server_name: the hostname of the server
+        # os.environ.get('SERVER_NAME', '')
+
+        # sentry_client.setTagsContext({
+        #     environment: "production"
+        # })
+        # some are set in sentry.py
+        tags = {
+            # environment: 'production'
+            # 'git_commit': 'c0deb10c4'
+        }
+        # DEFAULT_VERSION_HOSTNAME    david-buxton-test.appspot.com
+        # HTTP_X_CLOUD_TRACE_CONTEXT  301334dd3fca3fe29d8625c3a3a115f7/13580140575625565538;o=1
+        # REQUEST_ID_HASH 7DB846CB    <type 'str'>
+        # REQUEST_LOG_ID  5a5f0ce100ff0c90937db846cb0001737e6412d332d6733343630326234000100
+        varnames = 'CURRENT_NAMESPACE INBOUND_APPID QUEUENAME'
+        varnames += ' TASKEXECUTIONCOUNT TASKNAME TASKRETRYCOUNT TASKRETRYREASON'
+        for name in varnames.split():
+            fullname = 'HTTP_X_APPENGINE_' + name
+            if os.environ.get(fullname):
+                tags['APPENGINE_' + name] = os.environ.get(fullname)
+        sentry_client.tags_context(tags)
+
+        # extra={
+        # 'task_id': task_id,
+        # 'task': sender,
+        # 'args': args,
+        # 'kwargs': kwargs,
+        # 'app': app,
+        # },
+        # data['tags'].setdefault('site', settings.SITE_ID)
+        # data[:server_name] = @server_name if @server_name
+        # data[:release] = @release if @release
+        # data[:modules] = @modules if @modules

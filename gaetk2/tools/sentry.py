@@ -57,7 +57,7 @@ if gaetkconfig.SENTRY_DSN:
                 'APPLICATION_ID': os.environ.get('APPLICATION_ID'),
                 'GAE_RUNTIME': os.environ.get('GAE_RUNTIME'),
                 'GAE_ENV': os.environ.get('GAE_ENV'),
-                },
+            },
             exclude_paths=['cs', 'google'],
             # environment = 'staging'
             # https://docs.sentry.io/clientdev/interfaces/repos/
