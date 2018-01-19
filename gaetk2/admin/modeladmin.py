@@ -23,6 +23,7 @@ from .. import exc
 from .. import modelexporter
 # from gaetk.admin.models import DeletedObject
 import gaetk2.admin
+logger = logging.getLogger(__name__)
 
 
 class ModelAdmin(object):
@@ -337,7 +338,7 @@ class ModelAdmin(object):
             obj = self.get_object(object_id)
             if obj is None:
                 raise exc.HTTP404_NotFound(u'Keine Instanz zu ID %s gefunden.' % object_id)
-            logging.info(u'Delete %s', object_id)
+            logger.info(u'Delete %s', object_id)
             if issubclass(self.model, ndb.Model):
                 keys.append(ndb.Key(urlsafe=object_id))
             elif issubclass(self.model, db.Model):

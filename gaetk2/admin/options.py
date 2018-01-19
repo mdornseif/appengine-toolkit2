@@ -27,6 +27,9 @@ from gaetk.admin.models import DeletedObject
 from gaetk.compat import xdb_kind
 
 
+logger = logging.getLogger(__name__)
+
+
 class AdminSite(object):
     """Konzept zur Verwaltung (per Weboberfläche) adminsitrierbarer GAE Models."""
 
@@ -55,7 +58,7 @@ class AdminSite(object):
         #     validate = lambda model, adminclass: None
 
         if model_class in self._registry:
-            logging.warn(u'The model %s is already registered', xdb_kind(model_class))
+            logger.warn(u'The model %s is already registered', xdb_kind(model_class))
 
         # Instantiate the admin class to save in the registry
         self._registry[model_class] = admin_class(model_class, self)
@@ -364,7 +367,7 @@ class ModelAdmin(object):
             obj = self.get_object(object_id)
             if obj is None:
                 raise gaetk.handler.HTTP404_NotFound(u'Keine Instanz zu ID %s gefunden.' % object_id)
-            logging.info(u'Delete %s', object_id)
+            logger.info(u'Delete %s', object_id)
             if issubclass(self.model, ndb.Model):
                 keys.append(ndb.Key(urlsafe=object_id))
             elif issubclass(self.model, db.Model):

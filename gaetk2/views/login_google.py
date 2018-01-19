@@ -25,6 +25,9 @@ from ..tools.config import config
 from ..tools.ids import guid128
 
 
+logger = logging.getLogger(__name__)
+
+
 class LoginGoogleHandler(BasicHandler, AuthenticationReaderMixin):
     """Login via GoogleApps OpenID Connect.
 
@@ -62,19 +65,19 @@ class LoginGoogleHandler(BasicHandler, AuthenticationReaderMixin):
         # First try the host the current request came from
         callback_url = self.request.host_url + callbackpath
         if callback_url not in config.OAUTH_GOOGLE_CONFIG['redirect_uris']:
-            logging.critical("%s not valid", callback_url)
+            logger.critical("%s not valid", callback_url)
             # this did not work. Try to get the Servername from the
             # environment and enforce https
             callback_url = 'https://' + os.environ.get('SERVER_NAME') + callbackpath
             if callback_url not in config.OAUTH_GOOGLE_CONFIG['redirect_uris']:
-                logging.debug("%s no valid callback", callback_url)
+                logger.debug("%s no valid callback", callback_url)
                 # this did not work. Try to use the default version.
                 callback_url = 'https://' + os.environ.get('DEFAULT_VERSION_HOSTNAME') + callbackpath
                 if callback_url not in config.OAUTH_GOOGLE_CONFIG['redirect_uris']:
-                    logging.debug("%s no valid fallback callback", callback_url)
+                    logger.debug("%s no valid fallback callback", callback_url)
                     # this also did not work. Just use the first available callback URL.
                     callback_url = config.OAUTH_GOOGLE_CONFIG['redirect_uris'][0]
-            logging.info('using %s', callback_url)
+            logger.info('using %s', callback_url)
 
         self.session['oauth_redirect_uri'] = callback_url
         # Construct OAuth Request.
@@ -106,7 +109,7 @@ class LoginGoogleHandler(BasicHandler, AuthenticationReaderMixin):
         #    raise HTTP302_Found(location=continue_url)
 
         # redirect for google to get Authenticated
-        logging.info(
+        logger.info(
             'redirecting with state %r to %s via %s',
             self.session['oauth_state'], self.session['oauth_redirect_uri'], oauth_url)
         raise HTTP302_Found(location=oauth_url)
@@ -123,10 +126,10 @@ class GoogleOAuth2Callback(BasicHandler, AuthenticationReaderMixin):
         # 3. Confirm anti-forgery state token
         oauth_state = self.session.pop('oauth_state', None)
         if self.request.get('state') != oauth_state:
-            logging.error(
+            logger.error(
                 "wrong state: %r != %r", self.request.get('state'), oauth_state)
-            logging.debug("session: %s", self.session)
-            logging.debug("request: %s", self.request.GET)
+            logger.debug("session: %s", self.session)
+            logger.debug("request: %s", self.request.GET)
             self.session.terminate()
             # Redirect to try new login
             raise HTTP302_Found(location=continue_url)
@@ -149,14 +152,14 @@ class GoogleOAuth2Callback(BasicHandler, AuthenticationReaderMixin):
         # data = huTools.http.fetch_json2xx(url, method='POST', content=params)
         data = http.fetch_json(url, params, method='POST')
 
-        logging.info('token: %s', data)
+        logger.info('token: %s', data)
         input_jwt = data['id_token'].split('.')[1]
         input_jwt = unicodedata.normalize('NFKD', input_jwt).encode('ascii', 'ignore')
         # Append extra characters to make original string base 64 decodable.
         input_jwt += '=' * (4 - (len(input_jwt) % 4))
         jwt = base64.urlsafe_b64decode(input_jwt)
         jwt = json.loads(jwt)
-        logging.info("jwt = %r", jwt)
+        logger.info("jwt = %r", jwt)
         # email_verified True if the user's e-mail address has been verified
         # TODO: use jose for decoding JWT
         # jwt = {
@@ -178,10 +181,10 @@ class GoogleOAuth2Callback(BasicHandler, AuthenticationReaderMixin):
 
         # hd FEDERATED_IDENTITY FEDERATED_PROVIDER
         for name in 'USER_EMAIL USER_ID USER_IS_ADMIN USER_NICKNAME USER_ORGANIZATION'.split():
-            logging.info("%s: %r", name, os.environ.get(name))
+            logger.info("%s: %r", name, os.environ.get(name))
 
         self._login_user('OAuth2', jwt)
-        logging.info("logging in with final destination %s", continue_url)
+        logger.info("logging in with final destination %s", continue_url)
         raise HTTP302_Found(location=continue_url)
 
 

@@ -15,6 +15,9 @@ from gaetk2.tools.config import config as gaetk2config
 from google.appengine.api import memcache
 
 
+logger = logging.getLogger(__name__)
+
+
 def get_auth0_access_token():
     """Get a Token for the Management-API."""
     ret = memcache.get('get_auth0_access_token()')
@@ -65,11 +68,11 @@ def create_from_credential(credential):
         newuser = auth0api.users.create(payload)
     except Auth0Error as ex:
         if ex.status_code == 400 and ex.message == u'The user already exists.':
-            logging.info("The user already exists: %s %r %s", credential.uid, ex, payload)
+            logger.info("The user already exists: %s %r %s", credential.uid, ex, payload)
             try:
                 newuser = auth0api.users.get('auth0|{}'.format(credential.uid))
             except:
-                logging.warn('email collision? %s', credential.uid)
+                logger.warn('email collision? %s', credential.uid)
                 # propbably we have an E-Mail Address collision. This means
                 # several Credentials with the same E-Mail Adresses.
                 reply = auth0api.users.list(
@@ -77,32 +80,32 @@ def create_from_credential(credential):
                     q='email:"{}"'.format(credential.email),
                     search_engine='v2')
                 if reply['length'] > 0:
-                    logging.info('reply=%s', reply)
+                    logger.info('reply=%s', reply)
                     other_uid = reply['users'][0]['user_id']
                     newuser = auth0api.users.get(other_uid)
                     # doppelbelegung bei Auth0 notieren
                     if newuser.get('app_metadata'):
-                        logging.debug('app_metadata=%r', newuser['app_metadata'])
+                        logger.debug('app_metadata=%r', newuser['app_metadata'])
                         altd = newuser['app_metadata'].get('org_designator_alt', [])
                         altd = list(set(altd + [credential.org_designator]))
                         altu = newuser['app_metadata'].get('uid_alt', [])
                         altu = list(set(altu + [credential.uid]))
-                        logging.warn('updating duplicate Auth0 %s %s %s %s', altd, altu, other_uid, newuser)
+                        logger.warn('updating duplicate Auth0 %s %s %s %s', altd, altu, other_uid, newuser)
                         auth0api.users.update(
                             other_uid,
                             {'app_metadata': {'org_designator_alt': altd,
                                               'uid_alt': altu}})
         else:
-            logging.error('%r newuser = %s %s', 'auth0|{}'.format(credential.uid), newuser, ex)
+            logger.error('%r newuser = %s %s', 'auth0|{}'.format(credential.uid), newuser, ex)
             raise
     except:
-        logging.warn("payload = %s", payload)
+        logger.warn("payload = %s", payload)
         raise
     if newuser is None or (newuser.get('error')):
-        logging.warn("reply=%s payload = %s", newuser, payload)
+        logger.warn("reply=%s payload = %s", newuser, payload)
         raise RuntimeError("Auth0-Fehler: %s" % newuser)
 
-    logging.info("new auth0 user %s", newuser)
+    logger.info("new auth0 user %s", newuser)
     credential.meta['auth0_user_id'] = credential.external_uid = newuser['user_id']
     credential.put()
     return

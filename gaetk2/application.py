@@ -29,6 +29,9 @@ from webapp2 import Route
 
 __all__ = ['WSGIApplication', 'Route']
 
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
 
 # Das fängt leider kein runtime.DeadlineExceededError
 class WSGIApplication(webapp2.WSGIApplication):
@@ -51,7 +54,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                         response = rv
                 # webapp2 conly catches `Exception` not `BaseException`
                 except BaseException as e:
-                    logging.debug(
+                    logger.debug(
                         "Exception %r via %s %s %s", e, request.route,
                         request.route_args, request.route_kwargs)
                     try:
@@ -64,14 +67,16 @@ class WSGIApplication(webapp2.WSGIApplication):
                         response = e
                     except BaseException as e:
                         # Error wasn't handled so we have nothing else to do.
+                        logger.debug('internal_error(%s)', e)
                         response = self._internal_error(e)
 
                 try:
                     return response(environ, start_response)
                 except BaseException as e:
+                    logger.info('_internal_error')
                     return self._internal_error(e)(environ, start_response)
             except:
-                logging.critical("uncaught error")
+                logger.critical("uncaught error")
                 raise
 
     def handle_exception(self, request, response, e):
@@ -103,6 +108,7 @@ class WSGIApplication(webapp2.WSGIApplication):
 
         handler = self.error_handlers.get(code)
         if handler:
+            logger.debug('using %s', handler)
             return handler(request, response, e)
         else:
             if code >= 500:
@@ -111,18 +117,19 @@ class WSGIApplication(webapp2.WSGIApplication):
             else:
                 # This should be mostly `exc.HTTPException`s < 500
                 # which will be rendered directly to the client
+                logger.debug('re raising because of code %r', code)
                 raise
 
     def default_exception_handler(self, request, response, exception):
         status, level, fingerprint, tags = self.classify_exception(request, exception)
 
         # Make sure we have at least some decent infotation in the logfile
-        logging.exception(u'Exception caught for path %s: %s', request.path, exception)
+        logger.exception(u'Exception caught for path %s: %s', request.path, exception)
         response.set_status(status)
 
         if is_production():
             event_id = ''
-            logging.info("pushed to sentry: %s", event_id)
+            logger.info("pushing to sentry: %s", event_id)
             # render error page for the client
             # we do not use jinja2 here to avoid an additional error source.
             with open(os.path.join(__file__, '..', 'templates/error/500.html')) as fileobj:
@@ -143,7 +150,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                 )
         else:
             # On development servers display a nice traceback via `cgitb`.
-            logging.info(u"not pushing to sentry.")
+            logger.info(u"not pushing to sentry, cgitb()")
             response.clear()
             handler = cgitb.Hook(file=response.out).handle
             handler()
@@ -208,7 +215,7 @@ class WSGIApplication(webapp2.WSGIApplication):
             #     if 'cart' in current_session:
             #         addon['cart'] = vars(current_session['cart'])
             # except Exception:
-            #     logging.warn("error decoding cart from session")
+            #     logger.warn("error decoding cart from session")
 
             return addon
 

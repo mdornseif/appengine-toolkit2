@@ -32,7 +32,7 @@ from ..tools.config import get_version
 from ..tools.config import is_development
 from ..tools.config import is_production
 
-
+logger = logging.getLogger(__name__)
 _jinja_env_cache = None
 
 # Your app usually will extend a `BasicHandler` or `DefaultHandler`
@@ -208,7 +208,7 @@ class BasicHandler(webapp2.RequestHandler):
         self._render_to_fd(values, template_name, self.response.out)
         delta = time.time() - start
         if delta > 500:
-            logging.warn("rendering took %d ms", (delta * 1000.0))
+            logger.warn("rendering took %d ms", (delta * 1000.0))
 
     def return_text(self, text, status=200, content_type='text/plain', encoding='utf-8'):
         """Quick and dirty sending of some plaintext to the client.
@@ -281,7 +281,7 @@ class BasicHandler(webapp2.RequestHandler):
             callfile = calframe[1][1].split('/')[-1]
             callfunc = calframe[1][3]
             message = "{} {}(): {}".format(callfile, callfunc, message)
-            logging.debug(message, *args)
+            logger.debug(message, *args)
             # filename, lineno, function, code_context, index).
 
     # For MixIns:
@@ -333,12 +333,13 @@ class BasicHandler(webapp2.RequestHandler):
         # simple sample implementation: check compliance for headers/wsgiref
         for name, val in self.response.headers.items():
             if not (isinstance(name, basestring) and isinstance(val, basestring)):
-                logging.error("Header names and values must be strings: {%r: %r} in %s(%r, %r) => %r",
-                              name, val, method, args, kwargs, response)
+                logger.error(
+                    "Header names and values must be strings: {%r: %r} in %s(%r, %r) => %r",
+                    name, val, method, args, kwargs, response)
 
     def clear_session(self):
         """Terminate the session reliably."""
-        logging.info("clearing session")
+        logger.info("clearing session")
         self.session['uid'] = None
         if self.session and self.session.is_active():
             self.session.terminate()
@@ -379,9 +380,9 @@ class BasicHandler(webapp2.RequestHandler):
             raise jinja2.TemplateNotFound(template_name)
         except jinja2.TemplateAssertionError:
             # better logging
-            logging.debug("env=%r", env)
-            logging.debug("env.globals=%r", env.globals)
-            logging.debug("env.filters=%r", env.filters)
+            logger.debug("env=%r", env)
+            logger.debug("env.globals=%r", env.globals)
+            logger.debug("env.filters=%r", env.filters)
             raise
 
         # to collect template variables from all Parent-Classes and MisIns.
@@ -398,8 +399,8 @@ class BasicHandler(webapp2.RequestHandler):
         except jinja2.TemplateNotFound:  # can happen for includes etc.
             # better error reporting
             # TODO: https://docs.sentry.io/clientdev/interfaces/template/
-            logging.info('jinja2 environment: %s', vars(env))
-            logging.info('template dirs: %s', gaetkconfig.TEMPLATE_DIRS)
+            logger.info('jinja2 environment: %s', vars(env))
+            logger.info('template dirs: %s', gaetkconfig.TEMPLATE_DIRS)
             raise
 
         # TODO: warn about undeclared variables
@@ -447,10 +448,10 @@ class BasicHandler(webapp2.RequestHandler):
                     x = x.__get__(self)
                 if callable(x):
                     if self.debug_hooks:
-                        logging.debug("calling %s.%s(*%r, **%r)", cls, funcname, args, kwargs)
+                        logger.debug("calling %s.%s(*%r, **%r)", cls, funcname, args, kwargs)
                     x(*args, **kwargs)
                 else:
-                    logging.warn("not clallable: %r", x)
+                    logger.warn("not clallable: %r", x)
 
     def _reduce_all_inherited(self, funcname, initial):
         """In all SuperClasses call `funcname` with the output of the previus call."""
@@ -471,10 +472,10 @@ class BasicHandler(webapp2.RequestHandler):
                     x = x.__get__(self)
                 if callable(x):
                     if self.debug_hooks:
-                        logging.debug("reducing %s.%s(%r)", cls, funcname, ret)
+                        logger.debug("reducing %s.%s(%r)", cls, funcname, ret)
                     ret = x(ret)
                 else:
-                    logging.warn("not clallable: %r", x)
+                    logger.warn("not clallable: %r", x)
                 if ret is None:
                     raise RuntimeError("%s.%s did not provide a return value", cls, funcname)
         return ret
@@ -491,12 +492,12 @@ class BasicHandler(webapp2.RequestHandler):
         method = getattr(self, method_name, None)
         if not is_production():
             if hasattr(self, '__class__'):
-                logging.debug(
+                logger.debug(
                     "%s %s(%s, %s)",
                     method_name, self.__class__.__name__,
                     ', '.join(request.route_args), request.route_kwargs)
             else:
-                logging.debug("%s %s", method, self)
+                logger.debug("%s %s", method, self)
 
         if method is None:
             # 405 Method Not Allowed.

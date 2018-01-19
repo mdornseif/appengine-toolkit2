@@ -11,6 +11,7 @@ import logging
 
 from gaetk2.forms import widgets
 
+logger = logging.getLogger(__name__)
 widget_mapping = {
     # Multi Types
     'SelectMultipleField': widgets.Select(multiple=True),
@@ -33,12 +34,12 @@ widget_mapping = {
 
 def wtfbootstrap3(form):
     """changes a WTForms.Form Instance to use html5/bootstrap Widgets."""
-    logging.error('wtfbootstrap3 %s', form)
+    logger.error('wtfbootstrap3 %s', form)
     for field in form:
-        logging.error('wtfbootstrap3.filed %r', field)
+        logger.error('wtfbootstrap3.filed %r', field)
         if not hasattr(field.widget, '__webwidget__'):
             if field.type in widget_mapping:
                 field.widget = widget_mapping[field.type]
             else:
-                logging.critical('unstyled field %s' % field.type)
+                logger.critical('unstyled field %s' % field.type)
     return form

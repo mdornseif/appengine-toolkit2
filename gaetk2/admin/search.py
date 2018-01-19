@@ -16,6 +16,7 @@ from gaetk.admin import autodiscover
 from gaetk.admin.util import get_app_name
 
 
+logger = logging.getLogger(__name__)
 INDEX_NAME = 'gaetk-admin'
 
 
@@ -68,7 +69,7 @@ def perform_search(indexname, query_string, options=None):
             results.append(result)
         total = searchresult.number_found
     except search.Error:
-        logging.exception('Search for %r failed', query_string)
+        logger.exception('Search for %r failed', query_string)
 
     return results, cursor, total
 
@@ -99,7 +100,7 @@ def add_to_index(key):
     content = (value for value in data.itervalues() if isinstance(value, basestring))
 
     content = list(content)
-    logging.debug(u'content: %s', content)
+    logger.debug(u'content: %s', content)
 
     fields = [search.TextField(name='key', value=skey),
               search.TextField(name='key_name', value=unicode(key_name)),
@@ -114,7 +115,7 @@ def add_to_index(key):
     try:
         index.put(document)
     except search.Error:
-        logging.info(u'Fehler beim Hinzufügen von %s %s zum Suchindex', kind, skey)
+        logger.info(u'Fehler beim Hinzufügen von %s %s zum Suchindex', kind, skey)
 
 
 def remove_from_index(key):
@@ -124,4 +125,4 @@ def remove_from_index(key):
     try:
         index.delete(gaetk.compat.xdb_str_key(key))
     except search.Error:
-        logging.info(u'Fehler beim Löschen von %s %s aus Suchindex', key.kind(), key)
+        logger.info(u'Fehler beim Löschen von %s %s aus Suchindex', key.kind(), key)

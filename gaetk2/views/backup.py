@@ -21,6 +21,9 @@ from ..handlers import DefaultHandler
 from ..tools.config import config
 
 
+logger = logging.getLogger(__name__)
+
+
 class BackupHandler(DefaultHandler):
     """Handler to start scheduled backups."""
 
@@ -42,7 +45,7 @@ class BackupHandler(DefaultHandler):
             queue=config.BACKUP_QUEUE,
             kind=kinds,
         )
-        logging.info(u'backup to %r %r', bucketname, params)
+        logger.info(u'backup to %r %r', bucketname, params)
 
         taskqueue.add(
             url='/_ah/datastore_admin/backup.create',

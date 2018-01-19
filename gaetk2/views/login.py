@@ -32,6 +32,9 @@ from ..handlers.auth import gaetk_Credential
 from ..tools.config import config
 
 
+logger = logging.getLogger(__name__)
+
+
 class Debug(JsonHandler):
     """Handler for showing Authentication Data."""
 
@@ -84,7 +87,7 @@ class LogoutHandler(DefaultHandler):
 
     def get(self):
         """Logout user and terminate the current session."""
-        logging.info("forcing logout")
+        logger.info("forcing logout")
 
         # log out Google and either redirect to 'continue' or display
         # the default logout confirmation page
@@ -102,10 +105,10 @@ class LogoutHandler(DefaultHandler):
 
         user = users.get_current_user()
         if user:
-            logging.info("Google User %s", user)
+            logger.info("Google User %s", user)
             path = self.request.path
             logout_url = users.create_logout_url(path)
-            logging.info("logging out via %s", logout_url)
+            logger.info("logging out via %s", logout_url)
             self.redirect(logout_url)
         else:
             if continue_url:

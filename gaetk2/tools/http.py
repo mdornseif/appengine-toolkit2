@@ -13,6 +13,7 @@ import logging
 
 import requests
 
+logger = logging.getLogger(__name__)
 TIMEOUT = 30.0
 
 
@@ -20,8 +21,8 @@ def fetch_raw(url, content='', method='GET'):
     """Returns the raw `requests/response`."""
     response = requests.request(method, url, data=content, timeout=TIMEOUT)
     if response.status_code > 400:
-        logging.debug('requested %r, data=%r', url, content)
-        logging.warn('reply %s: %r', response.status_code, response.text)
+        logger.debug('requested %r, data=%r', url, content)
+        logger.warn('reply %s: %r', response.status_code, response.text)
     response.raise_for_status()
     return response
 

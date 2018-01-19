@@ -21,6 +21,9 @@ from ..tools.config import config as gaetk2config
 from ..tools.ids import guid128
 
 
+logger = logging.getLogger(__name__)
+
+
 class LoginAuth0Handler(BasicHandler, AuthenticationReaderMixin):
     """Login via Auth0 OpenID Connect.
 
@@ -65,7 +68,7 @@ class LoginAuth0Handler(BasicHandler, AuthenticationReaderMixin):
         oauth_url = 'https://' + gaetk2config.AUTH0_DOMAIN + '/authorize' + '?' + urllib.urlencode(params)
 
         # redirect for google to get Authenticated
-        logging.info(
+        logger.info(
             'redirecting with state %r to %s via %s',
             self.session['oauth_state'],
             self.session['oauth_redirect_uri'],
@@ -84,10 +87,10 @@ class Auth0OAuth2Callback(BasicHandler, AuthenticationReaderMixin):
         # 3. Confirm anti-forgery state token
         oauth_state = self.session.pop('oauth_state', None)
         if self.request.get('state') != oauth_state:
-            logging.error(
+            logger.error(
                 "wrong state: %r != %r", self.request.get('state'), oauth_state)
-            logging.debug("session: %s", self.session)
-            logging.debug("request: %s", self.request.GET)
+            logger.debug("session: %s", self.session)
+            logger.debug("request: %s", self.request.GET)
             self.session.terminate()
             # Redirect to try new login
             raise HTTP302_Found(location=continue_url)
@@ -97,7 +100,7 @@ class Auth0OAuth2Callback(BasicHandler, AuthenticationReaderMixin):
         auth0_users = auth0.v3.authentication.Users(gaetk2config.AUTH0_DOMAIN)
 
         if self.request.get('error'):
-            logging.error(
+            logger.error(
                 'auth0 Error: %s %s',
                 self.request.get('error'),
                 self.request.get('error_description'))
@@ -106,7 +109,7 @@ class Auth0OAuth2Callback(BasicHandler, AuthenticationReaderMixin):
                                              self.request.get('code'),
                                              self.request.url)
         user_info = json.loads(auth0_users.userinfo(token['access_token']))
-        logging.info('user_info: %r', user_info)
+        logger.info('user_info: %r', user_info)
 
         # u'sub': u'auth0|5a2694527afc143957e80671',
         # u'email_verified': False,
@@ -117,7 +120,7 @@ class Auth0OAuth2Callback(BasicHandler, AuthenticationReaderMixin):
         # { "admin": true,
         # "env": { "AUTH_DOMAIN": "auth.gaetk2.23.nu",
         self._login_user('OAuth2', jwtinfo=user_info)
-        logging.info("logging in with final destination %s", continue_url)
+        logger.info("logging in with final destination %s", continue_url)
         raise HTTP302_Found(location=continue_url)
 
 

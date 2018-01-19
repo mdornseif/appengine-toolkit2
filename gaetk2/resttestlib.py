@@ -24,6 +24,7 @@ import requests
 
 from requests.auth import HTTPBasicAuth
 
+logger = logging.getLogger(__name__)
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 FOREGROUND = 30
 RESET_SEQ = "\033[0m"
@@ -42,9 +43,9 @@ if False:
     # the only thing missing will be the response.body which is not logged.
     import httplib
     httplib.HTTPConnection.debuglevel = 1
-    logging.getLogger().setLevel(logging.DEBUG)
-    requests_log = logging.getLogger("requests.packages.urllib3")
-    requests_log.setLevel(logging.DEBUG)
+    logger.getLogger().setLevel(logger.DEBUG)
+    requests_log = logger.getLogger("requests.packages.urllib3")
+    requests_log.setLevel(logger.DEBUG)
     requests_log.propagate = True
 
 

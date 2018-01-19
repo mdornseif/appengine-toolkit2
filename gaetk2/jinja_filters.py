@@ -18,6 +18,9 @@ import markdown2
 from jinja2.utils import Markup
 
 
+logger = logging.getLogger(__name__)
+
+
 # Access Control
 
 @jinja2.contextfilter
@@ -38,7 +41,7 @@ def authorize(context, value, permission_types):
     else:
         value = u'…<!-- Berechtigung %s -->' % (', '.join(permission_types))
         if not context.get('credential'):
-            logging.info('context has no credential!')
+            logger.info('context has no credential!')
 
     if context.eval_ctx.autoescape:
         return Markup(value)
@@ -134,7 +137,7 @@ def onlystaff(ctx, value, tag=None):
             tag=tag, value=jinja2.escape(value))
     else:
         if not ctx.get('credential'):
-            logging.info('context has no credential!')
+            logger.info('context has no credential!')
         if not tag:
             return u''
         value = u'<{tag} class="gaetk_onlystaff-denied"><!-- !is_staff() --></{tag}>'.format(

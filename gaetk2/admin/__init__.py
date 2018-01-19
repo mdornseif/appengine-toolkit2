@@ -73,6 +73,7 @@ class _AdminSite(object):
                     model_class)
 
 
+logger = logging.getLogger(__name__)
 # The global AdminSite instance
 site = _AdminSite()
 
@@ -101,7 +102,7 @@ def autodiscover(appsdirs=None):
             try:
                 _import_module(module_name)
             except ImportError as error:
-                logging.critical(u'Error while importing %s: %s', module_name, error)
+                logger.critical(u'Error while importing %s: %s', module_name, error)
 
 
 def _import_module(name):

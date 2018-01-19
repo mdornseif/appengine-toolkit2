@@ -17,6 +17,8 @@ from google.appengine.ext import deferred
 
 from .tools.config import is_production
 
+logger = logging.getLogger(__name__)
+
 
 def taskqueue_add_multi(qname, url, paramlist, **kwargs):
     """Adds more than one Task to the same Taskqueue/URL.
@@ -58,7 +60,7 @@ def taskqueue_add_multi_payload(name, url, payloadlist, **kwargs):
             tasks = []
     if tasks:
         taskqueue.Queue(name=name).add(tasks)
-    logging.debug(u'%d tasks queued to %s', len(payloadlist), url)
+    logger.debug(u'%d tasks queued to %s', len(payloadlist), url)
 
 
 # See also https://github.com/freshplanet/AppEngine-Deferred
@@ -101,6 +103,6 @@ def defer(obj, *args, **kwargs):
     try:
         return deferred.defer(obj, *args, **kwargs)
     except taskqueue.TaskAlreadyExistsError:
-        logging.info('Task already exists')
+        logger.info('Task already exists')
     except taskqueue.TombstonedTaskError:
-        logging.info('Task did already run')
+        logger.info('Task did already run')
