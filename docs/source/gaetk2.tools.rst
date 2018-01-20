@@ -15,6 +15,7 @@ Thees package contains functionality mostly used intenally.
     * config.py
     * auth0tools.py
     * sentry.py
+    * structured.py
 
 
 gaetk2.tools.caching - smart caching
