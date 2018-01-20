@@ -12,12 +12,12 @@ Subpackages
     gaetk2.application
     gaetk2.wsgi
     gaetk2.helpers
-    gaetk2.tools.unicode
-    gaetk2.tools.caching
     gaetk2.taskqueue
     gaetk2.datastore
     gaetk2.resttestlib
-
+    gaetk2.modelexporter
+    gaetk2.admin
+    gaetk2.tools
 
 
 gaetk2\.exc module
