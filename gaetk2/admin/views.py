@@ -96,7 +96,7 @@ class AdminListHandler(_AbstractAdminHandler, PaginateMixin):
 class AdminExportXLSHandler(_AbstractAdminHandler):
     """Detailseite zu einer Entity"""
 
-    def get(self, kind, action_or_objectid):
+    def get(self, kind):
         """Handler, der die richtige Methode für die Aktion aufruft"""
 
         admin_class = check404(gaetk2.admin.site.get_admin_by_kind(kind))
@@ -106,7 +106,7 @@ class AdminExportXLSHandler(_AbstractAdminHandler):
 class AdminExportCSVHandler(_AbstractAdminHandler):
     """Detailseite zu einer Entity"""
 
-    def get(self, kind, action_or_objectid):
+    def get(self, kind):
         """Handler, der die richtige Methode für die Aktion aufruft"""
 
         admin_class = check404(gaetk2.admin.site.get_admin_by_kind(kind))
