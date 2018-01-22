@@ -4,19 +4,18 @@
 gaetk2.admin.views - administrationsinterface - inspieriert von Django.
 
 Created by Christian Klein on 2011-08-10.
-Copyright (c) 2011, 2013, 2014, 2015, 2017 HUDORA GmbH. MIT Licensed.
+Copyright (c) 2011, 2013-2015, 2017-2018 HUDORA GmbH. MIT Licensed.
 """
 import logging
 
 # import gaetk.handler
 # import gaetk.snippets
-import webapp2
-
-from webapp2 import Route
 
 from google.appengine.api import app_identity
 
 from gaetk2.admin import autodiscover
+from gaetk2.application import Route
+from gaetk2.application import WSGIApplication
 # from gaetk2.admin import search
 # from gaetk2.admin.models import DeletedObject
 import gaetk2.admin
@@ -25,6 +24,9 @@ from .. import exc
 from ..handlers import AuthenticatedHandler
 from ..handlers.mixins.paginate import PaginateMixin
 from gaetk2.helpers import check404
+
+
+logger = logging.getLogger(__name__)
 
 
 class _AbstractAdminHandler(AuthenticatedHandler):
@@ -52,12 +54,20 @@ class AdminIndexHandler(_AbstractAdminHandler):
         for kind in gaetk2.admin.site.kinds():
             modeladm = gaetk2.admin.site.get_admin_by_kind(kind)
             apps.setdefault(modeladm.topic, []).append(kind)
+
+        topics = {}
+        for topic in gaetk2.admin.site.topics():
+            topics.setdefault(topic, {})['layout'] = gaetk2.admin.site.get_layout_by_topic(topic)
+            topics.setdefault(topic, {})['modeladmins'] = gaetk2.admin.site.get_admin_by_topic(topic)
+
+        logger.debug('topics=%r', topics)
         self.render({
             'apps': apps,
+            'topics': topics,
             'default_version_hostname': app_identity.get_default_version_hostname(),
             'default_gcs_bucket_name': app_identity.get_default_gcs_bucket_name(),
             'application_id': app_identity.get_application_id(),
-            }, 'admin2/index.html')
+        }, 'admin2/index.html')
 
 
 class AdminListHandler(_AbstractAdminHandler, PaginateMixin):
@@ -77,11 +87,30 @@ class AdminListHandler(_AbstractAdminHandler, PaginateMixin):
             datanodename='object_list',
             calctotal=False)
         template_values.update(
+            qtype=self.request.get('qtype'),
             admin_class=admin_class,
-            app='bla',
-            model=kind,
             model_class=model_class)
         self.render(template_values, 'admin2/list.html')
+
+
+class AdminExportXLSHandler(_AbstractAdminHandler):
+    """Detailseite zu einer Entity"""
+
+    def get(self, kind, action_or_objectid):
+        """Handler, der die richtige Methode für die Aktion aufruft"""
+
+        admin_class = check404(gaetk2.admin.site.get_admin_by_kind(kind))
+        admin_class.export_view_xls(self)
+
+
+class AdminExportCSVHandler(_AbstractAdminHandler):
+    """Detailseite zu einer Entity"""
+
+    def get(self, kind, action_or_objectid):
+        """Handler, der die richtige Methode für die Aktion aufruft"""
+
+        admin_class = check404(gaetk2.admin.site.get_admin_by_kind(kind))
+        admin_class.export_view_csv(self)
 
 
 class AdminSearchHandler(_AbstractAdminHandler):
@@ -115,6 +144,17 @@ class AdminSearchHandler(_AbstractAdminHandler):
 class AdminDetailHandler(_AbstractAdminHandler):
     """Detailseite zu einer Entity"""
 
+    def get(self, kind, objectid):
+        """Handler, der die richtige Methode für die Aktion aufruft"""
+
+        admin_class = check404(gaetk2.admin.site.get_admin_by_kind(kind))
+        obj = check404(admin_class.get_object(objectid))
+        self.render({'obj': obj, 'admin_class': admin_class}, 'admin2/detail.html')
+
+
+class AdminChangeHandler(_AbstractAdminHandler):
+    """Detailseite zu einer Entity"""
+
     def get(self, kind, action_or_objectid):
         """Handler, der die richtige Methode für die Aktion aufruft"""
 
@@ -125,10 +165,6 @@ class AdminDetailHandler(_AbstractAdminHandler):
             if admin_class.read_only:
                 raise exc.HTTP403_Forbidden
             admin_class.add_view(self)
-        elif action_or_objectid == 'export_xls':
-            admin_class.export_view_xls(self)
-        elif action_or_objectid == 'export_csv':
-            admin_class.export_view_csv(self)
         elif action_or_objectid == 'delete':
             if admin_class.read_only:
                 raise exc.HTTP403_Forbidden
@@ -141,7 +177,7 @@ class AdminDetailHandler(_AbstractAdminHandler):
                 raise exc.HTTP403_Forbidden
             # TODO: view only is missing
             admin_class.change_view(self, action_or_objectid,
-                                    extra_context=dict(app=application, model=model))
+                                    extra_context=dict(app=application))  # model=model
 
 
 # class AdminUndeleteHandler(AdminHandler):
@@ -166,11 +202,14 @@ class AdminDetailHandler(_AbstractAdminHandler):
 
 
 autodiscover()
-application = webapp2.WSGIApplication(([
+application = WSGIApplication(([
     # (r'^/admin2/_undelete/(.+)', AdminUndeleteHandler),
-                # (r'^/admin2/snippet/edit/', gaetk.snippets.SnippetEditHandler),
-                Route('/admin2/', AdminIndexHandler),
-                Route('/admin2/e/<kind>/', AdminListHandler),
-                Route('/admin2/e/<kind>/search/', AdminSearchHandler),
-                Route('/admin2/e/<kind>/<action_or_objectid>/', AdminDetailHandler),
-                ]))
+    # (r'^/admin2/snippet/edit/', gaetk.snippets.SnippetEditHandler),
+    Route('/admin2/', AdminIndexHandler),
+    Route('/admin2/q/<kind>/', AdminListHandler),
+    Route('/admin2/q/<kind>/export_xls/', AdminExportXLSHandler),
+    Route('/admin2/q/<kind>/export_csv/', AdminExportCSVHandler),
+    Route('/admin2/q/<kind>/search/', AdminSearchHandler),
+    Route('/admin2/e/<kind>/<objectid>/', AdminDetailHandler),
+    # Route('/admin2/e/<kind>/<action_or_objectid>/', AdminChangeHandler),
+]))

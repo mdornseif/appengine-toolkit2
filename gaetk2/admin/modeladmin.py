@@ -22,7 +22,8 @@ from . import util
 from .. import exc
 from .. import modelexporter
 # from gaetk.admin.models import DeletedObject
-import gaetk2.admin
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,7 +47,11 @@ class ModelAdmin(object):
     """
     list_per_page = 50
     """Number of items per page."""
-    list_display_links = ()
+
+    queries = {}
+    """TBD"""
+
+    detail_fields = ()
 
     order_field = '-created_at'
     """Sorting. Beware of datastore indices!"""
@@ -91,11 +96,26 @@ class ModelAdmin(object):
         self.topic = topic
         self.admin_site = admin_site
 
+        if not self.queries:
+            self.queries = {'': self.model.query()}
+
         if not self.list_fields:
             self.list_fields = self.model._properties.keys()
 
-        if not self.list_display_links:
-            self.list_display_links = [self.list_fields[0]]
+        if not self.detail_fields:
+            self.detail_fields = self.model._properties.keys()
+
+    @property
+    def kind(self):
+        return self.model._get_kind()
+
+    @property
+    def name(self):
+        return self.kind
+
+    @property
+    def url(self):
+        return '/admin2/e/{}/' % self.kind
 
     def get_ordering(self, request):
         """Return the sort order attribute"""
@@ -124,7 +144,12 @@ class ModelAdmin(object):
         Es wird die gewünschte Sortierung durchgeführt.
         """
         ordering = self.get_ordering(request)
-        query = self.model.query()
+        qname = request.get('qtype', '')
+        if qname in self.queries:
+            query = self.queries[qname]
+        else:
+            # fallback
+            query = self.model.query()
         if ordering:
             attr, direction = ordering  # pylint: disable=unpacking-non-sequence
             prop = self.model._properties.get(attr)
@@ -190,19 +215,19 @@ class ModelAdmin(object):
 
         if handler.request.get('delete') == 'yesiwant':
             # Der User hat gebeten, dieses Objekt zu löschen.
-            key = obj.key
-            data = ndb.ModelAdapter().entity_to_pb(obj).Encode()
-            archived = DeletedObject(key_name=str(key), model_class=model_class.__name__,
-                                     old_key=str(key), dblayer='ndb', data=data)
-            archived.put()
-            # Indexierung für Admin-Volltextsuche
-            # from gaetk.admin.search import remove_from_index
-            obj.key.delete()
+            # key = obj.key
+            # data = ndb.ModelAdapter().entity_to_pb(obj).Encode()
+            # archived = DeletedObject(key_name=str(key), model_class=model_class.__name__,
+            #                          old_key=str(key), dblayer='ndb', data=data)
+            # archived.put()
+            # # Indexierung für Admin-Volltextsuche
+            # # from gaetk.admin.search import remove_from_index
+            # obj.key.delete()
 
-            handler.add_message(
-                'warning',
-                u'<strong>{} {}</strong> wurde gelöscht. <a href="{}">Objekt wiederherstellen!</a>'.format(
-                    self.model._get_kind(), key.id(), archived.undelete_url()))
+            # handler.add_message(
+            #     'warning',
+            #     u'<strong>{} {}</strong> wurde gelöscht. <a href="{}">Objekt wiederherstellen!</a>'.format(
+            #         self.model._get_kind(), key.id(), archived.undelete_url()))
             raise exc.HTTP302_Found(location='/admin/%s/%s/' % (
                 util.get_app_name(model_class), model_class._get_kind()))
 
@@ -248,7 +273,8 @@ class ModelAdmin(object):
         # Key generieren. Es besteht jedoch in der Admin-Klasse die Moeglichkeit, via
         # 'db_key_field=[propertyname]' ein Feld festzulegen, dessen Inhalt im Formular
         # als Key beim Erzeugen der Instanz genutzt wird.
-        admin_class = gaetk2.admin.site.get_admin_class(self.model)
+        from . import sitemodel  # cyclic import :-(
+        admin_class = sitemodel.site.get_admin_class(self.model)
         key_field = None
         if admin_class and hasattr(admin_class, 'db_key_field'):
             key_field = admin_class.db_key_field
@@ -389,6 +415,7 @@ class ModelAdmin(object):
         return getattr(self, attr, 'admin/detail.html')
 
 
+# TODO: use structured_xls
 class XlsWriter(object):
     """Compatible to the CSV module writer implementation."""
     def __init__(self):

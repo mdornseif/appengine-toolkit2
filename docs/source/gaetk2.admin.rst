@@ -51,9 +51,14 @@ in like this to :file:`admin_gaetk2.py`::
 :class:`gaetk2.admin.modeladmin.ModelAdmin` is the main mechanism for changing the automatically generated admin interface. You intantiate it for each model you want to have administered::
 
     class LastschriftmandatAdmin(ModelAdmin):
-        list_fields = ['mandatsreferenz', 'ist_aktiv', 'last_used',
+        list_fields = ['ist_aktiv', 'last_used',
             'kundennr', 'kontoinhaber', 'iban', 'updated_at', 'created_at']
-    site.registermodel(pay_models.pay_Lastschriftmandat, LastschriftmandatAdmin)
+        queries = {
+            'aktiv': pay_models.pay_Lsm.query(pay_models.pay_Lsm.ist_aktiv==True),
+            'nicht aktiv': pay_models.pay_Lsm.query(pay_models.pay_Lsm.ist_aktiv==False),
+            'alle': pay_models.pay_Lsm.query(),
+        }
+    site.registermodel(pay_models.pay_Lsm, LastschriftmandatAdmin)
 
 
 
@@ -63,8 +68,8 @@ in like this to :file:`admin_gaetk2.py`::
         m_Kunde,
         exclude=['designator', 'empfaengernr', 'updated_at', 'created_at', 'name1', 'name2'],
         field_args={
-            'owner': {'default': 'cyberlogi'},
-            'email': {'validators': [express_email_validator]},
+        'owner': {'default': 'cyberlogi'},
+        'email': {'validators': [express_email_validator]},
         })
 
 
@@ -78,14 +83,13 @@ in like this to :file:`admin_gaetk2.py`::
 Package contents
 ----------------
 
-.. automodule:: gaetk2.admin
+.. autoclass:: gaetk2.admin.modeladmin.ModelAdmin
+    :members:
+
+.. automodule:: gaetk2.admin.sitemodel
     :members:
     :undoc-members:
 
-.. automodule:: gaetk2.admin.modeladmin
-    :members:
-    :undoc-members:
-
-.. automodule:: gaetk2.admin.views
+.. automodule:: gaetk2.admin.layout
     :members:
     :undoc-members:

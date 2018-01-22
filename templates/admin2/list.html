@@ -1,4 +1,4 @@
-{% set title = model + " Administration" %}
+{% set title = admin_class.kind + " Administration" %}
 {% extends "base_admin3.html" %}
 
 {% macro display_key(obj) %}
@@ -12,22 +12,33 @@
 {% block breadcrumbs %}
 <ol class="breadcrumb">
   <li><a href="/admin2/">Administration</a></li>
-  <li class="active">{{ model }}</li>
+  <li class="active">{{ admin_class.kind }}</li>
 </ol>
 {% endblock %}
 
 {% block maincontent %}
 
 <form class="form-inline" method="GET" action="search/">
-  {% if not read_only %}
-    <a href="add/" type="button" class="btn btn-default">Neu</a>
-  {% endif %}
-  <div class="btn-group">
-    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Export <span class="caret"></span></button>
-    <ul class="dropdown-menu">
-      <li><a href="export_xls/">XLS</a></li>
-      <li><a href="export_csv/">CSV</a></li>
-    </ul>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="btn-group" role="group">
+        {% if not admin_class.read_only %}
+          <a href="add/" type="button" class="btn btn-default">Neu</a>
+        {% endif %}
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Export <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+          <li><a href="export_xls/">XLS</a></li>
+          <li><a href="export_csv/">CSV</a></li>
+        </ul>
+      </div>
+      <ul class="nav nav-pills pull-right">
+        {% for q in admin_class.queries.keys() %}
+          {% if q %}
+            <li {% if qtype == q %}class="active"{% endif %}><a href="?qtype={{q|urlencode}}">{{q}}</a></li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </div>
   </div>
 
   <div class="form-group form-group-sm">&nbsp;</div>
@@ -58,7 +69,7 @@
       <tr>
         <td>
           {% if not read_only %}
-            <a href="/admin2/e/{{ model }}/{{ display_key(obj) }}/">{{ display_id(obj)|e }}</a>
+            <a href="/admin2/e/{{ admin_class.kind }}/{{ display_key(obj) }}/">{{ display_id(obj)|e }}</a>
           {% else %}
             {{ display_id(obj)|e }}
           {%- endif %}

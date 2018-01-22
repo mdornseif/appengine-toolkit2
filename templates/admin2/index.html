@@ -2,21 +2,28 @@
 {% extends "base_admin3.html" %}
 
 {% block maincontent %}
-<h2>Datastore</h2>
-{% for app in apps %}
-    <h3>{{ app.capitalize() }}</h3>
-    <ul>
-    {% for model in apps[app] -%}
-        <li><a href="/admin2/e/{{ model }}/">{{ model }}</a></li>
-    {%- endfor %}
-    </ul>
+
+{% for topic, item in topics.items() %}
+<h2>{{ topic|none|capitalize }}</h2>
+
+<ul>
+  {% for madmin in item.modeladmins %}
+    <li><a href="/admin2/q/{{ madmin.kind }}/">
+      <i class="fa fa-database" aria-hidden="true"></i> {{ madmin.name }}</a>
+    </li>
+  {% endfor %}
+  {% for link in item.layout.links %}
+    <li><a href="{{link.1}}">{{link.0}}</a></li>
+  {% endfor %}
+</ul>
 {% endfor %}
 
 <h2>Further Functionality</h2>
   <ul>
-  <li><a href="https://console.cloud.google.com/logs/viewer?project={{ application_id }}&logName=projects%2F{{ application_id }}%2Flogs%2Fappengine.googleapis.com%252Frequest_log">Server Logfiles</a></li>
-  <li><a href="https://console.cloud.google.com/appengine/taskqueues?project={{ application_id }}&tab=PUSH">Server Taskqueues</a></li>
-  <li><a href="https://console.cloud.google.com/storage/browser/{{ default_gcs_bucket_name }}?project={{ application_id }}">Cloud Storage</a></li>
+    <!-- TODO: Add version to link -->
+    <li><a href="https://console.cloud.google.com/logs/viewer?project={{ application_id }}&logName=projects%2F{{ application_id }}%2Flogs%2Fappengine.googleapis.com%252Frequest_log">Server Logfiles</a></li>
+    <li><a href="https://console.cloud.google.com/appengine/taskqueues?project={{ application_id }}&tab=PUSH">Server Taskqueues</a></li>
+    <li><a href="https://console.cloud.google.com/storage/browser/{{ default_gcs_bucket_name }}?project={{ application_id }}">Cloud Storage</a></li>
   </ul>
 </p>
 {% endblock %}

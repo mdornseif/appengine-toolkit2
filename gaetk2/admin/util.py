@@ -8,37 +8,15 @@ Copyright (c) 2011-2015 HUDORA GmbH. All rights reserved.
 """
 import mimetypes
 
-import cloudstorage
 # import config
 
 # from gaetk.compat import xdb_kind
+from gaetk2.tools.datetools import convert_to_date
+from gaetk2.tools.datetools import convert_to_datetime
 from google.appengine.api import app_identity
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
 from google.appengine.ext import ndb
-from huTools.calendar.formats import convert_to_date
-from huTools.calendar.formats import convert_to_datetime
-
-
-def get_topic_name(model):
-    """Try to extract the Name of an Admin Topic from the path.
-
-    Still somewhat like Django App-Names.
-
-    >>> get_app_name('frontend.news.models.NewsItem')
-    'news'
-    >>> get_app_name('common.models.Sparepart')
-    'Sparepart'
-    """
-    if not hasattr(model, '__module__'):
-        return u''
-    components = model.__module__.split('.')
-    if len(components) > 3:
-        return components[-3]
-    elif len(components) > 2:
-        return components[-2]
-    else:
-        return components[-1]
 
 
 def create_instance(klass, data):
@@ -95,8 +73,10 @@ def upload_to_blobstore(obj, key_name, blob):
 
     Der Rückgabewert ist der Blob-Key des neuen Objekts.
     """
+    import cloudstorage  # this makes Sphynx barf
+
     mime_type, _ = mimetypes.guess_type(blob.filename)
-    bucket = getattr(config, 'GCS_BUCKET_NAME', app_identity.get_default_gcs_bucket_name())
+    bucket = getattr(app_identity.get_default_gcs_bucket_name())
     file_name = '/%s/admin/%s/%s/%s' % (bucket, obj._Get_kind(), key_name, blob.filename)
     with cloudstorage.open(file_name, 'w', content_type=mime_type) as fileobj:
         while blob.file:
