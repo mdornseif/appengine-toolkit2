@@ -14,6 +14,7 @@ import urlparse
 
 from google.appengine.api import memcache
 from google.appengine.api import users
+from google.appengine.api.app_identity import get_application_id
 
 import jinja2
 import webapp2
@@ -258,6 +259,8 @@ class BasicHandler(webapp2.RequestHandler):
             env.globals['profiler_includes'] = gae_mini_profiler.templatetags.profiler_includes
 
         """
+        if not gaetkconfig.APP_NAME:
+            gaetkconfig.APP_NAME = get_application_id().capitalize()
         env.globals.update(dict(
             gaetk_production=is_production(),
             gaetk_development=is_development(),
@@ -391,8 +394,11 @@ class BasicHandler(webapp2.RequestHandler):
         values = self._reduce_all_inherited('build_context', values)
         # for debugging provide access to all variables in gaetk_localcontext
         if is_development():
-            values['gaetk_localcontext_json'] = hujson2.dumps(values)
-            values['gaetk_globalcontext_json'] = hujson2.dumps(env.globals)
+            try:
+                values['gaetk_globalcontext_json'] = hujson2.dumps(env.globals)
+                values['gaetk_localcontext_json'] = hujson2.dumps(values)
+            except:
+                logging.exception('gaetk_*context issue')
         try:
             template.stream(values).dump(fd, encoding='utf-8')
             # we do not want to rely on webob.Response magically transforming unicode
@@ -477,7 +483,7 @@ class BasicHandler(webapp2.RequestHandler):
                 else:
                     logger.warn("not clallable: %r", x)
                 if ret is None:
-                    raise RuntimeError("%s.%s did not provide a return value", cls, funcname)
+                    raise RuntimeError('%s.%s did not provide a return value' % (cls, funcname))
         return ret
 
     def dispatch(self):
