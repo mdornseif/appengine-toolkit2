@@ -9,8 +9,10 @@ Copyright (c) 2010-2017 HUDORA. MIT licensed.
 import cStringIO
 import functools
 
-import huTools.hujson
-import huTools.structured
+from gaetk2.tools import hujson2
+from gaetk2.tools.structured import dict2csv
+from gaetk2.tools.structured import dict2xls
+from gaetk2.tools.structured import dict2xml
 
 
 class MultirenderMixin(object):
@@ -53,7 +55,7 @@ class MultirenderMixin(object):
         If you give a dict in `html_addon` this dict is additionaly passed the the HTML rendering function
         (but not to the rendering functions of other formats).
 
-        You can give the `xml_root` and `xml_lists` parameters to provide `huTools.structured.dict2xml()`
+        You can give the `xml_root` and `xml_lists` parameters to provide `dict2xml()`
         with defenitions on how to name elements. See the documentation of `roottag` and `listnames` in
         dict2xml documentation.
 
@@ -105,10 +107,10 @@ class MultirenderMixin(object):
 
         mymappers = dict(
             xml=functools.partial(
-                huTools.structured.dict2xml, roottag=xml_root, listnames=xml_lists, pretty=True),
-            json=huTools.hujson2.dumps,
-            csv=functools.partial(huTools.structured.dict2csv, datanodename=tabular_datanodename),
-            xls=functools.partial(huTools.structured.dict2xls, datanodename=tabular_datanodename),
+                dict2xml, roottag=xml_root, listnames=xml_lists, pretty=True),
+            json=hujson2.dumps,
+            csv=functools.partial(dict2csv, datanodename=tabular_datanodename),
+            xls=functools.partial(dict2xls, datanodename=tabular_datanodename),
             html=htmlrender)
         if mappers:
             mymappers.update(mappers)
