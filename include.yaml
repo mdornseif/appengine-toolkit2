@@ -93,6 +93,7 @@ skip_files:
 - ^.+/README.*
 - ^js_src/.*
 - ^tmp/.*
+- ^tmpcheckout/.*
 - ^venv/.*
 - js_*/.*
 - lib/.*/site-packages

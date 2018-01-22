@@ -8,17 +8,53 @@ gaetk2 based Application still use old school Makefiles as their main interface 
 This is not implemented so far in gaetk2. It has to be ported over from gaetk1.
 
 
-Make Targets
-------------
+Commands
+--------
 
-code                  alias for build
-build                 Does all generation of code and asserts where needed.
-build_bproduction     Does a re-generation of code and asserts with optimisations.
-deploy                pushes the code to Google Appengine. Implies build
-check                 does local code quality checks and local tests
-test_production       runs limited tests against a deployment
-test                  runs extended tests. Implies test_production, check
-deploy_production     does a clean checkout of the branch `production` of your
-                      Application. Deploys it to a Test Server (Version).
-                      Runs ``test_production`` againstsp it. If this is fine, executes the deployment against the production version.
+.. glossary::
 
+    doit openlogs
+        open App Engine logfiles in Browser
+
+    doit deploy
+        installs the current checkout as a developer specific version and
+        opens it in the browser
+
+    doit build
+        builds assets (Javascript, CSS) and other dependencies for development
+
+    doit mergeproduction
+        process to merge `master` into `production`
+
+    doit check
+        TBD
+
+    doit staging_deploy
+        TBD
+
+    testing_deploy
+        TBD
+
+    testing_test
+        TBD
+
+    doit production_clean_checkout
+        TBD
+
+    doit production_build
+        like `doit built` but produces minified, optimized versions
+
+    doit production_deploy
+        TBD
+
+    Parameter -a, --always-execute
+        execute even if dependencies are up to date
+
+    Parameter -v ARG, --verbosity=ARG
+        0-2
+
+    Parameter -s, --single
+        Execute only specified tasks ignoring their dependencies
+
+    doit doit info -s <task>
+        Show on what the task depends

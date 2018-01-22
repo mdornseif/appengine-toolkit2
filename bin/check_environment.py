@@ -30,6 +30,7 @@ tools = collections.OrderedDict([
     ('yarn --version', 'brew install yarn'),
     ('grunt --version', 'https://gruntjs.com/installing-grunt'),
     ('gcloud --version', 'https://cloud.google.com/sdk/downloads'),
+    ('premailer --version', 'gem install premailer ; gem install nokogiri'),
 ])
 
 for command, doc in tools.items():

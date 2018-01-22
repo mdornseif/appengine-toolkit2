@@ -79,10 +79,10 @@ def get_or_insert_if_new(cls, id, **kwds):
     This allows you to see if something has been created or if there was an
     already existing entity::
 
-    >>> get_or_insert_if_new(Model, 'newid')
-    (<instance>, True)
-    >>> get_or_insert_if_new(Model, 'newid')
-    (<instance>, False)
+        >>> get_or_insert_if_new(Model, 'newid')
+        (<instance>, True)
+        >>> get_or_insert_if_new(Model, 'newid')
+        (<instance>, False)
     """
     # from https://stackoverflow.com/a/14549493/49407
     # See https://cloud.google.com/appengine/docs/standard/python/ndb/modelclass#Model_get_or_insert
@@ -103,6 +103,7 @@ def write_on_change2(instance, data):
     It als helps you do leave not given attributes unchanged.
 
     Usage::
+
         instance = ndb.Model...get()
         dirty = write_on_change(instance, ...,
           dict(id=123, amout_open=500, score=5, ...)

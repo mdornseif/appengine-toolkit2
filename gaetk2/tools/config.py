@@ -67,7 +67,7 @@ def is_production():
     elif os.environ.get('SERVER_NAME', '').startswith('staging'):
         return False
     elif (os.environ.get('SERVER_NAME', '').startswith('v') and
-        os.environ.get('SERVER_NAME', '').endswith('appspot.com')):
+          os.environ.get('SERVER_NAME', '').endswith('appspot.com')):
         return False
     else:
         return True
