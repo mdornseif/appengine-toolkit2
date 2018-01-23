@@ -54,7 +54,7 @@ class Gaetk1Mixin(PaginateMixin, MultirenderMixin):
     def create_jinja2env(self):
         """Emulate old - and unneeded - Method."""
         warnings.warn(
-            "use create_jinja2env() is not needed anymore, overwrite `add_jinja2env_globals()` instead.",
+            "use create_jinja2env() is not needed anymore, use `add_jinja2env_globals()` instead.",
             DeprecationWarning, stacklevel=2)
         return self._create_jinja2env()
 

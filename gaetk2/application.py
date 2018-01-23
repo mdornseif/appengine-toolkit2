@@ -189,7 +189,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         # interesting environment variables - see https://david-buxton-test.appspot.com/env#:
         for attr in ('REQUEST_ID_HASH INSTANCE_ID REQUEST_LOG_ID HTTP_X_CLOUD_TRACE_CONTEXT '
                      'USER_IS_ADMIN USER_ORGANIZATION SERVER_SOFTWARE'
-                     'AUTH_DOMAIN HTTP_REFERER HTTP_USER_AGENT REQUEST_METHOD'
+                     'AUTH_DOMAIN'
                      'PATH_TRANSLATED DEFAULT_VERSION_HOSTNAME'
                      'HTTP_X_GOOGLE_APPS_METADATA SCRIPT_NAME PATH_INFO').split():
             if attr in request.environ:
@@ -353,8 +353,20 @@ class WSGIApplication(webapp2.WSGIApplication):
                 extra['GAE_' + name] = os.environ.get(fullname)
         sentry_client.extra_context(extra)
 
+        http = {}
+        # 'url': '%s://%s%s' % (urlparts.scheme, urlparts.netloc, urlparts.path),
+        # 'query_string': urlparts.query,
+        # 'method': request.method,
+        # 'data': data,
+        # 'headers': dict(get_headers(request.environ)),
+        # 'env': dict(get_environ(request.environ)),
+        varnames = 'HTTP_REFERER HTTP_USER_AGENT REQUEST_METHOD'
+        for name in varnames.split():
+            if os.environ.get(name):
+                extra[name] = os.environ.get(name)
+        sentry_client.http_context(http)
+
         # extra={
-        # 'task': sender,
         # 'args': args,
         # 'kwargs': kwargs,
         # 'app': app,
@@ -363,3 +375,9 @@ class WSGIApplication(webapp2.WSGIApplication):
         # data[:server_name] = @server_name if @server_name
         # data[:release] = @release if @release
         # data[:modules] = @modules if @modules
+        # if not data.get('level'):
+        # if not data.get('modules'):
+        # data['release'] = self.release
+        # data['environment'] = self.environment
+        #     data['culprit'] = culprit
+        # self.repos = self._format_repos(o.get('repos'))

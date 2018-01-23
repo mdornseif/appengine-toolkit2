@@ -38,6 +38,12 @@ class _Dummy(object):
     def tags_context(*args, **kwargs):  # noqa: N802
         return
 
+    def extra_context(*args, **kwargs):  # noqa: N802
+        return
+
+    def http_context(*args, **kwargs):  # noqa: N802
+        return
+
 
 if gaetkconfig.SENTRY_DSN:
     import raven
@@ -60,6 +66,7 @@ if gaetkconfig.SENTRY_DSN:
             },
             exclude_paths=['cs', 'google'],
             # environment = 'staging'
+            # TODO: study https://github.com/getsentry/raven-python/blob/master/raven/versioning.py
             # https://docs.sentry.io/clientdev/interfaces/repos/
             # this results in `ImportError: Import by filename is not supported`:
             # repos={

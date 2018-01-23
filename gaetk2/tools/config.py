@@ -79,3 +79,7 @@ def is_development():
     See :term:`development version` what this means."""
     return (os.environ.get('SERVER_SOFTWARE', '').startswith('Development') or
             os.environ.get('SERVER_NAME', '').startswith('dev-'))
+
+
+import logging
+logging.critical("d=%s, p=%s", is_development(), is_production())
