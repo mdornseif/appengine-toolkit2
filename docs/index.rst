@@ -35,6 +35,7 @@ Features
    frontend.rst
    howto.rst
    source/gaetk2.rst
+   howto.rst
 
 
 .. This makes readthedocs fail: todolist::

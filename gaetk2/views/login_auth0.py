@@ -13,7 +13,7 @@ import urllib
 
 import auth0.v3.authentication
 
-from ..application import make_app
+from ..application import WSGIApplication
 from ..exc import HTTP302_Found
 from ..handlers import AuthenticationReaderMixin
 from ..handlers import BasicHandler
@@ -125,7 +125,7 @@ class Auth0OAuth2Callback(BasicHandler, AuthenticationReaderMixin):
 
 
 # die URL-Handler fuer's Login via Google OpenID Connect
-application = make_app([
+application = WSGIApplication([
     (r'^/gaetk2/auth/auth0/oauth2callback$', Auth0OAuth2Callback),
     (r'.*', LoginAuth0Handler),
 ])

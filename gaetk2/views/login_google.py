@@ -15,7 +15,7 @@ import os
 import unicodedata
 import urllib
 
-from ..application import make_app
+from ..application import WSGIApplication
 from ..exc import HTTP302_Found
 from ..exc import HTTP403_Forbidden
 from ..handlers import AuthenticationReaderMixin
@@ -189,7 +189,7 @@ class GoogleOAuth2Callback(BasicHandler, AuthenticationReaderMixin):
 
 
 # die URL-Handler fuer's Login via Google OpenID Connect
-application = make_app([
+application = WSGIApplication([
     (r'^/gaetk2/auth/google/oauth2callback$', GoogleOAuth2Callback),
     (r'.*', LoginGoogleHandler),
 ])

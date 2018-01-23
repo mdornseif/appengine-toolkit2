@@ -22,7 +22,7 @@ import huTools.hujson2
 from google.appengine.api import users
 from jose import jwt
 
-from ..application import make_app
+from ..application import WSGIApplication
 from ..exc import HTTP400_BadRequest
 from ..exc import HTTP403_Forbidden
 from ..exc import HTTP404_NotFound
@@ -200,7 +200,7 @@ class CredentialsHandler(JsonHandler):
             updated_at=credential.updated_at)))
 
 
-application = make_app([
+application = WSGIApplication([
     (r'^/gaetk2/auth/debug$', Debug),
     (r'^/gaetk2/auth/getjwt.txt$', GetJWTtxt),
     (r'^/gaetk2/auth/logout$', LogoutHandler),

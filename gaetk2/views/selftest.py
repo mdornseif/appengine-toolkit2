@@ -10,7 +10,7 @@ Copyright (c) 2017 HUDORA. MIT licnsed.
 """
 import datetime
 
-from ..application import make_app
+from ..application import WSGIApplication
 from ..exc import HTTP400_BadRequest
 from ..handlers import DefaultHandler
 from ..handlers import JsonHandler
@@ -60,7 +60,7 @@ class T5(DefaultHandler):
         raise HTTP400_BadRequest('irgendwas')
 
 
-application = make_app([
+application = WSGIApplication([
     (r'^/gaetk2/test/t1$', T1),
     (r'^/gaetk2/test/t2$', T2),
     (r'^/gaetk2/test/t3$', T3),

@@ -15,7 +15,7 @@ from google.appengine.api import taskqueue
 from google.appengine.api.app_identity import get_application_id
 from google.appengine.ext.db.metadata import Kind
 
-from ..application import make_app
+from ..application import WSGIApplication
 from ..exc import HTTP403_Forbidden
 from ..handlers import DefaultHandler
 from ..tools.config import config
@@ -63,6 +63,6 @@ def _get_all_datastore_kinds():
             yield kind.kind_name
 
 
-application = make_app([
+application = WSGIApplication([
     (r'^backup/$', BackupHandler),
 ])

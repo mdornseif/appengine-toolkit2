@@ -22,7 +22,7 @@ includes:
 handlers:
 # needed to allow abritary postfixes for better overview during logging
 - url: /_ah/queue/deferred(.*)
-  script: google.appengine.ext.deferred.deferred.application
+  script: gaetk2.views.default.application
   login: admin
 
 # static files / bootstrap

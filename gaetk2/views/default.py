@@ -8,8 +8,9 @@ Copyright (c) 2011, 2015, 2017 HUDORA. MIT licensed.
 """
 import google.appengine.api.app_identity
 import google.appengine.api.memcache
+import google.appengine.ext.deferred.deferred
 
-from ..application import make_app
+from ..application import WSGIApplication
 from ..handlers import DefaultHandler
 from ..tools.config import get_version
 from .tools.config import is_production
@@ -66,8 +67,9 @@ class WarmupHandler(DefaultHandler):
         self.return_text(self.warmup())
 
 
-application = make_app([
+application = WSGIApplication([
     (r'robots.txt$', RobotTxtHandler),
     (r'version.txt$', VersionHandler),
     (r'^/_ah/warmup$', WarmupHandler),
+    (r'^/_ah/queue/deferred(.*)$', google.appengine.ext.deferred.deferred.TaskHandler),
 ])

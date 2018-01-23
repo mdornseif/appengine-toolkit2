@@ -75,11 +75,11 @@ def defer(obj, *args, **kwargs):
 
     Add this to `app.yaml`:
         handlers:
-          # needed to allow abritary postfixes
-          - url: /_ah/queue/deferred(.*)
-            script: google.appengine.ext.deferred.deferred.application
-            login: admin
-    """
+            # needed to allow abritary postfixes and better error handling
+            - url: /_ah/queue/deferred(.*)
+              script: gaetk2.views.default.application
+              login: admin
+      """
     def to_str(value):
         """Convert all datatypes to str"""
         if isinstance(value, unicode):
