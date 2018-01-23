@@ -4,16 +4,20 @@
 gaetk2/views/default.py - handlers implementing common views for gaetk2.
 
 Created by Maximillian Dornseif on 2011-01-09.
-Copyright (c) 2011, 2015, 2017 HUDORA. MIT licensed.
+Copyright (c) 2011, 2015, 2017, 2018 HUDORA. MIT licensed.
 """
+import logging
+import os
+
 import google.appengine.api.app_identity
 import google.appengine.api.memcache
 import google.appengine.ext.deferred.deferred
 
-from ..application import WSGIApplication
-from ..handlers import DefaultHandler
-from ..tools.config import get_version
-from .tools.config import is_production
+from gaetk2.application import WSGIApplication
+from gaetk2.handlers import DefaultHandler
+from gaetk2.tools.config import get_version
+from gaetk2.tools.config import is_development
+from gaetk2.tools.config import is_production
 
 
 class RobotTxtHandler(DefaultHandler):
@@ -53,14 +57,17 @@ class WarmupHandler(DefaultHandler):
 
     def warmup(self):
         """Common warmup functionality. Loads big/slow Modules."""
-        import datetime.datetime
-        import tools.http
+        import datetime
         import jinja2
-        import gaetk2.admin
-        import gaetk2.moduleexporter
+        import gaetk2.admin  # this will pull in a lot of code, good for warming up
+        import gaetk2.modelexporter
+        import gaetk2.tools.http
         # http://groups.google.com/group/google-appengine-python/browse_thread/thread/efbcffa181c32f33
         datetime.datetime.strptime('2000-01-01', '%Y-%m-%d').date()
-        return repr([tools.http, jinja2, gaetk2.admin, gaetk2.moduleexporter])
+        logging.debug(u"is_production=%s is_development=%s", is_production(), is_development())
+        logging.debug(u"SERVER_SOFTWARE %r", os.environ.get('SERVER_SOFTWARE', ''))
+        logging.debug(u"SERVER_NAME %r", os.environ.get('SERVER_NAME', ''))
+        return repr([gaetk2.tools.http, jinja2, gaetk2.admin, gaetk2.modelexporter])
 
     def get(self):
         """Handle warm up requests."""
@@ -71,5 +78,5 @@ application = WSGIApplication([
     (r'robots.txt$', RobotTxtHandler),
     (r'version.txt$', VersionHandler),
     (r'^/_ah/warmup$', WarmupHandler),
-    (r'^/_ah/queue/deferred(.*)$', google.appengine.ext.deferred.deferred.TaskHandler),
+    (r'^/_ah/queue/deferred.*   ', google.appengine.ext.deferred.deferred.TaskHandler),
 ])

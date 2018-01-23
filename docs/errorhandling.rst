@@ -34,7 +34,9 @@ We strongly suggest to use an external log aggregation service. We use
 `Sentry <https://github.com/getsentry/sentry>`_ in the hosted variant
 provided by `GetSentry <https://sentry.io>`_. What convinced us to use that is
 that Armin Ronacher started working there. Armin created so many things we
-use every day so we thought sentry.io probably is great, too.
+use every day so we thought sentry.io probably is great, too. Sentry also seems
+to be OpenSource in large parts so you might be able to run your own instance.
+We didn't try.
 
 In gaetk2 we use three levels of error reporting: `high level` in application
 code, `medium level` in library code and `low level` in infrastructure code.

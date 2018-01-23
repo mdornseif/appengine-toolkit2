@@ -130,7 +130,6 @@ class WSGIApplication(webapp2.WSGIApplication):
 
         if not is_development():
             event_id = ''
-            logger.info("pushing to sentry: %s", event_id)
 
             if sentry_client:
                 event_id = sentry_client.captureException(
@@ -139,76 +138,81 @@ class WSGIApplication(webapp2.WSGIApplication):
                     fingerprint=fingerprint,
                     tags=tags,
                 )
+                logger.info("pushing to sentry: %s", event_id)
+            else:
+                logger.info("sentry not configured")
 
             # render error page for the client
             # we do not use jinja2 here to avoid an additional error source.
-            with open(os.path.join(__file__, '..', 'templates/error/500.html')) as fileobj:
+            with open(os.path.join(os.path.dirname(__file__), '..', 'templates/error/500.html')) as fileobj:
                 # set sentry_event_id for GetSentry User Feedback
                 template = fileobj.read().decode('utf-8')
                 template = template.replace(u"'{{sentry_event_id}}'", u"'%s'" % event_id)
-                template = template.replace(u"'{{sentry_public_dsn}}'", gaetkconfig.GAETK2_SENTRY_PUBLIC_DSN)
+                template = template.replace(u"'{{sentry_public_dsn}}'", gaetkconfig.SENTRY_PUBLIC_DSN)
                 template = template.replace(u"{{exception_text}}", jinja2.escape(u"%s" % exception))
                 response.clear()
                 response.out.body = template.encode('utf-8')
         else:
             # On development servers display a nice traceback via `cgitb`.
             logger.info(u"not pushing to sentry, cgitb()")
+            logger.debug(u"SERVER_SOFTWARE %r", os.environ.get('SERVER_SOFTWARE', ''))
+            logger.debug(u"SERVER_NAME %r", os.environ.get('SERVER_NAME', ''))
             response.clear()
             handler = cgitb.Hook(file=response.out).handle
             handler()
 
-        def get_sentry_addon(request):
-            """This tries to extract additional data from the request for Sentry.
+    def get_sentry_addon(self, request):
+        """This tries to extract additional data from the request for Sentry.
 
-            Parameters:
-                request: The Request Object
+        Parameters:
+            request: The Request Object
 
-            Returns:
-                a dict to be sent to sentry as `addon`.
-            """
+        Returns:
+            a dict to be sent to sentry as `addon`.
+        """
 
-            addon = {}
+        addon = {}
 
-            # Things worth considering
-            # request.app = None
-            # request.route = None
-            # request.route_args = None
-            # request.route_kwargs = None
-            # request.query/query_string)
-            # request.script_name/SCRIPT_NAME
-            # request.path_info / PATH_INFO
-            # request.application_url() = The URL including SCRIPT_NAME (no PATH_INFO or query string)
-            # request.path_url(): The URL including SCRIPT_NAME and PATH_INFO, but not QUERY_STRING
-            # request.path(self): The path of the request, without host or query string
-            # request.path_qs: The path of the request, without host but with query string
+        # Things worth considering
+        # request.app = None
+        # request.route = None
+        # request.route_args = None
+        # request.route_kwargs = None
+        # request.query/query_string)
+        # request.script_name/SCRIPT_NAME
+        # request.path_info / PATH_INFO
+        # request.application_url() = The URL including SCRIPT_NAME (no PATH_INFO or query string)
+        # request.path_url(): The URL including SCRIPT_NAME and PATH_INFO, but not QUERY_STRING
+        # request.path(self): The path of the request, without host or query string
+        # request.path_qs: The path of the request, without host but with query string
 
-            # interesting environment variables - see https://david-buxton-test.appspot.com/env#:
-            for attr in ('REQUEST_ID_HASH INSTANCE_ID REQUEST_LOG_ID HTTP_X_CLOUD_TRACE_CONTEXT '
-                         'USER_IS_ADMIN USER_ORGANIZATION SERVER_SOFTWARE'
-                         'AUTH_DOMAIN HTTP_REFERER HTTP_USER_AGENT REQUEST_METHOD'
-                         'PATH_TRANSLATED DEFAULT_VERSION_HOSTNAME'
-                         'HTTP_X_GOOGLE_APPS_METADATA SCRIPT_NAME PATH_INFO').split():
-                if attr in request.environ:
-                    addon[attr] = request.environ.get(attr)
+        # interesting environment variables - see https://david-buxton-test.appspot.com/env#:
+        for attr in ('REQUEST_ID_HASH INSTANCE_ID REQUEST_LOG_ID HTTP_X_CLOUD_TRACE_CONTEXT '
+                     'USER_IS_ADMIN USER_ORGANIZATION SERVER_SOFTWARE'
+                     'AUTH_DOMAIN HTTP_REFERER HTTP_USER_AGENT REQUEST_METHOD'
+                     'PATH_TRANSLATED DEFAULT_VERSION_HOSTNAME'
+                     'HTTP_X_GOOGLE_APPS_METADATA SCRIPT_NAME PATH_INFO').split():
+            if attr in request.environ:
+                addon[attr] = request.environ.get(attr)
 
-            # Its not well documented how to structure the data for sentry
-            # https://gist.github.com/cgallemore/4507616
+        # Its not well documented how to structure the data for sentry
+        # https://gist.github.com/cgallemore/4507616
 
-            # try to recover session information
-            # current_session = gaesessions.Session(cookie_key=COOKIE_KEY)
-            # addon.update(
-            #     login_via=current_session.get('login_via', ''),
-            #     login_time=current_session.get('login_time', ''),
-            #     uid=current_session.get('uid', ''),
-            # )
+        # try to recover session information
+        # current_session = gaesessions.Session(cookie_key=COOKIE_KEY)
+        # addon.update(
+        #     login_via=current_session.get('login_via', ''),
+        #     login_time=current_session.get('login_time', ''),
+        #     uid=current_session.get('uid', ''),
+        # )
 
-            # try:
-            #     if 'cart' in current_session:
-            #         addon['cart'] = vars(current_session['cart'])
-            # except Exception:
-            #     logger.warn("error decoding cart from session")
+        # try:
+        #     if 'cart' in current_session:
+        #         addon['cart'] = vars(current_session['cart'])
+        # except Exception:
+        #     logger.warn("error decoding cart from session")
 
-            return addon
+        return addon
 
     def classify_exception(self, request, exception):
         """Based on the exception raised we classify it for logging.
@@ -334,16 +338,22 @@ class WSGIApplication(webapp2.WSGIApplication):
         # HTTP_X_CLOUD_TRACE_CONTEXT  301334dd3fca3fe29d8625c3a3a115f7/13580140575625565538;o=1
         # REQUEST_ID_HASH 7DB846CB    <type 'str'>
         # REQUEST_LOG_ID  5a5f0ce100ff0c90937db846cb0001737e6412d332d6733343630326234000100
-        varnames = 'CURRENT_NAMESPACE INBOUND_APPID QUEUENAME'
-        varnames += ' TASKEXECUTIONCOUNT TASKNAME TASKRETRYCOUNT TASKRETRYREASON'
+        varnames = 'CURRENT_NAMESPACE INBOUND_APPID QUEUENAME TASKRETRYREASON'
         for name in varnames.split():
             fullname = 'HTTP_X_APPENGINE_' + name
             if os.environ.get(fullname):
-                tags['APPENGINE_' + name] = os.environ.get(fullname)
+                tags['GAE_' + name] = os.environ.get(fullname)
         sentry_client.tags_context(tags)
 
+        extra = {}
+        varnames = 'TASKEXECUTIONCOUNT TASKNAME TASKRETRYCOUNT'
+        for name in varnames.split():
+            fullname = 'HTTP_X_APPENGINE_' + name
+            if os.environ.get(fullname):
+                extra['GAE_' + name] = os.environ.get(fullname)
+        sentry_client.extra_context(extra)
+
         # extra={
-        # 'task_id': task_id,
         # 'task': sender,
         # 'args': args,
         # 'kwargs': kwargs,

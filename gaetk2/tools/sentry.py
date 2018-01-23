@@ -13,7 +13,7 @@ import os
 
 from gaetk2.tools.config import config as gaetkconfig
 from gaetk2.tools.config import get_version
-from gaetk2.tools.config import is_production
+from gaetk2.tools.config import is_development
 
 
 sentry_client = None
@@ -45,7 +45,7 @@ if gaetkconfig.SENTRY_DSN:
     # from raven.middleware import Sentry
     from raven.transport.http import HTTPTransport
 
-    if gaetkconfig.SENTRY_DSN and is_production():
+    if gaetkconfig.SENTRY_DSN and not is_development():
         sentry_client = raven.Client(
             gaetkconfig.SENTRY_DSN,
             # inform the client which parts of code are yours
@@ -61,13 +61,14 @@ if gaetkconfig.SENTRY_DSN:
             exclude_paths=['cs', 'google'],
             # environment = 'staging'
             # https://docs.sentry.io/clientdev/interfaces/repos/
-            repos={
-                'lib/appengine-toolkit2': {
-                    # the name of the repository as registered in Sentry
-                    'name': 'mdornseif/appengine-toolkit2',
-                }
-            }
-            # ignore_exceptions = ['Http404', ValueError, ]
+            # this results in `ImportError: Import by filename is not supported`:
+            # repos={
+            #     'lib/appengine-toolkit2': {
+            #         # the name of the repository as registered in Sentry
+            #         'name': 'mdornseif/appengine-toolkit2',
+            #     }
+            # }
+            # # ignore_exceptions = ['Http404', ValueError, ]
         )
         sentry_client.is_active = True
 
