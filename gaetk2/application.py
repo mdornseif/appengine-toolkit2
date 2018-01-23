@@ -22,7 +22,7 @@ import webapp2
 
 from gaetk2 import exc
 from gaetk2.tools.config import config as gaetkconfig
-from gaetk2.tools.config import is_production
+from gaetk2.tools.config import is_development
 from gaetk2.tools.sentry import sentry_client
 from google.appengine.ext import ndb
 from webapp2 import Route
@@ -128,7 +128,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         logger.exception(u'Exception caught for path %s: %s', request.path, exception)
         response.set_status(status)
 
-        if is_production():
+        if not is_development():
             event_id = ''
             logger.info("pushing to sentry: %s", event_id)
 
