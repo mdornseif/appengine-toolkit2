@@ -34,8 +34,8 @@ Features
    errorhandling.rst
    frontend.rst
    howto.rst
+   migration.rst
    source/gaetk2.rst
-   howto.rst
 
 
 .. This makes readthedocs fail: todolist::

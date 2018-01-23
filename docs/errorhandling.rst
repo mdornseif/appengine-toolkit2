@@ -254,7 +254,6 @@ And don't forget to add ``GAETK2_SENTRY_DSN`` to ``appengine_config.py``!
     * Describe how to add front end logging via Sentry to Low Level Error Handling
     * gaetk2.wsgi Documentation
     * Manual Logging
-    * move from ``is_prduction`` to ``not is_development``.
 
 .. note::
 
