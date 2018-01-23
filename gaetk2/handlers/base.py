@@ -365,6 +365,7 @@ class BasicHandler(webapp2.RequestHandler):
                 autoescape=jinja2.select_autoescape(['html', 'xml']),
             )
             jinja_filters.register_custom_filters(env)
+            env.policies['json.dumps_function'] = hujson2.htmlsafe_json_dumps
             env = self._reduce_all_inherited('add_jinja2env_globals', env)
             _jinja_env_cache = env
 
@@ -395,8 +396,8 @@ class BasicHandler(webapp2.RequestHandler):
         # for debugging provide access to all variables in gaetk_localcontext
         if is_development():
             try:
-                values['gaetk_globalcontext_json'] = hujson2.dumps(env.globals)
-                values['gaetk_localcontext_json'] = hujson2.dumps(values)
+                values['gaetk_globalcontext_json'] = hujson2.htmlsafe_json_dumps(env.globals)
+                values['gaetk_localcontext_json'] = hujson2.htmlsafe_json_dumps(values)
             except:
                 logging.exception('gaetk_*context issue')
         try:

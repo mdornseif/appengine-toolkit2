@@ -6,12 +6,11 @@ hujson2.py - encode Google App Engine Models and stuff.
 hujson can encode additional types like decimal and datetime into valid json.
 
 Created by Maximillian Dornseif on 2010-09-10.
-Copyright (c) 2010, 2012, 2013, 2017 HUDORA. MIT licensed.
+Copyright (c) 2010, 2012, 2013, 2017, 2018 HUDORA. MIT licensed.
 """
 import datetime
 import decimal
 import json
-
 
 def _unknown_handler(value):
     """Helper for json.dmps())."""
@@ -25,6 +24,9 @@ def _unknown_handler(value):
     elif hasattr(value, 'dict_mit_positionen') and callable(value.dict_mit_positionen):
         # helpful for our internal data-modelling
         return value.dict_mit_positionen()
+    elif hasattr(value, 'to_dict') and callable(value.to_dict):
+        # helpful for ndb.Model Objects
+        return value.to_dict()
     elif hasattr(value, 'as_dict') and callable(value.as_dict):
         # helpful for structured.Struct() Objects
         return value.as_dict()
@@ -85,3 +87,10 @@ def dumps(val, indent=' '):
 def loads(data):
     """Parse `data` as JSON and return Python data."""
     return json.loads(data)
+
+
+def htmlsafe_json_dumps(obj, **kwargs):
+    """Use `jinja2.utils.htmlsafe_json_dumps` with our dumper."""
+    import jinja2.utils
+    return jinja2.utils.htmlsafe_json_dumps(obj, dumper=dumps, **kwargs)
+
