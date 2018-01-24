@@ -11,7 +11,7 @@ import time
 
 from google.appengine.api import lib_config
 
-config = lib_config.register(
+gaetkconfig = lib_config.register(
     'GAETK2',
     dict(
         TEMPLATE_DIRS=['./templates'],
@@ -30,7 +30,7 @@ config = lib_config.register(
         BACKUP_FILESYSTEM='gs',
         BACKUP_QUEUE='default',
         BACKUP_BLACKLIST=[],
-        SECRET='*changeme"*',
+        SECRET='',
         APP_NAME='',
         SENTRY_DSN='',
         SENTRY_PUBLIC_DSN='',
@@ -39,7 +39,13 @@ config = lib_config.register(
 
 
 # add our own template directory
-config.TEMPLATE_DIRS.append(os.path.join(os.path.dirname(__file__), '../..', 'templates'))
+gaetkconfig.TEMPLATE_DIRS.append(
+    os.path.join(
+        os.path.dirname(__file__),
+        '../..',
+        'templates'))
+# legacy
+config = gaetkconfig
 
 
 def get_version():
@@ -82,4 +88,4 @@ def is_development():
 
 
 import logging
-logging.critical("d=%s, p=%s", is_development(), is_production())
+logging.info("d=%s, p=%s", is_development(), is_production())

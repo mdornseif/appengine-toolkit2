@@ -78,5 +78,5 @@ application = WSGIApplication([
     (r'robots.txt$', RobotTxtHandler),
     (r'version.txt$', VersionHandler),
     (r'^/_ah/warmup$', WarmupHandler),
-    (r'^/_ah/queue/deferred.*   ', google.appengine.ext.deferred.deferred.TaskHandler),
+    (r'^/_ah/queue/deferred.*', google.appengine.ext.deferred.deferred.TaskHandler),
 ])

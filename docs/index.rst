@@ -25,7 +25,6 @@ Features
   * :mod:`gaetk2.tools.unicode` encode integers in base32, get rid of 😎 etc in strings.
   * :class:`gaetk2.tools.structured_xls.XLSwriter` - :class:`csv.writer` compatible interface to generate XLS-Files.
 
-
 .. toctree::
    :maxdepth: 3
    :caption: Contents:

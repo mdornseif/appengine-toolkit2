@@ -364,12 +364,17 @@ class BasicHandler(webapp2.RequestHandler):
                 # This needs jinja2 > Version 2.8
                 autoescape=jinja2.select_autoescape(['html', 'xml']),
             )
+            env.exception_handler = self._jinja2_exception_handler
             jinja_filters.register_custom_filters(env)
             env.policies['json.dumps_function'] = hujson2.htmlsafe_json_dumps
             env = self._reduce_all_inherited('add_jinja2env_globals', env)
             _jinja_env_cache = env
 
         return _jinja_env_cache
+
+    def _jinja2_exception_handler(self, traceback):
+        """Is called during Jinja2 Exception processing to provide logging."""
+        logging.warning('exception_handler(%s)', traceback)
 
     def _render_to_fd(self, values, template_name, fd):
         """Sends the rendered content of a Jinja2 Template to Output.
@@ -482,7 +487,7 @@ class BasicHandler(webapp2.RequestHandler):
                         logger.debug("reducing %s.%s(%r)", cls, funcname, ret)
                     ret = x(ret)
                 else:
-                    logger.warn("not clallable: %r", x)
+                    logger.warn("not callable: %r", x)
                 if ret is None:
                     raise RuntimeError('%s.%s did not provide a return value' % (cls, funcname))
         return ret

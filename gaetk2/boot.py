@@ -14,6 +14,10 @@ The most robust approach in `appengine_config.py` would be:
         ['./lib/appengine-toolkit2/gaetk2/'])
     imp.load_module('gaetk_boot', fp, filename, data)
 
+Be carefull to do only minimal initialisation here. Since this is imported
+in `appengine_config.py` nothing you import should use `lib_config` which
+uses `appengine_config.py`.
+
 Created by Maximillian Dornseif on 2017-06-24.
 Copyright (c) 2017 Maximillian Dornseif. MIT Licensed.
 """
@@ -64,6 +68,7 @@ google.appengine.api.urlfetch.set_default_fetch_deadline(50)
 # see https://docs.python.org/2/library/logging.html#logrecord-attributes
 fr = logging.Formatter('%(funcName)s(): %(message)s [%(name)s]')
 logging.getLogger().handlers[0].setFormatter(fr)
+
 # make certain libraries log less
 logging.getLogger('raven').setLevel(logging.WARNING)
 

@@ -8,14 +8,14 @@ Builds on https://github.com/getsentry/raven-python
 Created by Maximillian Dornseif on 2018-01-11.
 Copyright (c) 2018 Maximillian Dornseif. MIT Licensed.
 """
-
+import logging
 import os
 
 from gaetk2.tools.config import config as gaetkconfig
 from gaetk2.tools.config import get_version
 from gaetk2.tools.config import is_development
 
-
+logger = logging.getLogger(__name__)
 sentry_client = None
 
 
@@ -47,8 +47,7 @@ class _Dummy(object):
 
 if gaetkconfig.SENTRY_DSN:
     import raven
-    # from raven import breadcrumbs
-    # from raven.middleware import Sentry
+    import raven.breadcrumbs
     from raven.transport.http import HTTPTransport
 
     if gaetkconfig.SENTRY_DSN and not is_development():
@@ -80,5 +79,37 @@ if gaetkconfig.SENTRY_DSN:
         sentry_client.is_active = True
 
 
+    def note(category, message=None, data=None):
+        """bei Bedarf strukturiert loggen, Sentry breadcrumbs """
+        if not data:
+            data = dict()
+        assert category in ['rpc', 'input', 'external', 'storage', 'auth']
+
+        raven.breadcrumbs.record(
+            data=data,
+            category=category,
+            message=message
+        )
+else:
+    def note(category, message=None, data=None):
+        assert category in ['rpc', 'input', 'external', 'storage', 'auth']
+        logger.debug("%s %r", message, data)
+
+
 if not sentry_client:
     sentry_client = _Dummy()
+
+sentry_client.note = note
+
+
+def setup_logging():
+    """Set up logging to sentry if Sentry is configured."""
+    if gaetkconfig.SENTRY_DSN:
+        import raven.handlers.logging
+        import raven.conf
+        # Configure the default client
+        handler = raven.handlers.logging.SentryHandler(gaetkconfig.SENTRY_DSN)
+        handler.setLevel(logging.ERROR)
+        raven.conf.setup_logging(handler)
+
+
