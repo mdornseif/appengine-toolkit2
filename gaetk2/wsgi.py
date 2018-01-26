@@ -28,7 +28,6 @@ def wrap_errorhandling(application):
     # We use a Sentry WSGI Middleware to catch erros which are not
     # handled by the framework. Usually higher layers should catch
     # and display errors.
-    from gaetk2.tools.config import is_production
     from gaetk2.tools.config import gaetkconfig
     if not gaetkconfig.SENTRY_DSN:
         return application

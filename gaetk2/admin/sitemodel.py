@@ -108,7 +108,6 @@ def _get_topic_name(klass):
     if not hasattr(klass, '__module__'):
         return u''
     components = klass.__module__.split('.')
-    logging.debug('components=%r', components)
     if len(components) > 3:
         return components[-3]
     elif len(components) > 2:

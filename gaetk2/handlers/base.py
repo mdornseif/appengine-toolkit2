@@ -120,6 +120,8 @@ class BasicHandler(webapp2.RequestHandler):
         self.session = {}
         # Careful! `webapp2.RequestHandler` does not call super()!
         super(BasicHandler, self).__init__(*args, **kwargs)
+        # ... so we route arround that
+        super(webapp2.RequestHandler, self).__init__()
 
     # helper methods
 

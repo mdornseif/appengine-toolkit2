@@ -453,7 +453,7 @@ def plural(value, singular_str, plural_str):
 def datastore_query_link(entity, attr):
     """Generate HTML Link to Google Datastore Query."""
     value = getattr(entity, attr, '')
-    text = 'SELECT  FROM {} WHERE {}={}'.format(entity._get_kind(), attr, value)
+    text = 'SELECT * FROM {} WHERE {}={}'.format(entity._get_kind(), attr, value)
     url = _datastore_query(entity, attr)
     content = '<a href="{}">{}</a>'.format(url, text)
     return Markup(content)
