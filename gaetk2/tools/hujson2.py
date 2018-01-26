@@ -12,6 +12,9 @@ import datetime
 import decimal
 import json
 
+# see raven/utils/json.py for an other nice aproach
+
+
 def _unknown_handler(value):
     """Helper for json.dmps())."""
     # originally from `huTools.hujson` (c) 2010
@@ -93,4 +96,3 @@ def htmlsafe_json_dumps(obj, **kwargs):
     """Use `jinja2.utils.htmlsafe_json_dumps` with our dumper."""
     import jinja2.utils
     return jinja2.utils.htmlsafe_json_dumps(obj, dumper=dumps, **kwargs)
-

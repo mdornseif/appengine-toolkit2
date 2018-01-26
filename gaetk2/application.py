@@ -107,6 +107,13 @@ class WSGIApplication(webapp2.WSGIApplication):
         else:
             code = 500
 
+        # WSGIHTTPException come with some further explanations
+        notedata = {}
+        for attr in ['code', 'explanation', 'detail', 'comment', 'headers']:
+            if getattr(e, attr):
+                notedata[attr] = getattr(e, attr)
+        sentry_client.note('flow', message=u'HTTPException', data=notedata)
+
         handler = self.error_handlers.get(code)
         if handler:
             logger.debug('using %s', handler)
@@ -118,7 +125,14 @@ class WSGIApplication(webapp2.WSGIApplication):
             else:
                 # This should be mostly `exc.HTTPException`s < 500
                 # which will be rendered directly to the client
-                logger.debug('re raising because of code %r', code)
+                # but if we have a `explanation` we really want to
+                # note that in Sentry:
+                if getattr(e, 'explanation'):
+                    sentry_client.captureMessage(
+                        'HTTP Exception: %s' % e.explanation,
+                        level='info',
+                        tags={'httpcode': code, 'type': 'Exception'},
+                        extra=notedata)
                 raise
 
     def default_exception_handler(self, request, response, exception):

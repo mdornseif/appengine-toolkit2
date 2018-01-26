@@ -11,6 +11,7 @@ Copyright (c) 2018 Maximillian Dornseif. MIT Licensed.
 import logging
 import os
 
+from gaetk2.tools import hujson2
 from gaetk2.tools.config import config as gaetkconfig
 from gaetk2.tools.config import get_version
 from gaetk2.tools.config import is_development
@@ -32,16 +33,19 @@ class _Dummy(object):
     def captureException(*args, **kwargs):  # noqa: N802
         return 'dummy-id'
 
-    def user_context(*args, **kwargs):  # noqa: N802
+    def captureMessage(self, message, **kwargs):  # noqa: N802
         return
 
-    def tags_context(*args, **kwargs):  # noqa: N802
+    def user_context(*args, **kwargs):
         return
 
-    def extra_context(*args, **kwargs):  # noqa: N802
+    def tags_context(*args, **kwargs):
         return
 
-    def http_context(*args, **kwargs):  # noqa: N802
+    def extra_context(*args, **kwargs):
+        return
+
+    def http_context(*args, **kwargs):
         return
 
 
@@ -78,12 +82,14 @@ if gaetkconfig.SENTRY_DSN:
         )
         sentry_client.is_active = True
 
-
     def note(category, message=None, data=None):
         """bei Bedarf strukturiert loggen, Sentry breadcrumbs """
+        assert category in ['rpc', 'input', 'external', 'storage', 'auth', 'flow']
         if not data:
             data = dict()
-        assert category in ['rpc', 'input', 'external', 'storage', 'auth']
+
+        # 'flatten' data
+        data = hujson2.loads(hujson2.dumps(data))
 
         raven.breadcrumbs.record(
             data=data,
@@ -92,7 +98,7 @@ if gaetkconfig.SENTRY_DSN:
         )
 else:
     def note(category, message=None, data=None):
-        assert category in ['rpc', 'input', 'external', 'storage', 'auth']
+        assert category in ['rpc', 'input', 'external', 'storage', 'auth', 'flow']
         logger.debug("%s %r", message, data)
 
 
@@ -111,5 +117,3 @@ def setup_logging():
         handler = raven.handlers.logging.SentryHandler(gaetkconfig.SENTRY_DSN)
         handler.setLevel(logging.ERROR)
         raven.conf.setup_logging(handler)
-
-

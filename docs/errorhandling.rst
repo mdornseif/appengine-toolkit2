@@ -249,11 +249,53 @@ For `High Level Error Handling`_ just use
 And don't forget to add ``GAETK2_SENTRY_DSN`` to ``appengine_config.py``!
 
 
+Using Logging
+-------------
+
+If you followed the steps until here all Exceptions should go to Sentry.
+Also all logging with level ``ERROR`` or ``CRITICAL`` via the Python Standard
+:mod:`logging` module should go to Sentry. If there is an Exception
+Sentry will attach all previous log messages (also ``DEBUG`` and ``WARNING``
+in the report.
+
+To allow better filtering we strongly suggest that you don not do calls to
+:func:`logging.error()` et. al. directly but instantiate a logger instance
+in each of your modules and use that::
+
+    logger = logging.getLogger(__name__)
+    logger.debug('happy coding away')
+
+For structured Information you only need in case of an Exception or other
+event you can use :func:`~gaetk2.tools.sentry_client.note()`::
+
+    from gaetk2.tools.sentry import sentry_client
+    sentry_client.note(
+        'auth',
+        message=u'Attaching Customer to Credential'
+        data={'self.credential': self.credential,
+              'userkunde': userkunde})
+
+
+This functionality is based on
+`raven.breadcrumbs <https://docs.sentry.io/learn/breadcrumbs/>`_
+functionality gut tries to pass objects in a more readable state to Sentry.
+
+:class:`WSGIHTTPException` can have a ``comment`` parameter in it's
+constructor. This is internal nformation meant for debugging purposes.
+If this is set we assume there are exceptional circumstances and
+record the exception to Sentry::
+
+    text = u'%s:%s tries to log in as inactive customer %r' % (
+        userkunde.designator, self.credential, userkunde.to_dict())
+    raise exc.HTTP301_Moved(
+        comment=text,
+        location='/inaktiv.html?kunde={}&uid={}'.format(
+            userkunde.designator, self.credential.uid))
+
 
 .. todo::
     * Describe how to add front end logging via Sentry to Low Level Error Handling
     * gaetk2.wsgi Documentation
-    * Manual Logging
 
 .. note::
 
