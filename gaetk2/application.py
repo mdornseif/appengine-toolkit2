@@ -110,7 +110,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         # WSGIHTTPException come with some further explanations
         notedata = {}
         for attr in ['code', 'explanation', 'detail', 'comment', 'headers']:
-            if getattr(e, attr):
+            if hasattr(e, attr):
                 notedata[attr] = getattr(e, attr)
         sentry_client.note('flow', message=u'HTTPException', data=notedata)
 
@@ -127,7 +127,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                 # which will be rendered directly to the client
                 # but if we have a `explanation` we really want to
                 # note that in Sentry:
-                if getattr(e, 'explanation'):
+                if hasattr(e, 'explanation'):
                     sentry_client.captureMessage(
                         'HTTP Exception: %s' % e.explanation,
                         level='info',
