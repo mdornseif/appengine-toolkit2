@@ -1,3 +1,5 @@
+.. _frondend-guidelines:
+
 Frontend Guidelines
 ===================
 
@@ -43,6 +45,17 @@ Available blocks to overwrite:
 * ``page`` basically overwrites ``header``, ``<h1>{{title}}</h1>``, ``maincontent`` and ``secondarycontent`` leaving only ``footer``.
 
 
+.. _breadcrumbs:
+Breadcrumbs
+-----------
+
+If you add something like this to your template Variables::
+
+    breadcrumbs = [('Market', '/'), (kundennr, '#'), (u'Aufträge', '#')]
+
+There will be a list of breadcrumbs rendered above the Title.
+
+
 Progressive enhancements
 ------------------------
 
@@ -65,3 +78,12 @@ to go. In Bootstrap 4 the Markup is somewhat convoluted::
       <dt class="col-3">Auftragsdatum / Status</dt>
       <dd class="col-9">{{ a.eingegangen_am|dateformat }} / {{ a.nicestatus }}</dd>
     </dl>
+
+
+Table Styling
+^^^^^^^^^^^^^
+
+Tagles we usually style with ``class="table table-striped table-sm"``.
+For large rows like Product Listing with Images we use ``class="table table-hover"``.
+
+
