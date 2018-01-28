@@ -80,20 +80,15 @@ def defer(obj, *args, **kwargs):
               script: gaetk2.views.default.application
               login: admin
       """
-    def to_str(value):
-        """Convert all datatypes to str"""
-        if isinstance(value, unicode):
-            return value.encode('ascii', 'ignore')
-        return str(value)
 
     suffix = '{0}({1!s},{2!r})'.format(
         obj.__name__,
-        ','.join(to_str(arg) for arg in args),
-        ','.join('%s=%s' % (key, to_str(value)) for (key, value) in kwargs.items() if not key.startswith('_'))
+        ','.join(_to_str(arg) for arg in args),
+        ','.join('%s=%s' % (key, _to_str(value)) for (key, value) in kwargs.items() if not key.startswith('_'))
     )
     suffix = re.sub(r'-+', '-', suffix.replace(' ', '-'))
     suffix = re.sub(r'[^/A-Za-z0-9_,.:@&+$\(\)\-]+', '', suffix)
-    url = google.appengine.ext.deferred.deferred._DEFAULT_URL + '/' + suffix[:1600]
+    url = google.appengine.ext.deferred.deferred._DEFAULT_URL + '/' + suffix[:200]
     kwargs["_url"] = kwargs.pop("_url", url)
     # kwargs["_queue"] = kwargs.pop("_queue", 'workersq')
     if is_production():
@@ -106,3 +101,13 @@ def defer(obj, *args, **kwargs):
         logger.info('Task already exists')
     except taskqueue.TombstonedTaskError:
         logger.info('Task did already run')
+
+
+def _to_str(value):
+    """Convert all datatypes to str"""
+    if isinstance(value, unicode):
+        ret = value.encode('ascii', 'ignore')
+    ret = str(value)
+    if len(ret) > 20:
+        ret = '{}...'.format(ret[:20])
+    return ret

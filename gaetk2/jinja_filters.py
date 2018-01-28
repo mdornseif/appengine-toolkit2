@@ -468,6 +468,7 @@ def _datastore_query(entity, attr):
             len(attr), attr, len(value), value),
         'kind': entity._get_kind()}
     return 'https://console.cloud.google.com/datastore/entities/query?' + urllib.urlencode(query)
+    # https://console.cloud.google.com/datastore/entities/query?project=hudoraexpress&ns=&kind=pay_Kontovorgang
 
 
 def register_custom_filters(jinjaenv):
