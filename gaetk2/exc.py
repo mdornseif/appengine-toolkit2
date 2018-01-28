@@ -49,3 +49,6 @@ __all__ = [
     'HTTP501_NotImplemented',
     'HTTP503_ServiceUnavailable'
 ]
+
+# acoid unwanted Information being pushed to Sentry
+HTTP302_Found.explanation = None

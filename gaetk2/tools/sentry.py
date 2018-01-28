@@ -55,6 +55,7 @@ if gaetkconfig.SENTRY_DSN:
     from raven.transport.http import HTTPTransport
 
     if gaetkconfig.SENTRY_DSN and not is_development():
+        # see https://docs.sentry.io/clients/python/advanced/
         sentry_client = raven.Client(
             gaetkconfig.SENTRY_DSN,
             # inform the client which parts of code are yours
@@ -68,6 +69,7 @@ if gaetkconfig.SENTRY_DSN:
                 'GAE_ENV': os.environ.get('GAE_ENV'),
             },
             exclude_paths=['cs', 'google'],
+            auto_log_stacks=True,
             # environment = 'staging'
             # TODO: study https://github.com/getsentry/raven-python/blob/master/raven/versioning.py
             # https://docs.sentry.io/clientdev/interfaces/repos/

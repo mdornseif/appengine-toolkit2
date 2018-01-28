@@ -58,6 +58,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                     logger.debug(
                         "Exception %r via %s %s %s", e, request.route,
                         request.route_args, request.route_kwargs)
+                    logger.debug('called from %s %s', self.__class__.__name__, self.__class__.__module__)
                     try:
                         # Try to handle it with a custom error handler.
                         rv = self.handle_exception(request, response, e)
@@ -110,9 +111,10 @@ class WSGIApplication(webapp2.WSGIApplication):
         # WSGIHTTPException come with some further explanations
         notedata = {}
         for attr in ['code', 'explanation', 'detail', 'comment', 'headers']:
-            if hasattr(e, attr):
+            if getattr(e, attr, None):
                 notedata[attr] = getattr(e, attr)
-        sentry_client.note('flow', message=u'HTTPException', data=notedata)
+        if notedata:
+            sentry_client.note('flow', message=u'HTTPException', data=notedata)
 
         handler = self.error_handlers.get(code)
         if handler:
@@ -127,9 +129,11 @@ class WSGIApplication(webapp2.WSGIApplication):
                 # which will be rendered directly to the client
                 # but if we have a `explanation` we really want to
                 # note that in Sentry:
-                if hasattr(e, 'explanation'):
+                if getattr(e, 'explanation', None):
+                    notedata.update(self.get_sentry_addon(request))
+                    # TODO: http-Headers etc are missing
                     sentry_client.captureMessage(
-                        'HTTP Exception: %s' % e.explanation,
+                        'HTTPException: %s' % e.explanation,
                         level='info',
                         tags={'httpcode': code, 'type': 'Exception'},
                         extra=notedata)

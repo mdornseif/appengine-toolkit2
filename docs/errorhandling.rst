@@ -299,6 +299,4 @@ record the exception to Sentry::
 
 .. note::
 
-* in gaetk2 the ``debug`` Parameter to :class:`WSGIApplication` is not used
-for enabling reporting of trackbacks to the client. Instead it is used for
-configuring :meth:`~gaetk2.handlers.base.BasicHandler.debug()`
+    * in gaetk2 the ``debug`` Parameter to :class:`WSGIApplication` is not used for enabling reporting of trackbacks to the client. Instead it is used for configuring :meth:`~gaetk2.handlers.base.BasicHandler.debug()`
