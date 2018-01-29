@@ -61,7 +61,7 @@ class AuthenticationReaderMixin(object):
                     "failed HTTP-Login from %s/%s %s %s %r %r", uid, self.request.remote_addr,
                     self.request.headers.get('Authorization'),
                     self.credential, self.credential.secret, secret.strip())
-                logging.info("Falsches credential oder kein secret")
+                logger.info("Falsches credential oder kein secret")
                 raise HTTP401_Unauthorized(
                     "Invalid HTTP-Auth Infomation",
                     headers={'WWW-Authenticate': 'Basic realm="API Login"'})
@@ -110,8 +110,10 @@ class AuthenticationReaderMixin(object):
         # X-AppEngine-QueueName
         # https://cloud.google.com/appengine/docs/standard/python/taskqueue/push/creating-handlers
         if self.request.headers.get('X-AppEngine-QueueName'):
-            self.credential = self.get_credential('X-AppEngine-Taskqueue-{}@auth.gaetk2.23.nu'.format(
-                self.request.headers.get('X-AppEngine-QueueName')))
+            uid = 'X-AppEngine-Taskqueue-{}@auth.gaetk2.23.nu'.format(
+                self.request.headers.get('X-AppEngine-QueueName'))
+            self.credential = models.gaetk_Credential.create(
+                id=uid, uid=uid, text='created automatically via gaetk2')
             return self._login_user('AppEngine')
 
         logger.info('user unauthenticated')
@@ -119,15 +121,15 @@ class AuthenticationReaderMixin(object):
     def _login_user(self, via, jwtinfo=None):
         """Ensure the system knows that a user has been logged in."""
         # user did not exist before but we have a validated jwt
-        logging.info('logging in via %s', via)
+        logger.info('logging in via %s', via)
         if not self.credential and jwtinfo:
             # create credential from JWT
             self.credential = allow_credential_from_jwt(jwtinfo)
-        if not self.credential:
-            # here we could redirect the user to a page
-            # explaining that we couldn't match the data
-            # given by him to our local database.
-            raise HTTP401_Unauthorized(explanation="Couldn't assign {} to a local user".format(jwtinfo))
+            if not self.credential:
+                # here we could redirect the user to a page
+                # explaining that we couldn't match the data
+                # given by him to our local database.
+                raise HTTP401_Unauthorized(explanation="Couldn't assign {} to a local user".format(jwtinfo))
 
         # ensure that users with empty password are never logged in
         if self.credential and not self.credential.secret:
@@ -175,6 +177,7 @@ class AuthenticationReaderMixin(object):
         """Read a credential from the database or return None."""
         cred = models.gaetk_Credential.get_by_id(username)
         if not cred:
+            logger.debug('could not get credential %r', username)
             # legacy, update from gaetk1
             import gaetk.handler
             cred1 = gaetk.handler._get_credential(username)
