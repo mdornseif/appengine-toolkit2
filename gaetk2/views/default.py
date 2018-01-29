@@ -11,13 +11,12 @@ import os
 
 import google.appengine.api.app_identity
 import google.appengine.api.memcache
-import google.appengine.ext.deferred.deferred
 
-from gaetk2.application import WSGIApplication
+import google.appengine.ext.deferred.deferred
+from gaetk2.application import Route, WSGIApplication
 from gaetk2.handlers import DefaultHandler
-from gaetk2.tools.config import get_version
-from gaetk2.tools.config import is_development
-from gaetk2.tools.config import is_production
+from gaetk2.tools.config import (get_release, get_revision, get_version,
+                                 is_development, is_production)
 
 
 class RobotTxtHandler(DefaultHandler):
@@ -48,8 +47,24 @@ class VersionHandler(DefaultHandler):
     """Version Handler - allows clients to see the git revision currently running."""
 
     def get(self):
-        """Returns the current Version."""
+        """Returns the current version."""
         self.return_text(get_version())
+
+
+class RevisionHandler(DefaultHandler):
+    """Version Handler - allows clients to see the git revision currently running."""
+
+    def get(self):
+        """Returns the current revision."""
+        self.return_text(get_revision())
+
+
+class ReleaseHandler(DefaultHandler):
+    """Version Handler - allows clients to see the git release currently running."""
+
+    def get(self):
+        """Returns the current release."""
+        self.return_text(get_release())
 
 
 class WarmupHandler(DefaultHandler):
@@ -75,8 +90,10 @@ class WarmupHandler(DefaultHandler):
 
 
 application = WSGIApplication([
-    (r'robots.txt$', RobotTxtHandler),
-    (r'version.txt$', VersionHandler),
-    (r'^/_ah/warmup$', WarmupHandler),
+    Route('/robots.txt', RobotTxtHandler),
+    Route('/version.txt', VersionHandler),
+    Route('/revision.txt', RevisionHandler),
+    Route('/release.txt', ReleaseHandler),
+    Route('/_ah/warmup', WarmupHandler),
     (r'^/_ah/queue/deferred.*', google.appengine.ext.deferred.deferred.TaskHandler),
 ])

@@ -31,6 +31,7 @@ App Engine Building Blocks
 
     development version
         like ``dev-md``. Postfixed by the developers username. Meant for development and testing. Usually deployed with the local copy of a master or feature branch. Available under names like ``dev-md-dot-application.appspot.com``.
+        Also versions staring with ``test`` will be considered development.
         Code can check via :func:`gaetk2.tools.config.is_development()` if running on a development version.
 
         Prior to pushing to `master` tests should be run against the deployed :term:`development version`.
@@ -40,3 +41,5 @@ App Engine Building Blocks
         Generally where we are using App Engine Modules/Services we try to run the same codebase on all Modules/Services to keep deployment and versioning in under control. We mostly use them to fine tune latency and instance size.
         When the :term:`production version` is deployed all services should be redeployed.
 
+    release number
+        The string used for the :term:`tagged version`. Also found in :file:`gaetk2-release.txt` and available via :func:`gaetk2.tools.config.get_release()`

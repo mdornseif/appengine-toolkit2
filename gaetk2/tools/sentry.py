@@ -13,8 +13,7 @@ import os
 
 from gaetk2.tools import hujson2
 from gaetk2.tools.config import config as gaetkconfig
-from gaetk2.tools.config import get_version
-from gaetk2.tools.config import is_development
+from gaetk2.tools.config import get_release, get_revision, is_development
 
 logger = logging.getLogger(__name__)
 sentry_client = None
@@ -58,8 +57,7 @@ if gaetkconfig.SENTRY_DSN:
         # see https://docs.sentry.io/clients/python/advanced/
         sentry_client = raven.Client(
             gaetkconfig.SENTRY_DSN,
-            # inform the client which parts of code are yours
-            release=get_version(),
+            release=get_release(),
             transport=HTTPTransport,
             tags={
                 'MODULE_ID': os.environ.get('CURRENT_MODULE_ID'),
@@ -67,6 +65,13 @@ if gaetkconfig.SENTRY_DSN:
                 'APPLICATION_ID': os.environ.get('APPLICATION_ID'),
                 'GAE_RUNTIME': os.environ.get('GAE_RUNTIME'),
                 'GAE_ENV': os.environ.get('GAE_ENV'),
+            },
+            repos={
+                'huExpress': {
+                    # the name of the repository as registered in Sentry
+                    'name': 'hudora/huExpress',
+                    'commit': get_revision()
+                }
             },
             exclude_paths=['cs', 'google'],
             auto_log_stacks=True,

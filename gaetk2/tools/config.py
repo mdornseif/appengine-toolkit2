@@ -6,8 +6,10 @@ gaetk2/tools/config.py - Configuration via appengine_config.py.
 Created by Maximillian Dornseif on 2017-05-25.
 Copyright (c) 2017, 2018 HUDORA. MIT licensed.
 """
+import logging
 import os
 import time
+import warnings
 
 from google.appengine.api import lib_config
 
@@ -48,19 +50,38 @@ gaetkconfig.TEMPLATE_DIRS.append(
 config = gaetkconfig
 
 
-def get_version():
-    """Get GIT-Version.
+def get_release():
+    """Get the :term:`tagged version` of the current deployment.
 
-    Returns the first line of version.txt.
+    Get the first line of `gaetk2-release.txt`.
+    """
+
+    try:
+        version = open('gaetk2-release.txt').readline().strip()
+    except IOError:
+        # if there is no version.txt file we return something fom the environment.
+        version = '{}-{}'.format(os.environ.get('CURRENT_VERSION_ID', 'dev'), time.time())
+    return version
+
+
+def get_version():
+    """Do not use this."""
+    warnings.warn("`get_version` is deprecated, use `get_release`", DeprecationWarning, stacklevel=2)
+    return get_release()
+
+
+def get_revision():
+    """Get the git SHA1 revision of the current deployment.
+
+    Get the first line of ` gaetk2-revision.txt`.
 
     When deploying we do something like `git show-ref --hash=7 HEAD > version.txt` just before
     `appcfg.py update`. This allows to retrive the data."""
 
     try:
-        version = open("version.txt").readline().strip()
+        version = open('gaetk2-revision.txt').readline().strip()
     except IOError:
-        # if there is no version.txt file we return something fom the environment.
-        version = '{}-{}'.format(os.environ.get('CURRENT_VERSION_ID', 'dev'), time.time())
+        version = 'HEAD'
     return version
 
 
@@ -83,9 +104,9 @@ def is_development():
     """Checks if we are running on a development system.
 
     See :term:`development version` what this means."""
+    name = os.environ.get('SERVER_NAME', '')
     return (os.environ.get('SERVER_SOFTWARE', '').startswith('Development') or
-            os.environ.get('SERVER_NAME', '').startswith('dev-'))
+            name.startswith('dev-') or name.startswith('test'))
 
 
-import logging
 logging.info("d=%s, p=%s", is_development(), is_production())
