@@ -32,6 +32,7 @@ from ..tools.config import config as gaetkconfig
 from ..tools.config import get_version
 from ..tools.config import is_development
 from ..tools.config import is_production
+from ..tools.sentry import sentry_client
 
 logger = logging.getLogger(__name__)
 _jinja_env_cache = None
@@ -504,14 +505,11 @@ class BasicHandler(webapp2.RequestHandler):
             method_name = webapp2._normalize_handler_method(request.method)
 
         method = getattr(self, method_name, None)
-        if not is_production():
-            if hasattr(self, '__class__'):
-                logger.debug(
-                    "%s %s(%s, %s)",
-                    method_name, self.__class__.__name__,
-                    ', '.join(request.route_args), request.route_kwargs)
-            else:
-                logger.debug("%s %s", method, self)
+        if hasattr(self, '__class__'):
+            sentry_client.tags_context({
+                'handler': self.__class__.__name__,
+                'method': method_name,
+            })
 
         if method is None:
             # 405 Method Not Allowed.

@@ -58,7 +58,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                     logger.debug(
                         "Exception %r via %s %s %s", e, request.route,
                         request.route_args, request.route_kwargs)
-                    logger.debug('called from %s %s', self.__class__.__name__, self.__class__.__module__)
+                    # logger.debug('called from %s %s', self.__class__.__name__, self.__class__.__module__)
                     try:
                         # Try to handle it with a custom error handler.
                         rv = self.handle_exception(request, response, e)
@@ -137,6 +137,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                         level='info',
                         tags={'httpcode': code, 'type': 'Exception'},
                         extra=notedata)
+                logging.debug("HTTP exception:", exc_info=True)
                 raise
 
     def default_exception_handler(self, request, response, exception):
@@ -192,7 +193,6 @@ class WSGIApplication(webapp2.WSGIApplication):
         addon = {}
 
         # Things worth considering
-        # request.app = None
         # request.route = None
         # request.route_args = None
         # request.route_kwargs = None
@@ -203,6 +203,9 @@ class WSGIApplication(webapp2.WSGIApplication):
         # request.path_url(): The URL including SCRIPT_NAME and PATH_INFO, but not QUERY_STRING
         # request.path(self): The path of the request, without host or query string
         # request.path_qs: The path of the request, without host but with query string
+
+        for attr in 'uri app route route_args route_kwargs query path_qs':
+            addon[attr] = request.get(attr)
 
         # interesting environment variables - see https://david-buxton-test.appspot.com/env#:
         for attr in ('REQUEST_ID_HASH INSTANCE_ID REQUEST_LOG_ID HTTP_X_CLOUD_TRACE_CONTEXT '
@@ -242,7 +245,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         status = 500
         level = 'error'
         fingerprint = None
-        tags = {}
+        tags = {'uri': request.uri}
 
         if isinstance(exception, Warning):
             level = 'warning'

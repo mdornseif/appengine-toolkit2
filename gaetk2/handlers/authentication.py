@@ -18,7 +18,6 @@ from google.appengine.api import users
 from jose import jwt
 
 from .. import models
-
 from ..exc import HTTP302_Found
 from ..exc import HTTP400_BadRequest
 from ..exc import HTTP401_Unauthorized
@@ -49,8 +48,9 @@ class AuthenticationReaderMixin(object):
             # If the Client send us invalid credentials, let him know , else parse into
             # username and password
             if ':' not in decoded:
-                raise HTTP400_BadRequest("invalid credentials %r" % decoded)
+                raise HTTP400_BadRequest(explanation="invalid credentials %r" % decoded)
             uid, secret = decoded.strip().split(':', 1)
+            logger.debug('HTTP-Auth attempted for %r', uid)
 
             self.credential = self.get_credential(uid or ' *invalid* ')
             if self.credential and self.credential.secret == secret.strip():
@@ -61,6 +61,7 @@ class AuthenticationReaderMixin(object):
                     "failed HTTP-Login from %s/%s %s %s %r %r", uid, self.request.remote_addr,
                     self.request.headers.get('Authorization'),
                     self.credential, self.credential.secret, secret.strip())
+                logging.info("Falsches credential oder kein secret")
                 raise HTTP401_Unauthorized(
                     "Invalid HTTP-Auth Infomation",
                     headers={'WWW-Authenticate': 'Basic realm="API Login"'})
@@ -88,8 +89,8 @@ class AuthenticationReaderMixin(object):
                 return self._login_user('Google User OpenID Connect')
 
         # 4. Check for session based login
-        logger.debug("session")
         if self.session.get('uid'):
+            logger.debug("trying session based login")
             self.credential = self.get_credential(self.session['uid'])
             if self.credential:
                 # We do not check the password because session storage is trusted
@@ -118,6 +119,7 @@ class AuthenticationReaderMixin(object):
     def _login_user(self, via, jwtinfo=None):
         """Ensure the system knows that a user has been logged in."""
         # user did not exist before but we have a validated jwt
+        logging.info('logging in via %s', via)
         if not self.credential and jwtinfo:
             # create credential from JWT
             self.credential = allow_credential_from_jwt(jwtinfo)
@@ -125,11 +127,11 @@ class AuthenticationReaderMixin(object):
             # here we could redirect the user to a page
             # explaining that we couldn't match the data
             # given by him to our local database.
-            raise HTTP401_Unauthorized("Couldn't assign {} to a local user".format(jwtinfo))
+            raise HTTP401_Unauthorized(explanation="Couldn't assign {} to a local user".format(jwtinfo))
 
         # ensure that users with empty password are never logged in
         if self.credential and not self.credential.secret:
-            raise HTTP401_Unauthorized("Account disabled")
+            raise HTTP401_Unauthorized(explanation="Account %s disabled" % self.credential.uid)
 
         if 'uid' not in self.session or self.session['uid'] != self.credential.uid:
             self.session['uid'] = self.credential.uid
@@ -218,7 +220,7 @@ def allow_credential_from_jwt(jwt):
 
 
 class AuthenticationRequiredMixin(AuthenticationReaderMixin):
-    """Class which adds authentication."""
+    """Class which adds authorisation."""
 
     def authentication_hook(self, method, *args, **kwargs):
         """Function to enforce that users `are authenticated."""
