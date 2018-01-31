@@ -66,13 +66,13 @@ if gaetkconfig.SENTRY_DSN:
                 'GAE_RUNTIME': os.environ.get('GAE_RUNTIME'),
                 'GAE_ENV': os.environ.get('GAE_ENV'),
             },
-            repos={
-                'huExpress': {
-                    # the name of the repository as registered in Sentry
-                    'name': 'hudora/huExpress',
-                    'commit': get_revision()
-                }
-            },
+            # repos={
+            #     'huExpress': {
+            #         # the name of the repository as registered in Sentry
+            #         'name': 'hudora/huExpress',
+            #         'commit': get_revision()
+            #     }
+            # },
             exclude_paths=['cs', 'google'],
             auto_log_stacks=True,
             # environment = 'staging'
