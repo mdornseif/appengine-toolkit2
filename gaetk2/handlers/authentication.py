@@ -21,7 +21,7 @@ from .. import models
 from ..exc import HTTP302_Found
 from ..exc import HTTP400_BadRequest
 from ..exc import HTTP401_Unauthorized
-from ..tools.config import config
+from ..tools.config import gaetkconfig
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class AuthenticationReaderMixin(object):
             # TODO: get public key
             userdata = jwt.decode(
                 token,
-                config.JWT_SECRET_KEY,
+                gaetkconfig.JWT_SECRET_KEY,
                 algorithms=unverified_header["alg"],
                 # audience=API_AUDIENCE,
                 # issuer="https://"+AUTH0_DOMAIN+"/"
@@ -115,6 +115,14 @@ class AuthenticationReaderMixin(object):
             self.credential = models.gaetk_Credential.create(
                 id=uid, uid=uid, text='created automatically via gaetk2')
             return self._login_user('AppEngine')
+        # 6. log in by Sentry bot
+        # see https://blog.sentry.io/2017/06/15/notice-of-address-change
+        if self.request.headers.get('X-Sentry-Token'):
+            if gaetkconfig.SENTRY_SECURITY_TOKEN:
+                if self.request.headers.get('X-Sentry-Token') == gaetkconfig.SENTRY_SECURITY_TOKEN:
+                    self.credential = self.get_credential('X-Sentry-Token@auth.gaetk2.23.nu')
+                    return self._login_user('Sentry')
+        # User-Agent', '').startswith('Slackbot-LinkExpanding 1.0
 
         logger.info('user unauthenticated')
 
