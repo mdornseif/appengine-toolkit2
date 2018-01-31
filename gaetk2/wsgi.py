@@ -28,12 +28,13 @@ def wrap_errorhandling(application):
     # We use a Sentry WSGI Middleware to catch erros which are not
     # handled by the framework. Usually higher layers should catch
     # and display errors.
+    import gaetk2.tools.sentry
     from gaetk2.tools.config import gaetkconfig
+    from raven.middleware import Sentry
+
     if not gaetkconfig.SENTRY_DSN:
         return application
-    from raven import Client
-    from raven.middleware import Sentry
-    return Sentry(application, Client(gaetkconfig.SENTRY_DSN))
+    return Sentry(application, gaetk2.tools.sentry.sentry_client)
 
 
 def wrap_session(application):
