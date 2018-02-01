@@ -19,7 +19,7 @@ from functools import update_wrapper
 _CacheInfo = namedtuple("CacheInfo", ["hits", "misses", "maxsize", "currsize"])
 
 
-def lru_cache(maxsize=64, typed=True, ttl=60 * 60 * 12):
+def lru_cache(maxsize=64, typed=False, ttl=60 * 60 * 12):
     """Least-recently-used cache decorator.
 
     Parameters:
@@ -184,7 +184,13 @@ def _make_key(args, kwds, typed,
               fasttypes={int, str, frozenset, type(None)},
               sorted=sorted, tuple=tuple, type=type, len=len):
     """Make a cache key from optionally typed positional and keyword arguments"""
-    key = args
+    if len(args) == 1:
+        if isinstance(args[0], list):
+            # this catches the common "list of strings"
+            key = [tuple(args[0])]
+    else:
+        key = args
+
     if kwds:
         sorted_items = sorted(kwds.items())
         key += kwd_mark
@@ -214,7 +220,7 @@ class lru_cache_memcache(object):
 
     """
 
-    def __init__(self, maxsize=8, typed=True, ttl=60 * 60 * 12):
+    def __init__(self, maxsize=8, typed=False, ttl=60 * 60 * 12):
         """
         If there are decorator arguments, the function
         to be decorated is not passed to the constructor!
