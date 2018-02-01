@@ -3,7 +3,7 @@
 DSL zur Beschreibung von REST-interfaces, angelehnt an https://gist.github.com/805540
 
 File created by Philipp Benjamin Koeppchen on 2011-02-23
-Copyright (c) 2011, 2013, 2016, 2017, 2017 HUDORA. MIT Licensed.
+Copyright (c) 2011, 2013, 2016, 2017, 2018 HUDORA. MIT Licensed.
 """
 
 import json
@@ -15,6 +15,7 @@ import sys
 import time
 import urlparse
 import xml.dom.minidom
+import codecs
 
 from collections import Counter
 from functools import partial
@@ -100,8 +101,8 @@ class TestClient(object):
         self.sessions = {None: requests.Session()}
         self.sessions[None].trust_env = False  # avoid reading .netrc!
         self.queue = []  # contains URLs to be checked, kwargs, and checks to be done
-        self.urlfile = open('.resttest-urls.txt', 'w')  # für JavaScript Tests
-        self.curlfile = open('.resttest-curl.txt', 'w')  # für JavaScript Tests
+        self.urlfile = codecs.open('.resttest-urls.txt', 'w', encoding='utf8')  # for JavaScript Tests
+        self.curlfile = codecs.open('.resttest-curl.txt', 'w', encoding='utf8')  # for Postman Tests
 
         for user in users:
             key, creds = user.split('=', 1)
