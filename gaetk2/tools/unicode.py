@@ -53,7 +53,7 @@ def de_umlaut(data):
                 data = data.replace(from_char, to_char)
             except UnicodeDecodeError:
                 data = data
-
+    # data = unidecode(data)
     data = unicodedata.normalize('NFKD', data)
 
     try:

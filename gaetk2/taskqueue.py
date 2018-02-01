@@ -16,6 +16,7 @@ from google.appengine.api import taskqueue
 from google.appengine.ext import deferred
 
 from .tools.config import is_production
+from .tools.unicode import slugify
 
 logger = logging.getLogger(__name__)
 
@@ -106,9 +107,9 @@ def defer(obj, *args, **kwargs):
 
 def _to_str(value):
     """Convert all datatypes to str"""
-    if isinstance(value, unicode):
-        ret = value.encode('ascii', 'ignore')
-    ret = str(value)
-    if len(ret) > 20:
-        ret = '{}...'.format(ret[:20])
-    return ret
+    if isinstance(value, basestring):
+        value = slugify(value)
+    value = str(value)
+    if len(value) > 20:
+        value = '{}...'.format(value[:20])
+    return value
