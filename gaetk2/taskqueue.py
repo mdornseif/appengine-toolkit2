@@ -108,7 +108,7 @@ def defer(obj, *args, **kwargs):
 def _to_str(value):
     """Convert all datatypes to str"""
     if isinstance(value, basestring):
-        value = slugify(value)
+        value = slugify(repr(value))
     value = str(value)
     if len(value) > 20:
         value = '{}...'.format(value[:20])
