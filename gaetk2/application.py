@@ -204,7 +204,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         # request.path(self): The path of the request, without host or query string
         # request.path_qs: The path of the request, without host but with query string
 
-        for attr in 'uri app route route_args route_kwargs query path_qs':
+        for attr in 'uri app route route_args route_kwargs query path_qs'.split():
             addon[attr] = request.get(attr)
 
         # interesting environment variables - see https://david-buxton-test.appspot.com/env#:
