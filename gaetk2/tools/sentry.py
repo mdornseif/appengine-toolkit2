@@ -13,7 +13,7 @@ import os
 
 from gaetk2.tools import hujson2
 from gaetk2.tools.config import config as gaetkconfig
-from gaetk2.tools.config import get_release, get_revision, is_development
+from gaetk2.tools.config import get_release, is_development
 
 logger = logging.getLogger(__name__)
 sentry_client = None
@@ -117,10 +117,10 @@ sentry_client.note = note
 
 def setup_logging():
     """Set up logging to sentry if Sentry is configured."""
-    if gaetkconfig.SENTRY_DSN:
+    if gaetkconfig.SENTRY_DSN and sentry_client.is_active:
         import raven.handlers.logging
         import raven.conf
         # Configure the default client
-        handler = raven.handlers.logging.SentryHandler(gaetkconfig.SENTRY_DSN)
+        handler = raven.handlers.logging.SentryHandler(sentry_client)
         handler.setLevel(logging.ERROR)
         raven.conf.setup_logging(handler)
