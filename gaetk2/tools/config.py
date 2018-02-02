@@ -6,7 +6,6 @@ gaetk2/tools/config.py - Configuration via appengine_config.py.
 Created by Maximillian Dornseif on 2017-05-25.
 Copyright (c) 2017, 2018 HUDORA. MIT licensed.
 """
-import logging
 import os
 import time
 import warnings
@@ -36,6 +35,7 @@ gaetkconfig = lib_config.register(
         APP_NAME='',
         SENTRY_DSN='',
         SENTRY_PUBLIC_DSN='',
+        SENTRY_SECURITY_TOKEN='',
     )
 )
 
@@ -107,6 +107,3 @@ def is_development():
     name = os.environ.get('SERVER_NAME', '')
     return (os.environ.get('SERVER_SOFTWARE', '').startswith('Development') or
             name.startswith('dev-') or name.startswith('test'))
-
-
-logging.info("d=%s, p=%s", is_development(), is_production())

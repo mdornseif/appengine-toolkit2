@@ -31,6 +31,7 @@ Features
 
    concepts.rst
    errorhandling.rst
+   aaa.rst
    frontend.rst
    howto.rst
    migration.rst

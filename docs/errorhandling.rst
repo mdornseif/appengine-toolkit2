@@ -142,8 +142,8 @@ file name is hardcoded.
 
 
 
-Push Error Information to Log Aggregator
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Push Error Information to Log Aggregator (Sentry)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Optionally Log information can be sent to Sentry for log aggregation.
 This automatically happens when a Sentry DSN (see below) is configured.
@@ -192,6 +192,7 @@ You want to log Javascript errors happening at the Client Side. Sentry and
 similar services offer that. gaetk2 allows easy integration.
 
 
+.. _sentry-configuration:
 Sentry Configuration
 --------------------
 

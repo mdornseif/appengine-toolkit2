@@ -17,7 +17,7 @@ Just ensure that you import the right WSGI Application::
     ....
     application = WSGIApplication([ ...
 
-Often you might ahve to replace `make_app` by
+Often you might have to replace `make_app` by
 :class:`~gaetk2.application.WSGIApplication`.
 
 With that you did the most important change. GAETK1 and GAETK2 get along quite well so you might leave it at that for a moment.
@@ -88,6 +88,15 @@ At the top of each module create a local logger instance::
 Then replace calls to :func:`logging.info()` et. al. with calls to
 ``logger.info()``  et. al.
 
+Change your views / handlers
+----------------------------
+
+.. todo::
+
+    * Replace `default_template_vars()` with `build_context()` - no `super()` calls necessary anymore.
+    * Authentication has changed significanty. `authchecker()` now handled by `pre_authentication_hook()`, `authentication_hook` and `authorisation_hook()`.
+    * if you used the `get_impl()` pattern to wrap your handler functions, you don't need that anymore. The often used `read_basedata()` can be moved into `method_preperation_hook()`.
+
 
 Migrate to Bootstrap 4
 ----------------------
@@ -98,7 +107,6 @@ general guidelines. See :ref:`frondend-guidelines` for the desired results.
 Usually you want to use ``{% extends "gaetk_base_bs4.html" %}``.
 
 Breadcrubs are now implemented by gaetk. See :ref:`breadcrumbs`.
-
 
 
 

@@ -102,13 +102,16 @@ class AuthenticationReaderMixin(object):
                 self._clear_session()
 
         # 5. Login for Google Special Calls from Cron & TaskQueue
-        # TODO: X-Appengine-Cron: true
+        # TODO:
         # x-appengine-user-is-admin
         # x-appengine-auth-domain
         # x-google-real-ip
+        # https://cloud.google.com/appengine/docs/standard/python/appidentity/
         # X-Appengine-Inbound-Appid
-        # X-AppEngine-QueueName
         # https://cloud.google.com/appengine/docs/standard/python/taskqueue/push/creating-handlers
+        # X-AppEngine-QueueName
+        # https://cloud.google.com/appengine/docs/standard/python/config/cron#securing_urls_for_cron
+        # X-Appengine-Cron: true
         if self.request.headers.get('X-AppEngine-QueueName'):
             uid = 'X-AppEngine-Taskqueue-{}@auth.gaetk2.23.nu'.format(
                 self.request.headers.get('X-AppEngine-QueueName'))
@@ -122,7 +125,6 @@ class AuthenticationReaderMixin(object):
                 if self.request.headers.get('X-Sentry-Token') == gaetkconfig.SENTRY_SECURITY_TOKEN:
                     self.credential = self.get_credential('X-Sentry-Token@auth.gaetk2.23.nu')
                     return self._login_user('Sentry')
-        # User-Agent', '').startswith('Slackbot-LinkExpanding 1.0
 
         logger.info('user unauthenticated')
 
