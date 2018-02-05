@@ -26,7 +26,7 @@ try:
 except:
     from gaetk2 import _gaesessions as gaesessions
 
-from .. import jinja_filters
+from .. import jinja_filters, exc
 from ..tools import hujson2
 from ..tools.config import config as gaetkconfig
 from ..tools.config import get_version
@@ -95,11 +95,12 @@ class BasicHandler(webapp2.RequestHandler):
 
         The following functions are called on all parent and sibling classes:
 
-        * meth:`pre_authentication_hook`.
-        * meth:`authentication_preflight_hook`.
-        * meth:`authentication_hook`.
-        * meth:`authorisation_hook`.
-        * meth:`method_preperation_hook`.
+        * :meth:`pre_authentication_hook`.
+        * :meth:`authentication_preflight_hook`.
+        * :meth:`authentication_hook`.
+        * :meth:`authorisation_hook`.
+        * :meth:`method_preperation_hook`.
+        * :meth:`finished_hook`.
 
         :meth:`build_context` and `add_jinja2env_globals` are special
         because the output is "chained".
@@ -332,6 +333,9 @@ class BasicHandler(webapp2.RequestHandler):
         """Function to transform response. To be overwritten."""
         return response
 
+    def finished_hook(self, method, *args, **kwargs):
+        """To be called at the end of an request."""
+
     def finished_overwrite(self, response, method, *args, **kwargs):
         """Function to allow logging etc. To be overwritten."""
         # not called when exceptions are raised
@@ -367,7 +371,10 @@ class BasicHandler(webapp2.RequestHandler):
                 # This needs jinja2 > Version 2.8
                 autoescape=jinja2.select_autoescape(['html', 'xml']),
             )
+
+            # unfortunately env.exception_handler seems not to be called
             env.exception_handler = self._jinja2_exception_handler
+
             jinja_filters.register_custom_filters(env)
             env.policies['json.dumps_function'] = hujson2.htmlsafe_json_dumps
             env = self._reduce_all_inherited('add_jinja2env_globals', env)
@@ -377,7 +384,8 @@ class BasicHandler(webapp2.RequestHandler):
 
     def _jinja2_exception_handler(self, traceback):
         """Is called during Jinja2 Exception processing to provide logging."""
-        logging.warning('exception_handler(%s)', traceback)
+        # see http://flask.pocoo.org/snippets/74/
+        logger.exception("Template Exception %s", traceback.render_as_text())
 
     def _render_to_fd(self, values, template_name, fd):
         """Sends the rendered content of a Jinja2 Template to Output.
@@ -464,7 +472,12 @@ class BasicHandler(webapp2.RequestHandler):
                 if callable(x):
                     if self.debug_hooks:
                         logger.debug("calling %s.%s(*%r, **%r)", cls, funcname, args, kwargs)
-                    x(*args, **kwargs)
+                    try:
+                        x(*args, **kwargs)
+                    except BaseException as e:
+                        if not isinstance(e, exc.HTTPException):
+                            logger.error("failure calling %s.%s(*%r, **%r)", cls, funcname, args, kwargs)
+                        raise
                 else:
                     logger.warn("not clallable: %r", x)
 
@@ -488,7 +501,11 @@ class BasicHandler(webapp2.RequestHandler):
                 if callable(x):
                     if self.debug_hooks:
                         logger.debug("reducing %s.%s(%r)", cls, funcname, ret)
-                    ret = x(ret)
+                    try:
+                        ret = x(ret)
+                    except:
+                        logger.debug("error reducing %s.%s(%r)", cls, funcname, ret)
+                        raise
                 else:
                     logger.warn("not callable: %r", x)
                 if ret is None:
@@ -542,6 +559,7 @@ class BasicHandler(webapp2.RequestHandler):
             assert isinstance(response, webapp2.Response)
 
         self._set_cache_headers()
+        self._call_all_inherited('finished_hook', method_name, *args, **kwargs)
         self.finished_overwrite(response, method, *args, **kwargs)
         return response
 
