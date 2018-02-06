@@ -86,9 +86,13 @@ def get_revision():
 
 
 def is_production():
-    """checks if we can assume to run on a production version machine"""
+    """checks if we can assume to run on a production version instande.
+
+    ... unless called by the resttest-client."""
     if is_development:
         return False
+    if os.environ.get('HTTP_USER_AGENT').startswith('resttest'):
+        return True
     elif os.environ.get('SERVER_NAME', '').startswith('production'):
         return True
     elif os.environ.get('SERVER_NAME', '').startswith('staging'):
@@ -98,7 +102,6 @@ def is_production():
         return False
     else:
         return True
-
 
 def is_development():
     """Checks if we are running on a development system.
