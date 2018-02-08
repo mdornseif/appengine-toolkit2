@@ -55,9 +55,15 @@ import urllib3
 # fixing botocore
 os.path.expanduser = lambda x: x
 
-# make python-requests play nice with AppEngine and
+# do not use 
+# requests_toolbelt.adapters.appengine.monkeypatch(validate_certificate=False)
+# because it breaks code like
+#    session = requests.session()
+#    session.mount('https://', appengine.AppEngineAdapter())
+#    return dropbox.Dropbox(access_token session=session)
+# But without that session mounting you would get ChunkedEncodingError.
+
 # suppress SSL warnings we can not do anything about
-requests_toolbelt.adapters.appengine.monkeypatch(validate_certificate=False)
 urllib3.disable_warnings()
 
 # incerase global HTTP-Timeout from 5 to 50 seconds
