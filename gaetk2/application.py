@@ -133,7 +133,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                     notedata.update(self.get_sentry_addon(request))
                     # TODO: http-Headers etc are missing
                     sentry_client.captureMessage(
-                        'HTTPException: %s' % e.explanation,
+                        'HTTPException {}: {}'.format(code, e.explanation),
                         level='info',
                         tags={'httpcode': code, 'type': 'Exception'},
                         extra=notedata)
