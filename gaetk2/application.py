@@ -203,6 +203,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         # request.path_url(): The URL including SCRIPT_NAME and PATH_INFO, but not QUERY_STRING
         # request.path(self): The path of the request, without host or query string
         # request.path_qs: The path of the request, without host but with query string
+        # see also https://docs.sentry.io/clientdev/interfaces/http/
 
         for attr in 'uri app route route_args route_kwargs query path_qs'.split():
             addon[attr] = request.get(attr)
@@ -318,11 +319,12 @@ class WSGIApplication(webapp2.WSGIApplication):
 
     def setup_logging(self, request, response):
         """Provide sentry early on with information from the context."""
+        env = request.environ
         sentry_client.user_context({
-            'ip_address': os.environ.get('REMOTE_ADDR'),
-            'email': os.environ.get('USER_EMAIL'),
-            'id': os.environ.get('USER_ID'),
-            'username': os.environ.get('USER_NICKNAME', os.environ.get('HTTP_X_APPENGINE_INBOUND_APPID')),
+            'ip_address': env.get('REMOTE_ADDR'),
+            'email': env.get('USER_EMAIL'),
+            'id': env.get('USER_ID'),
+            'username': env.get('USER_NICKNAME', env.get('HTTP_X_APPENGINE_INBOUND_APPID')),
             # USER_ORGANIZATION
         })
         # HTTP_X_APPENGINE_CRON   true
@@ -362,7 +364,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         varnames = 'CURRENT_NAMESPACE INBOUND_APPID QUEUENAME TASKRETRYREASON'
         for name in varnames.split():
             fullname = 'HTTP_X_APPENGINE_' + name
-            if os.environ.get(fullname):
+            if request.environ.get(fullname):
                 tags['GAE_' + name] = os.environ.get(fullname)
         sentry_client.tags_context(tags)
 
@@ -370,7 +372,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         varnames = 'TASKEXECUTIONCOUNT TASKNAME TASKRETRYCOUNT'
         for name in varnames.split():
             fullname = 'HTTP_X_APPENGINE_' + name
-            if os.environ.get(fullname):
+            if request.environ.get(fullname):
                 extra['GAE_' + name] = os.environ.get(fullname)
         sentry_client.extra_context(extra)
 

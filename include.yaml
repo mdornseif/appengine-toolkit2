@@ -8,10 +8,7 @@
 builtins:
 - remote_api: off
 - appstats: on
-- deferred: on
-# See also https://github.com/freshplanet/AppEngine-Deferred
-# for an alternative
-
+- deferred: off
 
 includes:
 - lib/site-packages/mapreduce/include.yaml
@@ -98,3 +95,4 @@ skip_files:
 - js_*/.*
 - lib/.*/site-packages
 - lib/site-packages/.*\.dist-info
+- lib/python*.*

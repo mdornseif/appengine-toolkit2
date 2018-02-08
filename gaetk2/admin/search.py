@@ -1,23 +1,19 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-gaetk2/admin/search.py
+gaetk2.admin.search - Searching in rgistered Models
 
 Created by Christian Klein on 2013-12-25.
-Copyright (c) 2013 HUDORA GmbH. All rights reserved.
+Copyright (c) 2013, 2018 HUDORA GmbH. All rights reserved.
 """
 import logging
 
 from google.appengine.api import search
 
-import gaetk.compat
-
 from gaetk.admin import autodiscover
-from gaetk.admin.util import get_app_name
-
 
 logger = logging.getLogger(__name__)
-INDEX_NAME = 'gaetk-admin'
+INDEX_NAME = 'gaetk2-admin'
 
 
 # Füllt site._registry und kümmert sich um das Importieren der Modelklassen
@@ -76,46 +72,40 @@ def perform_search(indexname, query_string, options=None):
 
 def add_to_index(key):
     """Füge Instanz dem Suchindex hinzu"""
-    obj = gaetk.compat.xdb_get(key)
+    obj = key.get()
     if obj is None:
         return
-    key = gaetk.compat.xdb_key(obj)
-    key_name = gaetk.compat.xdb_id_or_name(key)
-    skey = gaetk.compat.xdb_str_key(key)
-    kind = gaetk.compat.xdb_kind(obj)
+    kind = obj._get_kind()
 
-    # We have some very nasty problems with cyclic imports
-    # site registry depends on options and options depends
-    # on a lot of stuff which depends on the site registry
-    # admin = gaetk.admin.sites.site._registry.get(type(obj))
     # if hasattr(admin, 'searchdoc'):
     #     data = admin.searchdoc(obj)
 
     if hasattr(obj, 'as_dict'):
         data = obj.as_dict()
+    if hasattr(obj, 'to_dict'):
+        data = obj.to_dict()
     else:
-        key_name = gaetk.compat.xdb_id_or_name(key)
-        data = {'key_name': key_name}
+        data = {'key_name': key.id()}
 
     content = (value for value in data.itervalues() if isinstance(value, basestring))
 
     content = list(content)
     logger.debug(u'content: %s', content)
 
-    fields = [search.TextField(name='key', value=skey),
-              search.TextField(name='key_name', value=unicode(key_name)),
+    fields = [search.TextField(name='key', value=key.urlsafe()),
+              search.TextField(name='key_name', value=unicode(key.id())),
               search.TextField(name='str', value=unicode(obj)),
-              search.TextField(name='kind', value=gaetk.compat.xdb_kind(obj)),
-              search.TextField(name='app', value=get_app_name(obj)),
+              search.TextField(name='kind', value=kind),
+              # search.TextField(name='app', value=get_app_name(obj)),
               search.TextField(name='content', value=' '.join(term for term in content if term)),
               ]
 
-    document = search.Document(doc_id=skey, fields=fields)
+    document = search.Document(doc_id=key.urlsafe(), fields=fields)
     index = search.Index(name=INDEX_NAME)
     try:
         index.put(document)
     except search.Error:
-        logger.info(u'Fehler beim Hinzufügen von %s %s zum Suchindex', kind, skey)
+        logger.info(u'Fehler beim Hinzufügen von %s %s zum Suchindex', kind, key.urlsafe())
 
 
 def remove_from_index(key):
@@ -123,6 +113,6 @@ def remove_from_index(key):
 
     index = search.Index(name=INDEX_NAME)
     try:
-        index.delete(gaetk.compat.xdb_str_key(key))
+        index.delete(key.urlsafe())
     except search.Error:
         logger.info(u'Fehler beim Löschen von %s %s aus Suchindex', key.kind(), key)

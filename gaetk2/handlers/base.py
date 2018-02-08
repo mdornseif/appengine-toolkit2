@@ -385,6 +385,7 @@ class BasicHandler(webapp2.RequestHandler):
     def _jinja2_exception_handler(self, traceback):
         """Is called during Jinja2 Exception processing to provide logging."""
         # see http://flask.pocoo.org/snippets/74/
+        # here we still get the correct traceback information
         logger.exception("Template Exception %s", traceback.render_as_text())
 
     def _render_to_fd(self, values, template_name, fd):

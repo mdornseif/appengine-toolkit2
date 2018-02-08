@@ -325,13 +325,13 @@ def g2kg(value, spacer=u'\u202F', nonchar=u'␀'):
     if not value:
         return value
     elif value < 100:
-        return "{:d}{}g".format(value, spacer)
+        return u"{:d}{}g".format(value, spacer)
     elif value < 1000 * 50:
-        return "{:.2f}{}kg".format(value / 1000.0, spacer)
+        return u"{:.2f}{}kg".format(value / 1000.0, spacer)
     elif value < 1000 * 1000:
-        return "{:.1f}{}kg".format(value / 1000.0, spacer)
+        return u"{:.1f}{}kg".format(value / 1000.0, spacer)
     else:
-        return "{:.1f}{}t".format(value / 1000.0 ** 2, spacer)
+        return u"{:.1f}{}t".format(value / 1000.0 ** 2, spacer)
 
 
 def percent(value, nonchar=u'␀'):

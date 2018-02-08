@@ -103,6 +103,7 @@ def is_production():
     else:
         return True
 
+
 def is_development():
     """Checks if we are running on a development system.
 

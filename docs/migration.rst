@@ -96,7 +96,9 @@ Change your views / handlers
     * Replace `default_template_vars()` with `build_context()` - no `super()` calls necessary anymore.
     * Authentication has changed significanty. `authchecker()` now handled by `pre_authentication_hook()`, `authentication_hook` and `authorisation_hook()`.
     * if you used the `get_impl()` pattern to wrap your handler functions, you don't need that anymore. The often used `read_basedata()` can be moved into `method_preperation_hook()`.
-
+    * Replace `self.is_admin()` with `self.is_staff()` (or `self.is_sysadmin()`).
+    * ``<meta property="og:price:amount" content="{{ preis|euroword|attrencode }}" />``
+        to ``<meta property="og:price:amount" {{ {'content': preis|euroword}|xmlattr }} />``
 
 Migrate to Bootstrap 4
 ----------------------
