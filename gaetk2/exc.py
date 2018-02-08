@@ -52,3 +52,4 @@ __all__ = [
 
 # acoid unwanted Information being pushed to Sentry
 HTTP302_Found.explanation = None
+HTTP401_Unauthorized.explanation = None
