@@ -100,6 +100,13 @@ Change your views / handlers
     * ``<meta property="og:price:amount" content="{{ preis|euroword|attrencode }}" />``
         to ``<meta property="og:price:amount" {{ {'content': preis|euroword}|xmlattr }} />``
 
+Templates
+---------
+
+.. todo::
+
+    * Autoescaping
+
 Migrate to Bootstrap 4
 ----------------------
 
