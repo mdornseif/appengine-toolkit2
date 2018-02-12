@@ -123,7 +123,9 @@ class AuthenticationReaderMixin(object):
         if self.request.headers.get('X-Sentry-Token'):
             if gaetkconfig.SENTRY_SECURITY_TOKEN:
                 if self.request.headers.get('X-Sentry-Token') == gaetkconfig.SENTRY_SECURITY_TOKEN:
-                    self.credential = self.get_credential('X-Sentry-Token@auth.gaetk2.23.nu')
+                    uid = 'X-Sentry-Token@auth.gaetk2.23.nu'
+                    self.credential = models.gaetk_Credential.create(
+                        id=uid, uid=uid, text='created automatically via gaetk2')
                     return self._login_user('Sentry')
 
         logger.info('user unauthenticated')
@@ -144,6 +146,8 @@ class AuthenticationReaderMixin(object):
         # ensure that users with empty password are never logged in
         if self.credential and not self.credential.secret:
             raise HTTP401_Unauthorized(explanation="Account %s disabled" % self.credential.uid)
+
+        assert self.credential, 'unknown user via %r' % via
 
         if 'uid' not in self.session or self.session['uid'] != self.credential.uid:
             self.session['uid'] = self.credential.uid
@@ -213,6 +217,7 @@ class AuthenticationReaderMixin(object):
                 if (cred.email.endswith('@hudora.de') or cred.email.endswith('@cyberlogi.de')):
                     cred.staff = True
                     cred.put()
+
         return cred
 
 
