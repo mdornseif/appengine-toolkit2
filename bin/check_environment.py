@@ -28,9 +28,7 @@ tools = collections.OrderedDict([
     ('make --version', 'https://developer.apple.com/downloads/index.action'),
     ('npm bin', 'https://nodejs.org/en/'),
     ('yarn --version', 'brew install yarn'),
-    ('grunt --version', 'https://gruntjs.com/installing-grunt'),
     ('gcloud --version', 'https://cloud.google.com/sdk/downloads'),
-    ('premailer --version', 'gem install premailer ; gem install nokogiri'),
 ])
 
 for command, doc in tools.items():

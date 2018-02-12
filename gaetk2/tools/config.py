@@ -86,17 +86,17 @@ def get_revision():
 
 
 def is_production():
-    """checks if we can assume to run on a production version instande.
+    """checks if we can assume to run on a production version instance.
 
     ... unless called by the resttest-client."""
     if is_development:
         return False
     if os.environ.get('HTTP_USER_AGENT').startswith('resttest'):
-        return True
+        return False
     elif os.environ.get('SERVER_NAME', '').startswith('production'):
         return True
     elif os.environ.get('SERVER_NAME', '').startswith('staging'):
-        return False
+        return True
     elif (os.environ.get('SERVER_NAME', '').startswith('v') and
           os.environ.get('SERVER_NAME', '').endswith('appspot.com')):
         return False

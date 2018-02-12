@@ -36,18 +36,12 @@
 </div>
   <script src="https://cdn.ravenjs.com/3.20.0/raven.min.js"></script>
   <script>
-    // remove on static handler
     if ( '{{sentry_public_dsn}}' ) {
       Raven.showReportDialog({
         eventId: '{{sentry_event_id}}',
-        // use the public DSN (dont include your secret!)
         dsn: '{{sentry_public_dsn}}'
       })
     }
-  // add in static handler
-  /*
-    Raven.config(gaetk_sentry_dsn, {}).install()
-  */
   </script>
 </body>
 </html>

@@ -23,7 +23,7 @@ Often you might have to replace `make_app` by
 With that you did the most important change. GAETK1 and GAETK2 get along quite well so you might leave it at that for a moment.
 
 
-Change congiguration-files
+Change configuration-files
 --------------------------
 
 In :file:`app.yaml` make sure :file:`lib/appengine-toolkit2/include.yaml`
@@ -92,6 +92,7 @@ Change your views / handlers
 ----------------------------
 
 .. todo::
+
 
     * Replace `default_template_vars()` with `build_context()` - no `super()` calls necessary anymore.
     * Authentication has changed significanty. `authchecker()` now handled by `pre_authentication_hook()`, `authentication_hook` and `authorisation_hook()`.

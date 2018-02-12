@@ -29,7 +29,7 @@ except:
 from .. import jinja_filters, exc
 from ..tools import hujson2
 from ..tools.config import config as gaetkconfig
-from ..tools.config import get_version
+from ..tools.config import get_release
 from ..tools.config import is_development
 from ..tools.config import is_production
 from ..tools.sentry import sentry_client
@@ -268,7 +268,7 @@ class BasicHandler(webapp2.RequestHandler):
         env.globals.update(dict(
             gaetk_production=is_production(),
             gaetk_development=is_development(),
-            gaetk_version=get_version(),
+            gaetk_release=get_release(),
             gaetk_app_name=gaetkconfig.APP_NAME,
             gaetk_sentry_dsn=gaetkconfig.SENTRY_PUBLIC_DSN,
         ))
@@ -387,6 +387,7 @@ class BasicHandler(webapp2.RequestHandler):
         # see http://flask.pocoo.org/snippets/74/
         # here we still get the correct traceback information
         logger.exception("Template Exception %s", traceback.render_as_text())
+        sentry_client.captureException(exc_info=traceback.exc_info())
 
     def _render_to_fd(self, values, template_name, fd):
         """Sends the rendered content of a Jinja2 Template to Output.
