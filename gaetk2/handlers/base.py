@@ -387,7 +387,7 @@ class BasicHandler(webapp2.RequestHandler):
         # see http://flask.pocoo.org/snippets/74/
         # here we still get the correct traceback information
         logger.exception("Template Exception %s", traceback.render_as_text())
-        sentry_client.captureException(exc_info=traceback.exc_info())
+        sentry_client.captureException(exc_info=traceback.exc_info)
 
     def _render_to_fd(self, values, template_name, fd):
         """Sends the rendered content of a Jinja2 Template to Output.
