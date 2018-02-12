@@ -91,7 +91,7 @@ def is_production():
     ... unless called by the resttest-client."""
     if is_development():
         return False
-    if os.environ.get('HTTP_USER_AGENT').startswith('resttest'):
+    if os.environ.get('HTTP_USER_AGENT', '').startswith('resttest'):
         return False
     elif os.environ.get('SERVER_NAME', '').startswith('production'):
         return True
