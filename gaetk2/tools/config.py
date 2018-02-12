@@ -112,8 +112,9 @@ def is_development():
     return (os.environ.get('SERVER_SOFTWARE', '').startswith('Development') or
             name.startswith('dev-') or name.startswith('test'))
 
+
 def get_environment():
-    """rteturns `production`, `staging`, `testing` or `development`."""
+    """Returns `production`, `staging`, `testing` or `development`."""
     if os.environ.get('SERVER_NAME', '').startswith('production'):
         return 'production'
     elif os.environ.get('SERVER_NAME', '').startswith('staging'):

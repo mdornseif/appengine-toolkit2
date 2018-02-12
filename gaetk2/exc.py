@@ -57,4 +57,3 @@ HTTP303_SeeOther.explanation = None
 HTTP307_TemporaryRedirect.explanation = None
 HTTP401_Unauthorized.explanation = None
 HTTP403_Forbidden.explanation = None
-

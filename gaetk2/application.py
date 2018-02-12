@@ -181,7 +181,7 @@ class WSGIApplication(webapp2.WSGIApplication):
             handler()
 
     def get_sentry_addon(self, request):
-        """This tries to extract additional data from the request for Sentry.
+        """This tries to extract additional data from the request for Sentry after an Exception tootk place.
 
         Parameters:
             request: The Request Object
@@ -191,34 +191,6 @@ class WSGIApplication(webapp2.WSGIApplication):
         """
 
         addon = {}
-
-        # Things worth considering
-        # request.route = None
-        # request.route_args = None
-        # request.route_kwargs = None
-        # request.query/query_string)
-        # request.script_name/SCRIPT_NAME
-        # request.path_info / PATH_INFO
-        # request.application_url() = The URL including SCRIPT_NAME (no PATH_INFO or query string)
-        # request.path_url(): The URL including SCRIPT_NAME and PATH_INFO, but not QUERY_STRING
-        # request.path(self): The path of the request, without host or query string
-        # request.path_qs: The path of the request, without host but with query string
-        # see also https://docs.sentry.io/clientdev/interfaces/http/
-
-        for attr in 'uri app route route_args route_kwargs query path_qs'.split():
-            addon[attr] = request.get(attr)
-
-        # interesting environment variables - see https://david-buxton-test.appspot.com/env#:
-        for attr in ('REQUEST_ID_HASH INSTANCE_ID REQUEST_LOG_ID HTTP_X_CLOUD_TRACE_CONTEXT '
-                     'USER_IS_ADMIN USER_ORGANIZATION SERVER_SOFTWARE'
-                     'AUTH_DOMAIN'
-                     'PATH_TRANSLATED DEFAULT_VERSION_HOSTNAME'
-                     'HTTP_X_GOOGLE_APPS_METADATA SCRIPT_NAME PATH_INFO').split():
-            if attr in request.environ:
-                addon[attr] = request.environ.get(attr)
-
-        # Its not well documented how to structure the data for sentry
-        # https://gist.github.com/cgallemore/4507616
 
         # try to recover session information
         # current_session = gaesessions.Session(cookie_key=COOKIE_KEY)
@@ -259,7 +231,7 @@ class WSGIApplication(webapp2.WSGIApplication):
             status = 503  # Service Unavailable
             level = 'warning'
             # this propbably can be done smarter
-            fingerprint = [request.route]
+            # fingerprint = [request.route]
             tags = {'class': 'timeout', 'subsystem': 'appengine'}
         if isinstance(exception, google.appengine.runtime.apiproxy_errors.CancelledError):
             status = 504  # Gateway Time-out
@@ -271,11 +243,7 @@ class WSGIApplication(webapp2.WSGIApplication):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'class': 'timeout', 'subsystem': 'googlecloud'}
-        if isinstance(exception, google.appengine.runtime.DeadlineExceededError):
-            # Not to be confused with runtime.apiproxy_errors.DeadlineExceededError.
-            status = 504  # Gateway Time-out
-            level = 'warning'
-            tags = {'class': 'timeout', 'subsystem': 'google'}
+        # Datastore
         if isinstance(exception, google.appengine.api.datastore_errors.Timeout):
             status = 504  # Gateway Time-out
             level = 'warning'
@@ -284,10 +252,12 @@ class WSGIApplication(webapp2.WSGIApplication):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'subsystem': 'googlecloud', 'api': 'Datastore'}
+        # CloudSQL
         if isinstance(exception, google.storage.speckle.python.api.rdbms.OperationalError):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'subsystem': 'googlecloud', 'api': 'CloudSQL'}
+        # urlfetch
         if isinstance(exception, urllib3.exceptions.ProtocolError):
             if 'Connection aborted' in str(exception):
                 status = 504  # Gateway Time-out
@@ -302,6 +272,10 @@ class WSGIApplication(webapp2.WSGIApplication):
             status = 507  # Insufficient Storage  - passt jetzt nicht wie die Faust auf's Auge ...
             level = 'warning'
             tags = {'subsystem': 'urlfetch'}
+        if isinstance(exception, google.appengine.api.urlfetch_errors.InternalTransientError):
+            status = 503  # Service Unavailable
+            level = 'warning'
+            tags = {'class': 'transienterror', 'subsystem': 'urlfetch'}
         if isinstance(exception, google.appengine.api.urlfetch_errors.DeadlineExceededError):
             # raised if the URLFetch times out.
             status = 504  # Gateway Time-out
@@ -318,89 +292,76 @@ class WSGIApplication(webapp2.WSGIApplication):
         return status, level, fingerprint, tags
 
     def setup_logging(self, request, response):
-        """Provide sentry early on with information from the context."""
+        """Provide sentry early on with information from the context.
+
+        Called at the beginning of each request. Some information is already set
+        in `sentry.py` during initialisation."""
+
+        # Its not well documented how to structure the data for sentry
+        # https://gist.github.com/cgallemore/4507616
+
         env = request.environ
         sentry_client.user_context({
             'ip_address': env.get('REMOTE_ADDR'),
             'email': env.get('USER_EMAIL'),
             'id': env.get('USER_ID'),
             'username': env.get('USER_NICKNAME', env.get('HTTP_X_APPENGINE_INBOUND_APPID')),
-            # USER_ORGANIZATION
+            # HTTP_X_APPENGINE_CRON   true
+            # USER_ORGANIZATION USER_IS_ADMIN
         })
-        # HTTP_X_APPENGINE_CRON   true
 
-        # http_context
-        # 'cookies': dict(request.COOKIES),
-        # 'data': data,
-        # 'data': {},
-        # 'env': dict(get_environ(environ)
-        # 'env': dict(get_environ(request.environ)),
-        # 'headers': dict(get_headers(environ)),
-        # 'headers': dict(get_headers(request.environ)),
-        # 'method': request.method,
-        # 'method': request.method,
-        # 'query_string': '...',
-        # 'query_string': urlparts.query,
-        # 'url': '%s://%s%s' % (urlparts.scheme, urlparts.netloc, urlparts.path),
-        # 'url': '...',
-
-        # extra_context
-        # server_name => INSTANCE_ID,
+        # see https://docs.sentry.io/clientdev/interfaces/user/
+        extra = {}
+        for name in 'HTTP_REFERER HTTP_USER_AGENT'.split():
+            if os.environ.get(name):
+                extra[name] = os.environ.get(name)
+        for name in 'TASKEXECUTIONCOUNT TASKNAME TASKRETRYCOUNT'.split():
+            fullname = 'HTTP_X_APPENGINE_' + name
+            if os.environ.get(fullname):
+                extra['GAE_' + name] = os.environ.get(fullname)
+        for attr in 'uri app route route_args route_kwargs'.split():
+            extra[attr] = request.get(attr)
+        sentry_client.extra_context(extra)
         # server_name: the hostname of the server
         # os.environ.get('SERVER_NAME', '')
+        # data[:release] = @release if @release
+        # data[:modules] = @modules if @modules
+        # if not data.get('level'):
+        # if not data.get('modules'):
+        # data['release'] = self.release
+        # data['culprit'] = culprit
+        # self.repos = self._format_repos(o.get('repos'))
 
-        # sentry_client.setTagsContext({
-        #     environment: "production"
-        # })
+        http = {
+            'url': request.url,
+            # 'query_string': request.query_string, - read by reaven vrom the environment
+            # 'method': request.method, - read by reaven vrom the environment
+            'cookies': request.cookies,
+            'headers': request.headers,
+            'env': request.environ,
+            # data - to slow & risky to read
+
+        }
+        # see also https://docs.sentry.io/clientdev/interfaces/http/
+        # https://docs.pylonsproject.org/projects/webob/en/stable/api/request.html
+        sentry_client.http_context(http)
+
         # some are set in sentry.py
         tags = {
-            # environment: 'production'
             # 'git_commit': 'c0deb10c4'
         }
-        # DEFAULT_VERSION_HOSTNAME    david-buxton-test.appspot.com
         # HTTP_X_CLOUD_TRACE_CONTEXT  301334dd3fca3fe29d8625c3a3a115f7/13580140575625565538;o=1
         # REQUEST_ID_HASH 7DB846CB    <type 'str'>
         # REQUEST_LOG_ID  5a5f0ce100ff0c90937db846cb0001737e6412d332d6733343630326234000100
+        # INSTANCE_ID
+        # SERVER_SOFTWARE
+        # AUTH_DOMAIN
+        # PATH_TRANSLATED SCRIPT_NAME PATH_INFO
+        # HTTP_X_GOOGLE_APPS_METADATA
+        # interesting environment variables - see https://david-buxton-test.appspot.com/env#:
         varnames = 'CURRENT_NAMESPACE INBOUND_APPID QUEUENAME TASKRETRYREASON'
         for name in varnames.split():
             fullname = 'HTTP_X_APPENGINE_' + name
             if request.environ.get(fullname):
                 tags['GAE_' + name] = os.environ.get(fullname)
         sentry_client.tags_context(tags)
-
-        extra = {}
-        varnames = 'TASKEXECUTIONCOUNT TASKNAME TASKRETRYCOUNT'
-        for name in varnames.split():
-            fullname = 'HTTP_X_APPENGINE_' + name
-            if request.environ.get(fullname):
-                extra['GAE_' + name] = os.environ.get(fullname)
-        sentry_client.extra_context(extra)
-
-        http = {}
-        # 'url': '%s://%s%s' % (urlparts.scheme, urlparts.netloc, urlparts.path),
-        # 'query_string': urlparts.query,
-        # 'method': request.method,
-        # 'data': data,
-        # 'headers': dict(get_headers(request.environ)),
-        # 'env': dict(get_environ(request.environ)),
-        varnames = 'HTTP_REFERER HTTP_USER_AGENT REQUEST_METHOD'
-        for name in varnames.split():
-            if os.environ.get(name):
-                extra[name] = os.environ.get(name)
-        sentry_client.http_context(http)
-
-        # extra={
-        # 'args': args,
-        # 'kwargs': kwargs,
-        # 'app': app,
-        # },
-        # data['tags'].setdefault('site', settings.SITE_ID)
-        # data[:server_name] = @server_name if @server_name
-        # data[:release] = @release if @release
-        # data[:modules] = @modules if @modules
-        # if not data.get('level'):
-        # if not data.get('modules'):
-        # data['release'] = self.release
-        # data['environment'] = self.environment
-        #     data['culprit'] = culprit
-        # self.repos = self._format_repos(o.get('repos'))
