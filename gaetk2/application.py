@@ -167,7 +167,9 @@ class WSGIApplication(webapp2.WSGIApplication):
                 # set sentry_event_id for GetSentry User Feedback
                 template = fileobj.read().decode('utf-8')
                 template = template.replace(u"'{{sentry_event_id}}'", u"'%s'" % event_id)
-                template = template.replace(u"'{{sentry_public_dsn}}'", u"'%s'" % gaetkconfig.SENTRY_PUBLIC_DSN)
+                template = template.replace(
+                    u"'{{sentry_public_dsn}}'",
+                    u"'%s'" % gaetkconfig.SENTRY_PUBLIC_DSN)
                 template = template.replace(u"{{exception_text}}", jinja2.escape(u"%s" % exception))
                 response.clear()
                 response.out.body = template.encode('utf-8')

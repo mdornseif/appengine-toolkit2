@@ -89,7 +89,7 @@ def is_production():
     """checks if we can assume to run on a production version instance.
 
     ... unless called by the resttest-client."""
-    if is_development:
+    if is_development():
         return False
     if os.environ.get('HTTP_USER_AGENT').startswith('resttest'):
         return False

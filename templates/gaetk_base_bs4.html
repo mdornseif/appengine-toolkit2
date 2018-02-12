@@ -107,6 +107,18 @@ body {
 
     <!-- Begin page content -->
     <div id="bs4container" class="container-fluid gaetk_content">{% block content %}
+
+    {% if breadcrumbs and breadcrumbs|length > 1 %}
+      <nav id="gaetkbreadcrumbs" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          {% for b in breadcrumbs[:-1] %}
+            <li class="breadcrumb-item"><a href="{{ b.1 }}">{{ b.0 }}</a></li>
+          {% endfor %}
+          <li class="breadcrumb-item active" aria-current="page">{{ breadcrumbs[-1].0 }}</li>
+        </ol>
+      </nav>
+      {% endif %}
+
       <header class="row">
         {% block title %}<div class="col"><h1>{{ title }}</h1></div>{% endblock title %}
       </header>
@@ -131,7 +143,7 @@ body {
 {% if gaetk_production and gaetk_sentry_dsn %}
     <script src="https://cdn.ravenjs.com/3.20.1/raven.min.js" crossorigin="anonymous"></script>
     Raven.config(gaetk_sentry_dsn, {
-      release: '{{ gaetk_version }}',
+      release: '{{ gaetk_release }}',
       ignoreUrls: [/http:\/\/dev-.*\.appspot\.com\/.*/]
     }).install()
 {% endif %}
