@@ -111,3 +111,16 @@ def is_development():
     name = os.environ.get('SERVER_NAME', '')
     return (os.environ.get('SERVER_SOFTWARE', '').startswith('Development') or
             name.startswith('dev-') or name.startswith('test'))
+
+def get_environment():
+    """rteturns `production`, `staging`, `testing` or `development`."""
+    if os.environ.get('SERVER_NAME', '').startswith('production'):
+        return 'production'
+    elif os.environ.get('SERVER_NAME', '').startswith('staging'):
+        return 'staging'
+    elif (os.environ.get('SERVER_NAME', '').startswith('v') and
+          os.environ.get('SERVER_NAME', '').endswith('appspot.com')):
+        return 'testing'
+    elif os.environ.get('SERVER_NAME', '').startswith('test'):
+        return 'test'
+    return 'development'

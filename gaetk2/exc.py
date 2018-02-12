@@ -54,5 +54,7 @@ __all__ = [
 HTTP301_Moved.explanation = None
 HTTP302_Found.explanation = None
 HTTP303_SeeOther.explanation = None
+HTTP307_TemporaryRedirect.explanation = None
 HTTP401_Unauthorized.explanation = None
+HTTP403_Forbidden.explanation = None
 

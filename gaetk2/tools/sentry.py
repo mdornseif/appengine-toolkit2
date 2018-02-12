@@ -13,7 +13,7 @@ import os
 
 from gaetk2.tools import hujson2
 from gaetk2.tools.config import config as gaetkconfig
-from gaetk2.tools.config import get_release, is_development
+from gaetk2.tools.config import get_release, is_development, get_environment
 
 logger = logging.getLogger(__name__)
 sentry_client = None
@@ -66,6 +66,7 @@ if gaetkconfig.SENTRY_DSN:
                 'GAE_RUNTIME': os.environ.get('GAE_RUNTIME'),
                 'GAE_ENV': os.environ.get('GAE_ENV'),
             },
+            # This results in crashes
             # repos={
             #     'huExpress': {
             #         # the name of the repository as registered in Sentry
@@ -73,10 +74,6 @@ if gaetkconfig.SENTRY_DSN:
             #         'commit': get_revision()
             #     }
             # },
-            exclude_paths=['cs', 'google'],
-            auto_log_stacks=True,
-            # environment = 'staging'
-            # TODO: study https://github.com/getsentry/raven-python/blob/master/raven/versioning.py
             # https://docs.sentry.io/clientdev/interfaces/repos/
             # this results in `ImportError: Import by filename is not supported`:
             # repos={
@@ -85,6 +82,10 @@ if gaetkconfig.SENTRY_DSN:
             #         'name': 'mdornseif/appengine-toolkit2',
             #     }
             # }
+            exclude_paths=['cs', 'google'],
+            auto_log_stacks=True,
+            environment=get_environment(),
+            # TODO: study https://github.com/getsentry/raven-python/blob/master/raven/versioning.py
             # # ignore_exceptions = ['Http404', ValueError, ]
         )
         sentry_client.is_active = True
