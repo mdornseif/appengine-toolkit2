@@ -75,15 +75,15 @@ def _unknown_handler(value):
     raise TypeError("%s(%s)" % (type(value), value))
 
 
-def dump(val, fd, indent=' '):
+def dump(val, fd, indent=' ', sort_keys=True):
     """Dump `val` into `fd` encoded as JSON."""
-    json.dump(val, fd, sort_keys=True, indent=bool(indent), ensure_ascii=True,
+    json.dump(val, fd, sort_keys=sort_keys, indent=bool(indent), ensure_ascii=True,
               default=_unknown_handler)
 
 
-def dumps(val, indent=' '):
+def dumps(val, indent=' ', sort_keys=True):
     """Return a JSON string containing encoded `val`."""
-    return json.dumps(val, sort_keys=True, indent=bool(indent), ensure_ascii=True,
+    return json.dumps(val, sort_keys=sort_keys, indent=bool(indent), ensure_ascii=True,
                       default=_unknown_handler)
 
 
