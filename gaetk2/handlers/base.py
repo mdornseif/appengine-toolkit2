@@ -478,7 +478,7 @@ class BasicHandler(webapp2.RequestHandler):
                         x(*args, **kwargs)
                     except BaseException as e:
                         if not isinstance(e, exc.HTTPException):
-                            logger.error("failure calling %s.%s(*%r, **%r)", cls, funcname, args, kwargs)
+                            logger.exception("failure calling %s.%s(*%r, **%r)", cls, funcname, args, kwargs)
                         raise
                 else:
                     logger.warn("not clallable: %r", x)
