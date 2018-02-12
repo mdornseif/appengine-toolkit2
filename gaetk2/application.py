@@ -176,8 +176,6 @@ class WSGIApplication(webapp2.WSGIApplication):
         else:
             # On development servers display a nice traceback via `cgitb`.
             logger.info(u"not pushing to sentry, cgitb()")
-            logger.debug(u"SERVER_SOFTWARE %r", os.environ.get('SERVER_SOFTWARE', ''))
-            logger.debug(u"SERVER_NAME %r", os.environ.get('SERVER_NAME', ''))
             response.clear()
             handler = cgitb.Hook(file=response.out).handle
             handler()

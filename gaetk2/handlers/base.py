@@ -102,8 +102,7 @@ class BasicHandler(webapp2.RequestHandler):
         * :meth:`method_preperation_hook`.
         * :meth:`finished_hook`.
 
-        :meth:`build_context` and `add_jinja2env_globals` are special
-        because the output is "chained".
+        :meth:`build_context` is special because the output is "chained".
         So the rendering is done with something like the output of
         ``Child.build_context(Parent.build_context(MixIn.build_context({})))``
 
@@ -204,10 +203,9 @@ class BasicHandler(webapp2.RequestHandler):
             template_name (str): name of the template to render.
 
         See also:
-            :meth:`add_jinja2env_globals()` and :meth:`build_context()`
-            both also provide data to the template context and are often
-            extended by plugins. See :class:`BasicHandler` docsting for
-            standard template variables.
+            :meth:`build_context()`also provides data to the template
+            context and is often extended by plugins. See
+            :class:`BasicHandler` docsting for standard template variables.
         """
         start = time.time()
         self._render_to_fd(values, template_name, self.response.out)
@@ -251,11 +249,10 @@ class BasicHandler(webapp2.RequestHandler):
         ret.update(values)
         return ret
 
-    def add_jinja2env_globals(self, env):
+    def _add_jinja2env_globals(self, env):
         """Helper to provide additional Globals to Jinja2 Environment.
 
         This should be considered one time initialisation.
-        Will be called on all Parents and MixIns, no `super()` needed.
 
         Example::
             env.globals['bottommenuurl'] = '/admin/'
@@ -372,20 +369,21 @@ class BasicHandler(webapp2.RequestHandler):
                 autoescape=jinja2.select_autoescape(['html', 'xml']),
             )
 
-            # unfortunately env.exception_handler seems not to be called
             env.exception_handler = self._jinja2_exception_handler
 
             jinja_filters.register_custom_filters(env)
             env.policies['json.dumps_function'] = hujson2.htmlsafe_json_dumps
-            env = self._reduce_all_inherited('add_jinja2env_globals', env)
+            env = self._add_jinja2env_globals(env)
             _jinja_env_cache = env
 
         return _jinja_env_cache
 
     def _jinja2_exception_handler(self, traceback):
         """Is called during Jinja2 Exception processing to provide logging."""
+        global _jinja_env_cache
         # see http://flask.pocoo.org/snippets/74/
-        # here we still get the correct traceback information
+        # here we still get the correct traceback information, it will be discarded later on
+        logger.info('Template globals = %s', getattr(_jinja_env_cache, 'globals', None))
         logger.exception("Template Exception %s", traceback.render_as_text())
         sentry_client.captureException(exc_info=traceback.exc_info)
 
@@ -400,8 +398,9 @@ class BasicHandler(webapp2.RequestHandler):
         except jinja2.TemplateNotFound:
             # better error reporting - we want to see the name of the base template
             raise jinja2.TemplateNotFound(template_name)
-        except jinja2.TemplateAssertionError:
+        except (jinja2.TemplateAssertionError, jinja2.TemplateRuntimeError):
             # better logging
+            logger.debug("values=%r", values)
             logger.debug("env=%r", env)
             logger.debug("env.globals=%r", env.globals)
             logger.debug("env.filters=%r", env.filters)
