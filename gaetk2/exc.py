@@ -58,3 +58,4 @@ HTTP307_TemporaryRedirect.explanation = None
 HTTP401_Unauthorized.explanation = None
 HTTP403_Forbidden.explanation = None
 HTTP404_NotFound.explanation = None
+HTTP405_HTTPMethodNotAllowed.explanation = None

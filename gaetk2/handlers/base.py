@@ -78,6 +78,8 @@ class BasicHandler(webapp2.RequestHandler):
 
         * :index:`request <Template Context; request>`
         * :index:`credential <Template Context; credential>`
+        * :index:`is_staff <Template Context; is_staff>`
+        * :index:`is_sysadmin <Template Context; is_sysadmin>`
         * :index:`gaetk_production <Template Context; gaetk_production>`
         * :index:`gaetk_development <Template Context; gaetk_development>`
         * :index:`gaetk_app_name <Template Context; gaetk_app_name>`
@@ -100,7 +102,7 @@ class BasicHandler(webapp2.RequestHandler):
         * :meth:`authentication_hook`.
         * :meth:`authorisation_hook`.
         * :meth:`method_preperation_hook`.
-        * :meth:`finished_hook`.
+        * :meth:`finished_hook` - called even if a :exc:`exc.HTTPException` < 500 occurs.
 
         :meth:`build_context` is special because the output is "chained".
         So the rendering is done with something like the output of
@@ -245,6 +247,8 @@ class BasicHandler(webapp2.RequestHandler):
             request=self.request,
             credential=self.credential,
             gaetk_logout_url='/gaetk2/auth/logout',
+            is_staff=self.is_staff(),
+            is_sysadmin=self.is_sysadmin(),
         )
         ret.update(values)
         return ret
@@ -554,8 +558,14 @@ class BasicHandler(webapp2.RequestHandler):
             self._call_all_inherited('method_preperation_hook', method_name, *args, **kwargs)
             response = method(*args, **kwargs)
             response = self.response_overwrite(response, method, *args, **kwargs)
+        except exc.HTTPException as e:
+            # for HTTP exceptions execute `finished_hooks`
+            if c.code < 500:
+                self._call_all_inherited('finished_hook', method_name, *args, **kwargs)
+            return self.handle_exception(e, self.app.debug)
         except BaseException, e:
             return self.handle_exception(e, self.app.debug)
+
         if response:
             assert isinstance(response, webapp2.Response)
 
