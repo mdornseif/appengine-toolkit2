@@ -560,7 +560,7 @@ class BasicHandler(webapp2.RequestHandler):
             response = self.response_overwrite(response, method, *args, **kwargs)
         except exc.HTTPException as e:
             # for HTTP exceptions execute `finished_hooks`
-            if c.code < 500:
+            if e.code < 500:
                 self._call_all_inherited('finished_hook', method_name, *args, **kwargs)
             return self.handle_exception(e, self.app.debug)
         except BaseException, e:
