@@ -173,7 +173,7 @@ class AuthenticationReaderMixin(object):
             self.session.get('login_time'),
             getattr(self.session, 'sid', '?'))
         sentry_client.user_context({
-            'email': env.get('USER_EMAIL'),
+            'email': os.environ.get('USER_EMAIL'),
             'id': self.credential.uid,
             'username': self.credential.name,
             # HTTP_X_APPENGINE_CRON   true
