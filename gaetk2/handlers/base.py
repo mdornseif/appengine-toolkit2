@@ -405,9 +405,8 @@ class BasicHandler(webapp2.RequestHandler):
         except (jinja2.TemplateAssertionError, jinja2.TemplateRuntimeError):
             # better logging
             logger.debug("values=%r", values)
-            logger.debug("env=%r", env)
-            logger.debug("env.globals=%r", env.globals)
-            logger.debug("env.filters=%r", env.filters)
+            logger.debug("env.globals=%r", env.globals.keys())
+            logger.debug("env.filters=%r", env.filters.keys())
             raise
 
         # to collect template variables from all Parent-Classes and MisIns.

@@ -82,7 +82,7 @@ if gaetkconfig.SENTRY_DSN:
             #         'name': 'mdornseif/appengine-toolkit2',
             #     }
             # }
-            exclude_paths=['cs', 'google'],
+            exclude_paths=['google', 'raven', 'logging', 'site-packages'],
             auto_log_stacks=True,
             environment=get_environment(),
             # TODO: study https://github.com/getsentry/raven-python/blob/master/raven/versioning.py
