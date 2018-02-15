@@ -341,13 +341,6 @@ class BasicHandler(webapp2.RequestHandler):
         """Function to allow logging etc. To be overwritten."""
         # not called when exceptions are raised
 
-        # simple sample implementation: check compliance for headers/wsgiref
-        for name, val in self.response.headers.items():
-            if not (isinstance(name, basestring) and isinstance(val, basestring)):
-                logger.error(
-                    "Header names and values must be strings: {%r: %r} in %s(%r, %r) => %r",
-                    name, val, method, args, kwargs, response)
-
     def clear_session(self):
         """Terminate the session reliably."""
         logger.info("clearing session")

@@ -73,6 +73,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                         response = self._internal_error(e)
 
                 try:
+                    self.fix_unicode_headers(response)
                     return response(environ, start_response)
                 except BaseException as e:
                     logger.info('_internal_error')
@@ -365,3 +366,8 @@ class WSGIApplication(webapp2.WSGIApplication):
             if request.environ.get(fullname):
                 tags['GAE_' + name] = os.environ.get(fullname)
         sentry_client.tags_context(tags)
+
+    def fix_unicode_headers(self, response):
+        """Ensure all Headers are Unicode."""
+        for name, val in response.headers.items():
+            response.headers[str(name)] = str(val)
