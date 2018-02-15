@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.handlers.authentication
 
 AuthenticationReaderMixin - Authentication MixIns for gaetk2.
 
 Created by Maximillian Dornseif on 2010-10-03.
-Copyright (c) 2010-2017 HUDORA. MIT licensed.
+Copyright (c) 2010-2018 HUDORA. MIT licensed.
 """
 import datetime
 import logging
@@ -18,10 +18,10 @@ from google.appengine.api import users
 from jose import jwt
 
 from .. import models
-from ..exc import HTTP302_Found
-from ..exc import HTTP400_BadRequest
-from ..exc import HTTP401_Unauthorized
+from ..exc import HTTP302_Found, HTTP400_BadRequest, HTTP401_Unauthorized
 from ..tools.config import gaetkconfig
+from ..tools.sentry import sentry_client
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class AuthenticationReaderMixin(object):
             # If the Client send us invalid credentials, let him know , else parse into
             # username and password
             if ':' not in decoded:
-                raise HTTP400_BadRequest(explanation="invalid credentials %r" % decoded)
+                raise HTTP400_BadRequest(explanation='invalid credentials %r' % decoded)
             uid, secret = decoded.strip().split(':', 1)
             logger.debug('HTTP-Auth attempted for %r', uid)
 
@@ -58,12 +58,12 @@ class AuthenticationReaderMixin(object):
                 return self._login_user('HTTP')
             else:
                 logger.error(
-                    "failed HTTP-Login from %s/%s %s %s %r %r", uid, self.request.remote_addr,
+                    'failed HTTP-Login from %s/%s %s %s %r %r', uid, self.request.remote_addr,
                     self.request.headers.get('Authorization'),
                     self.credential, self.credential.secret, secret.strip())
-                logger.info("Falsches credential oder kein secret")
+                logger.info('Falsches credential oder kein secret')
                 raise HTTP401_Unauthorized(
-                    "Invalid HTTP-Auth Infomation",
+                    'Invalid HTTP-Auth Infomation',
                     headers={'WWW-Authenticate': 'Basic realm="API Login"'})
 
         # 2. Check for valid Authentication via JWT
@@ -74,7 +74,7 @@ class AuthenticationReaderMixin(object):
             userdata = jwt.decode(
                 token,
                 gaetkconfig.JWT_SECRET_KEY,
-                algorithms=unverified_header["alg"],
+                algorithms=unverified_header['alg'],
                 # audience=API_AUDIENCE,
                 # issuer="https://"+AUTH0_DOMAIN+"/"
             )
@@ -90,14 +90,14 @@ class AuthenticationReaderMixin(object):
 
         # 4. Check for session based login
         if self.session.get('uid'):
-            logger.debug("trying session based login")
+            logger.debug('trying session based login')
             self.credential = self.get_credential(self.session['uid'])
             if self.credential:
                 # We do not check the password because session storage is trusted
                 return self._login_user('session')
             else:
                 logger.warn(
-                    "No Credential for Session: %s. Progressing unauthenticated",
+                    'No Credential for Session: %s. Progressing unauthenticated',
                     self.session.get('uid'))
                 self._clear_session()
 
@@ -145,7 +145,7 @@ class AuthenticationReaderMixin(object):
 
         # ensure that users with empty password are never logged in
         if self.credential and not self.credential.secret:
-            raise HTTP401_Unauthorized(explanation="Account %s disabled" % self.credential.uid)
+            raise HTTP401_Unauthorized(explanation='Account %s disabled' % self.credential.uid)
 
         assert self.credential, 'unknown user via %r' % via
 
@@ -167,12 +167,19 @@ class AuthenticationReaderMixin(object):
                 # fake email-address
                 os.environ['USER_EMAIL'] = '%s@auth.gaetk2.23.nu' % self.credential.uid
         logger.debug(
-            "%s logged in via %s since %s sid:%s",
+            '%s logged in via %s since %s sid:%s',
             self.credential.uid,
             self.session.get('login_via'),
             self.session.get('login_time'),
             getattr(self.session, 'sid', '?'))
-        self.response.headers.add_header("X-uid", str(self.credential.uid))
+        sentry_client.user_context({
+            'email': env.get('USER_EMAIL'),
+            'id': self.credential.uid,
+            'username': self.credential.name,
+            # HTTP_X_APPENGINE_CRON   true
+            # USER_ORGANIZATION USER_IS_ADMIN
+        })
+        self.response.headers.add_header('X-uid', str(self.credential.uid))
 
     def _interactive_client(self):
         """Check if we cvan redirect the client for login."""
@@ -245,7 +252,7 @@ class AuthenticationRequiredMixin(AuthenticationReaderMixin):
 
         if self.credential and not self.credential.secret:
             logger.debug('%r %r %r', method, args, kwargs)
-            raise HTTP401_Unauthorized("Account disabled")
+            raise HTTP401_Unauthorized('Account disabled')
 
         if not self.credential:
             # Login not successful
@@ -254,17 +261,17 @@ class AuthenticationRequiredMixin(AuthenticationReaderMixin):
             # Browser-Based Login
 
             if self._interactive_client():
-                logger.debug("302 headers: %r", self.request.headers)
+                logger.debug('302 headers: %r', self.request.headers)
                 # we assume the request came via a browser - redirect to the "nice" login page
                 # let login.py handle it from there
                 absolute_url = self.abs_url(
-                    "/_ah/login_required?continue=%s" % urllib.quote(self.request.url))
-                logger.info("enforcing interactive login as %s", absolute_url)
-                logger.info("session %r", self.session)
+                    '/_ah/login_required?continue=%s' % urllib.quote(self.request.url))
+                logger.info('enforcing interactive login as %s', absolute_url)
+                logger.info('session %r', self.session)
                 raise HTTP302_Found(location=absolute_url)
             else:
                 # We assume the access came via cURL et al, request Auth via 401 Status code.
                 logger.info(
-                    "requesting HTTP-Auth %s %s", self.request.remote_addr,
+                    'requesting HTTP-Auth %s %s', self.request.remote_addr,
                     self.request.headers.get('Authorization'))
                 raise HTTP401_Unauthorized(headers={'WWW-Authenticate': 'Basic realm="API Login"'})
