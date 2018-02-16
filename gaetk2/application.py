@@ -287,6 +287,11 @@ class WSGIApplication(webapp2.WSGIApplication):
             level = 'warning'
             tags = {'class': 'timeout', 'subsystem': 'urlfetch'}
 
+        if 'ApiTooSlowError' in str(exception):
+            status = 504  # Gateway Time-out
+            level = 'warning'
+            tags = {'class': 'timeout'}
+
         if 'dropboxapi' in str(exception):
             tags['api'] = 'Dropbox'
 
