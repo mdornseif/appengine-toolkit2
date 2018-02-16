@@ -3,7 +3,7 @@
 """
 jinja_filters - custom jinja2 filters for gaetk2.
 
-Copyright (c) 2010, 2012, 2014, 2017 Maximillian Dornseif. MIT Licensed.
+Copyright (c) 2010, 2012, 2014, 2017, 2018 Maximillian Dornseif. MIT Licensed.
 """
 import decimal
 import json
@@ -435,6 +435,25 @@ def none(value, nonchar=u''):
     return value
 
 
+# Datastore Protocol
+
+def otag(obj):
+    """TBD."""
+    if not getattr(obj, 'url'):
+        return
+    link = obj.url
+    designator = obj.designator
+    style = ''
+    klass = ''
+    # # wir machen ein bischen intelligente Formatierung hier
+    # # TODO: inaktiv und erledigt und storniert unterscheiden
+    # if getattr(obj, 'erledigt', False):
+    #     style = ''
+    #     klass = 'class="cs_erledigt"'
+    return Markup('<a href="{}" {} {}>{}</a>'.format(
+        link, style, klass, jinja2.escape(designator)))
+
+
 # Misc
 
 def plural(value, singular_str, plural_str):
@@ -496,4 +515,5 @@ def register_custom_filters(jinjaenv):
     jinjaenv.filters['yesno'] = yesno
     jinjaenv.filters['onoff'] = onoff
     jinjaenv.filters['none'] = none
+    jinjaenv.filters['otag'] = otag
     jinjaenv.filters['plural'] = plural
