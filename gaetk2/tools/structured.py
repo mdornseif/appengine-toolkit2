@@ -9,7 +9,6 @@ import csv
 import sys
 import unittest
 import xml.etree.cElementTree as ET
-
 from StringIO import StringIO
 
 
@@ -214,7 +213,7 @@ def list2csv(datalist):
     """Export a list of dicts to CSV."""
     data = x2tabular(datalist)
     fileobj = StringIO()
-    csvwriter = csv.writer(fileobj, dialect='excel', delimiter='\t')
+    csvwriter = csv.writer(fileobj, dialect='excel', delimiter=str('\t'))
 
     def fixer(row):
         return [unicode(x).encode('utf-8') for x in row]

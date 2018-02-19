@@ -14,7 +14,6 @@ from functools import wraps
 
 import wtforms.widgets.core as wt_core
 import wtforms.widgets.html5 as wt_html5
-
 from wtforms.widgets.core import HTMLString
 
 

@@ -117,7 +117,7 @@ class ModelExporter(object):
         `csv.writer <https://docs.python.org/2/library/csv.html>`_
         options.
         """
-        return csv.writer(fileobj, dialect='excel', delimiter='\t')
+        return csv.writer(fileobj, dialect='excel', delimiter=str('\t'))
 
     def to_csv(self, fileobj):
         """Generate CSV in fileobj.

@@ -11,8 +11,8 @@ import os
 
 import google.appengine.api.app_identity
 import google.appengine.api.memcache
-
 import google.appengine.ext.deferred.deferred
+
 from gaetk2.application import Route, WSGIApplication
 from gaetk2.handlers import DefaultHandler
 from gaetk2.tools.config import (get_release, get_revision, get_version,

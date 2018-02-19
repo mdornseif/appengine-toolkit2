@@ -8,10 +8,7 @@ Copyright (c) 2018 HUDORA GmbH. MIT Licensed.
 """
 import logging
 
-from . import layout
-from . import modeladmin
-from . import util
-
+from . import layout, modeladmin, util
 
 logger = logging.getLogger(__name__)
 

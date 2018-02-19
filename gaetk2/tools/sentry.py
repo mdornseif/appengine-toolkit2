@@ -96,6 +96,7 @@ if gaetkconfig.SENTRY_DSN:
         if not data:
             data = dict()
 
+        # see https://docs.sentry.io/clients/python/breadcrumbs/
         # 'flatten' data
         data = hujson2.loads(hujson2.dumps(data))
 

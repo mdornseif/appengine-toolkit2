@@ -13,10 +13,9 @@ import urllib
 import warnings
 
 import jinja2
-import markdown2
-
 from jinja2.utils import Markup
 
+import markdown2
 
 logger = logging.getLogger(__name__)
 

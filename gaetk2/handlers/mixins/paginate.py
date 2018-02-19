@@ -9,7 +9,6 @@ Copyright (c) 2010-2018 HUDORA. MIT licensed.
 import urllib
 
 import jinja2
-
 from google.appengine.datastore.datastore_query import Cursor
 
 

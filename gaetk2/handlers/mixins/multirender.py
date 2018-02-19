@@ -10,9 +10,7 @@ import cStringIO
 import functools
 
 from gaetk2.tools import hujson2
-from gaetk2.tools.structured import dict2csv
-from gaetk2.tools.structured import dict2xls
-from gaetk2.tools.structured import dict2xml
+from gaetk2.tools.structured import dict2csv, dict2xls, dict2xml
 
 
 class MultirenderMixin(object):

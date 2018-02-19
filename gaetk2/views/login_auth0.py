@@ -8,18 +8,15 @@ Copyright (c) 2017 HUDORA. MIT licensed.
 """
 import json
 import logging
-
 import urllib
 
 import auth0.v3.authentication
 
 from ..application import WSGIApplication
 from ..exc import HTTP302_Found
-from ..handlers import AuthenticationReaderMixin
-from ..handlers import BasicHandler
 from ..tools.config import config as gaetk2config
+from ..handlers import AuthenticationReaderMixin, BasicHandler
 from ..tools.ids import guid128
-
 
 logger = logging.getLogger(__name__)
 

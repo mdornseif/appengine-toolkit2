@@ -8,22 +8,21 @@ Copyright (c) 2011, 2013-2015, 2017-2018 HUDORA GmbH. MIT Licensed.
 """
 import logging
 
-# import gaetk.handler
-# import gaetk.snippets
-
 from google.appengine.api import app_identity
 
-from gaetk2.admin import autodiscover
-from gaetk2.application import Route
-from gaetk2.application import WSGIApplication
 # from gaetk2.admin import search
 # from gaetk2.admin.models import DeletedObject
 import gaetk2.admin
+from gaetk2.admin import autodiscover
+from gaetk2.application import Route, WSGIApplication
+from gaetk2.helpers import check404
 
 from .. import exc
 from ..handlers import AuthenticatedHandler
 from ..handlers.mixins.paginate import PaginateMixin
-from gaetk2.helpers import check404
+
+# import gaetk.handler
+# import gaetk.snippets
 
 
 logger = logging.getLogger(__name__)

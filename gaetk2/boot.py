@@ -47,15 +47,15 @@ from google.appengine.ext import vendor
 vendor.add('./lib')  # processes `.pth` files
 vendor.add('./lib/site-packages') # processes `.pth` files
 
-import google.appengine.api.urlfetch
-import requests
-import requests_toolbelt.adapters.appengine
-import urllib3
-
 # fixing botocore
 os.path.expanduser = lambda x: x
 
-# do not use 
+import google.appengine.api.urlfetch    # isort:skip
+import requests    # isort:skip
+import requests_toolbelt.adapters.appengine    # isort:skip
+import urllib3   # isort:skip
+
+# do not use
 # requests_toolbelt.adapters.appengine.monkeypatch(validate_certificate=False)
 # because it breaks code like
 #    session = requests.session()

@@ -8,10 +8,8 @@ Copyright (c) 2007, 2015, 2018 HUDORA GmbH. All rights reserved.
 """
 import threading
 import time
-
 from collections import namedtuple
 from functools import update_wrapper
-
 
 # from http://code.activestate.com/recipes/578078-py26-and-py30-backport-of-python-33s-lru-cache/
 # with added TTL

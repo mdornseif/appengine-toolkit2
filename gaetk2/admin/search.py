@@ -8,9 +8,8 @@ Copyright (c) 2013, 2018 HUDORA GmbH. All rights reserved.
 """
 import logging
 
-from google.appengine.api import search
-
 from gaetk.admin import autodiscover
+from google.appengine.api import search
 
 logger = logging.getLogger(__name__)
 INDEX_NAME = 'gaetk2-admin'

@@ -8,15 +8,13 @@ Copyright (c) 2011-2015 HUDORA GmbH. All rights reserved.
 """
 import mimetypes
 
-# import config
+from google.appengine.api import app_identity
+from google.appengine.ext import blobstore, db, ndb
 
 # from gaetk.compat import xdb_kind
-from gaetk2.tools.datetools import convert_to_date
-from gaetk2.tools.datetools import convert_to_datetime
-from google.appengine.api import app_identity
-from google.appengine.ext import blobstore
-from google.appengine.ext import db
-from google.appengine.ext import ndb
+from gaetk2.tools.datetools import convert_to_date, convert_to_datetime
+
+# import config
 
 
 def create_instance(klass, data):

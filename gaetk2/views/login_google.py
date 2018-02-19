@@ -21,7 +21,7 @@ from ..exc import HTTP403_Forbidden
 from ..handlers import AuthenticationReaderMixin
 from ..handlers import BasicHandler
 from ..tools import http
-from ..tools.config import config
+from ..config import config
 from ..tools.ids import guid128
 
 

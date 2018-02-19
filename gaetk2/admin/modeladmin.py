@@ -11,16 +11,14 @@ import collections
 import datetime
 import logging
 
-import wtforms
-
-from google.appengine.ext import db
-from google.appengine.ext import deferred
-from google.appengine.ext import ndb
+from google.appengine.ext import db, deferred, ndb
 from wtforms_appengine.db import model_form
 
+import wtforms
+
 from . import util
-from .. import exc
-from .. import modelexporter
+from .. import exc, modelexporter
+
 # from gaetk.admin.models import DeletedObject
 
 

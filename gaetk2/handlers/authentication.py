@@ -22,7 +22,6 @@ from ..exc import HTTP302_Found, HTTP400_BadRequest, HTTP401_Unauthorized
 from ..tools.config import gaetkconfig
 from ..tools.sentry import sentry_client
 
-
 logger = logging.getLogger(__name__)
 
 

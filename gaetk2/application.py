@@ -19,13 +19,13 @@ import jinja2
 import requests.exceptions
 import urllib3.exceptions
 import webapp2
+from google.appengine.ext import ndb
+from webapp2 import Route
 
 from gaetk2 import exc
 from gaetk2.tools.config import config as gaetkconfig
 from gaetk2.tools.config import is_development
 from gaetk2.tools.sentry import sentry_client
-from google.appengine.ext import ndb
-from webapp2 import Route
 
 __all__ = ['WSGIApplication', 'Route']
 

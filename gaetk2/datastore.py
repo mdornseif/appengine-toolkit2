@@ -100,15 +100,16 @@ def write_on_change2(instance, data):
     """Apply new data to an entity and write to datastore if anything changed.
 
     This should save you money since reads are 3 times cheaper than writes.
-    It als helps you do leave not given attributes unchanged.
+    It also helps you do leave not given attributes unchanged.
 
     Usage::
 
         instance = ndb.Model...get()
-        dirty = write_on_change(instance, ...,
+        dirty = write_on_change2(instance, ...,
           dict(id=123, amout_open=500, score=5, ...)
     """
 
+    assert instance
     dirty = False
     for key, value in data.iteritems():
         if value != getattr(instance, key, None):

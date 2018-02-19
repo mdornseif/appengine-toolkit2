@@ -12,8 +12,7 @@ import datetime
 
 from ..application import WSGIApplication
 from ..exc import HTTP400_BadRequest
-from ..handlers import DefaultHandler
-from ..handlers import JsonHandler
+from ..handlers import DefaultHandler, JsonHandler
 
 
 class T1(DefaultHandler):

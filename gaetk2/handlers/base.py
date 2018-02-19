@@ -12,12 +12,14 @@ import os
 import time
 import urlparse
 
-from google.appengine.api import memcache
-from google.appengine.api import users
-from google.appengine.api.app_identity import get_application_id
-
 import jinja2
 import webapp2
+from google.appengine.api import memcache, users
+from google.appengine.api.app_identity import get_application_id
+
+from .. import exc, jinja_filters
+from ..tools import hujson2
+from ..tools.sentry import sentry_client
 
 try:
     # if mixing gaetk1 and gaetk2 we need to use the same module
@@ -26,8 +28,6 @@ try:
 except:
     from gaetk2 import _gaesessions as gaesessions
 
-from .. import jinja_filters, exc
-from ..tools import hujson2
 from ..tools.config import config as gaetkconfig
 from ..tools.config import get_release
 from ..tools.config import is_development

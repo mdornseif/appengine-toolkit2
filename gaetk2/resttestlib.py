@@ -6,6 +6,8 @@ File created by Philipp Benjamin Koeppchen on 2011-02-23
 Copyright (c) 2011, 2013, 2016, 2017, 2018 HUDORA. MIT Licensed.
 """
 
+import codecs
+import concurrent.futures
 import json
 import logging
 import optparse
@@ -15,14 +17,10 @@ import sys
 import time
 import urlparse
 import xml.dom.minidom
-import codecs
-
 from collections import Counter
 from functools import partial
 
-import concurrent.futures
 import requests
-
 from requests.auth import HTTPBasicAuth
 
 logger = logging.getLogger(__name__)

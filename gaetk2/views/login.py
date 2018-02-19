@@ -11,23 +11,16 @@ Copyright (c) 2010, 2014, 2015 HUDORA. MIT licensed.
 import hashlib
 import logging
 import os
+from datetime import datetime, timedelta
 
-from datetime import datetime
-from datetime import timedelta
-
-import huTools.http
-import huTools.hujson2
-
-
+from gaetk2.tools import hujson2
 from google.appengine.api import users
+
 from jose import jwt
 
 from ..application import WSGIApplication
-from ..exc import HTTP400_BadRequest
-from ..exc import HTTP403_Forbidden
-from ..exc import HTTP404_NotFound
-from ..handlers import DefaultHandler
-from ..handlers import JsonHandler
+from ..exc import HTTP400_BadRequest, HTTP403_Forbidden, HTTP404_NotFound
+from ..handlers import DefaultHandler, JsonHandler
 from ..handlers.auth import gaetk_Credential
 from ..tools.config import config
 
@@ -156,7 +149,7 @@ class CredentialsHandler(JsonHandler):
         """
         # The data can be submitted either as a json encoded body or form encoded
         if self.request.headers.get('Content-Type', '').startswith('application/json'):
-            data = huTools.hujson2.loads(self.request.body)
+            data = hujson2.loads(self.request.body)
         else:
             data = self.request
 
@@ -191,7 +184,7 @@ class CredentialsHandler(JsonHandler):
 
         self.response.headers["Content-Type"] = "application/json"
         self.response.set_status(201)
-        self.response.out.write(huTools.hujson2.dumps(dict(
+        self.response.out.write(hujson2.dumps(dict(
             uid=credential.uid, secret=credential.secret,
             admin=credential.admin, text=credential.text,
             email=credential.email,

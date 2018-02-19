@@ -10,7 +10,6 @@ import re
 import string
 import sys
 import unicodedata
-
 from types import StringType
 
 from gaetk2.tools import unicode_helper_latin1
