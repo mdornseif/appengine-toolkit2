@@ -8,12 +8,12 @@ Copyright 2017 HUDROA. MIT Licensed.
 
 import logging
 
+from google.appengine.api import memcache
+
 from auth0.v3.authentication import GetToken
 from auth0.v3.exceptions import Auth0Error
 from auth0.v3.management import Auth0
-from gaetk2.tools.config import config as gaetk2config
-from google.appengine.api import memcache
-
+from gaetk2.config import gaetkconfig
 
 logger = logging.getLogger(__name__)
 
@@ -22,13 +22,13 @@ def get_auth0_access_token():
     """Get a Token for the Management-API."""
     ret = memcache.get('get_auth0_access_token()')
     if not ret:
-        assert gaetk2config.AUTH0_DOMAIN != '*unset*'
-        assert gaetk2config.AUTH0_CLIENT_ID != '*unset*'
-        get_token = GetToken(gaetk2config.AUTH0_DOMAIN)
+        assert gaetkconfig.AUTH0_DOMAIN != '*unset*'
+        assert gaetkconfig.AUTH0_CLIENT_ID != '*unset*'
+        get_token = GetToken(gaetkconfig.AUTH0_DOMAIN)
         token = get_token.client_credentials(
-            gaetk2config.AUTH0_CLIENT_ID,
-            gaetk2config.AUTH0_CLIENT_SECRET,
-            'https://{}/api/v2/'.format(gaetk2config.AUTH0_DOMAIN))
+            gaetkconfig.AUTH0_CLIENT_ID,
+            gaetkconfig.AUTH0_CLIENT_SECRET,
+            'https://{}/api/v2/'.format(gaetkconfig.AUTH0_DOMAIN))
         ret = token['access_token']
         memcache.set('get_auth0_access_token()', ret, token['expires_in'] / 2)
     return ret
@@ -46,7 +46,7 @@ def create_from_credential(credential):
     if not getattr(credential, 'name', None):
         credential.name = credential.org_designator
 
-    auth0api = Auth0(gaetk2config.AUTH0_DOMAIN, get_auth0_access_token())
+    auth0api = Auth0(gaetkconfig.AUTH0_DOMAIN, get_auth0_access_token())
     payload = {
         "connection": 'DefaultDatabase',
         "email": credential.email,

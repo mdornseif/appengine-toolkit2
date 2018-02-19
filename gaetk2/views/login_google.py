@@ -16,14 +16,11 @@ import unicodedata
 import urllib
 
 from ..application import WSGIApplication
-from ..exc import HTTP302_Found
-from ..exc import HTTP403_Forbidden
-from ..handlers import AuthenticationReaderMixin
-from ..handlers import BasicHandler
+from ..exc import HTTP302_Found, HTTP403_Forbidden
+from ..handlers import AuthenticationReaderMixin, BasicHandler
 from ..tools import http
 from ..config import config
 from ..tools.ids import guid128
-
 
 logger = logging.getLogger(__name__)
 

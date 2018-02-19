@@ -6,11 +6,12 @@ Subpackages
 
 .. toctree::
 
+    gaetk2.config.rst
+    gaetk2.application
+    gaetk2.wsgi
     gaetk2.handlers.rst
     gaetk2.jinja_filters
     gaetk2.forms
-    gaetk2.application
-    gaetk2.wsgi
     gaetk2.helpers
     gaetk2.taskqueue
     gaetk2.datastore

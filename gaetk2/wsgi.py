@@ -9,7 +9,7 @@ Copyright (c) 2018 Maximillian Dornseif. MIT Licensed.
 # WARNING
 # =======
 # since we are imported by `appengine_config.py` we can not use
-# gaetk2.tools.config/gaetkconfig at module level because this
+# gaetk2.config.gaetkconfig at module level because this
 # wants to read from appengine_config.py via `lib_config`
 import logging
 
@@ -29,7 +29,7 @@ def wrap_errorhandling(application):
     # handled by the framework. Usually higher layers should catch
     # and display errors.
     import gaetk2.tools.sentry
-    from gaetk2.tools.config import gaetkconfig
+    from gaetk2.config import gaetkconfig
     from raven.middleware import Sentry
 
     if not gaetkconfig.SENTRY_DSN:
@@ -39,7 +39,7 @@ def wrap_errorhandling(application):
 
 def wrap_session(application):
     """Put gaesession around the app."""
-    from gaetk2.tools.config import gaetkconfig
+    from gaetk2.config import gaetkconfig
     return gaesessions.SessionMiddleware(
         application,
         cookie_key=gaetkconfig.SECRET,
@@ -57,14 +57,14 @@ def webapp_add_wsgi_middleware(application):
     """
 
     # initialize Sentry logging if configured and not development
-    import gaetk2.tools.config
+    import gaetk2.config
     import gaetk2.tools.sentry
-    if not gaetk2.tools.config.is_development():
+    if not gaetk2.config.is_development():
         gaetk2.tools.sentry.setup_logging()
 
     application = wrap_session(application)
     # if ist_entwicklungsversion():
     #     app = gae_mini_profiler.profiler.ProfilerWSGIMiddleware(app)
-    if not gaetk2.tools.config.is_development():
+    if not gaetk2.config.is_development():
         application = wrap_errorhandling(application)
     return application

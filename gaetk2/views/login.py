@@ -22,8 +22,7 @@ from ..application import WSGIApplication
 from ..exc import HTTP400_BadRequest, HTTP403_Forbidden, HTTP404_NotFound
 from ..handlers import DefaultHandler, JsonHandler
 from ..handlers.auth import gaetk_Credential
-from ..tools.config import config
-
+from ..config import config
 
 logger = logging.getLogger(__name__)
 

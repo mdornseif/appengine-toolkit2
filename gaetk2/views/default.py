@@ -15,8 +15,7 @@ import google.appengine.ext.deferred.deferred
 
 from gaetk2.application import Route, WSGIApplication
 from gaetk2.handlers import DefaultHandler
-from gaetk2.tools.config import (get_release, get_revision, get_version,
-                                 is_development, is_production)
+from gaetk2.config import get_release, get_revision, get_version, is_development, is_production
 
 
 class RobotTxtHandler(DefaultHandler):

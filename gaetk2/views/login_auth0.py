@@ -14,8 +14,8 @@ import auth0.v3.authentication
 
 from ..application import WSGIApplication
 from ..exc import HTTP302_Found
-from ..tools.config import config as gaetk2config
 from ..handlers import AuthenticationReaderMixin, BasicHandler
+from ..config import config as gaetk2config
 from ..tools.ids import guid128
 
 logger = logging.getLogger(__name__)

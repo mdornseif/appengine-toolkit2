@@ -19,6 +19,8 @@ from google.appengine.api.app_identity import get_application_id
 
 from .. import exc, jinja_filters
 from ..tools import hujson2
+from ..config import gaetkconfig
+from ..config import get_release, is_development, is_production
 from ..tools.sentry import sentry_client
 
 try:
@@ -28,11 +30,6 @@ try:
 except:
     from gaetk2 import _gaesessions as gaesessions
 
-from ..tools.config import config as gaetkconfig
-from ..tools.config import get_release
-from ..tools.config import is_development
-from ..tools.config import is_production
-from ..tools.sentry import sentry_client
 
 logger = logging.getLogger(__name__)
 _jinja_env_cache = None

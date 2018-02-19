@@ -8,8 +8,7 @@ Copyright (c) 2017, 2018 HUDORA. MIT licnsed.
 """
 import warnings
 
-from gaetk2.tools.config import get_release
-from gaetk2.tools.config import is_production
+from gaetk2.config import get_release, is_production
 
 from .mixins.multirender import MultirenderMixin
 from .mixins.paginate import PaginateMixin

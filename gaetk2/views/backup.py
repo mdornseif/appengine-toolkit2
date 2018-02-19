@@ -18,8 +18,7 @@ from google.appengine.ext.db.metadata import Kind
 from ..application import WSGIApplication
 from ..exc import HTTP403_Forbidden
 from ..handlers import DefaultHandler
-from ..tools.config import config
-
+from ..config import config
 
 logger = logging.getLogger(__name__)
 

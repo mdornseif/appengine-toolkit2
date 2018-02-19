@@ -54,9 +54,16 @@ At the top of your :file:`appengine_configuration.py` include this::
     imp.load_module('gaetk_boot', fp, filename, data)
 
 This will set up paths as needed. To get error- and session-handling and
-add the following lines at the end of :file:`appengine_configuration.py`.
+add the following lines at the end of :file:`appengine_config.py`.
 
     from gaetk2.wsgi import webapp_add_wsgi_middleware  # pylint: disable=W0611
+
+Various configuration needs to be done in :file:`gaetk2_config.py`.
+Try ``grep GAETK2_ >> gaetk2_config.py``. Minimal contents would be::
+
+
+    GAETK2_SECRET='13f221234567890fae123-c0decafe'
+    GAETK2_TEMPLATE_DIRS=['./templates', './lib/CentralServices/templates']
 
 
 Replace Imports
@@ -66,11 +73,20 @@ Replace this::
 
     from google.appengine.ext.deferred import defer
     from gaetk.infrastructure import taskqueue_add_multi
+    from gaetk2.tools import hujson2
+    from gaetk.tools import slugify
+    from huTools.unicode import deUmlaut
+    from huTools import cache
+
 
 With this::
 
     from gaetk2.taskqueue import defer
     from gaetk2.taskqueue import taskqueue_add_multi
+    from gaetk2.tools import hujson2
+    from gaetk2.tools.unicode import slugify
+    from gaetk2.tools.unicode import de_umlaut
+    from gaetk2.tools.caching import lru_cache, lru_cache_memcache
 
 
 s/import gaetk.handler/from gaetk2 import exc/
@@ -88,6 +104,7 @@ At the top of each module create a local logger instance::
 Then replace calls to :func:`logging.info()` et. al. with calls to
 ``logger.info()``  et. al.
 
+
 Change your views / handlers
 ----------------------------
 
@@ -98,8 +115,29 @@ Change your views / handlers
     * Authentication has changed significanty. `authchecker()` now handled by `pre_authentication_hook()`, `authentication_hook` and `authorisation_hook()`.
     * if you used the `get_impl()` pattern to wrap your handler functions, you don't need that anymore. The often used `read_basedata()` can be moved into `method_preperation_hook()`.
     * Replace `self.is_admin()` with `self.is_staff()` (or `self.is_sysadmin()`).
-    * ``<meta property="og:price:amount" content="{{ preis|euroword|attrencode }}" />``
+    * attrencode to xmlattr:
+        ``<meta property="og:price:amount" content="{{ preis|euroword|attrencode }}" />``
         to ``<meta property="og:price:amount" {{ {'content': preis|euroword}|xmlattr }} />``
+    * ``authchecker`` to ``authorisation_hook``
+
+
+
+This::
+
+    def authchecker(self, method, *args, **kwargs):
+        """Sicherstellen, das Sources diese Seiten nicht anschauen dürfen."""
+        super(MasterdataHomepage, self).authchecker(method, *args, **kwargs)
+        if self.credential.get_typ() == 'source':
+            raise exc.HTTP403_Forbidden('Dies ist ein reiner Kundenbereich')
+
+Becomes that::
+
+    def (self, method_name, *args, **kwargs):
+        u"""Sicherstellen, dass nur kunden diese seite sehen düfen."""
+        if self.credential.get_typ() == 'source':
+            raise exc.HTTP403_Forbidden('Dies ist ein reiner Kundenbereich')
+
+
 
 Templates
 ---------

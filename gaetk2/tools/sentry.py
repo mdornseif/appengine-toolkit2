@@ -11,9 +11,8 @@ Copyright (c) 2018 Maximillian Dornseif. MIT Licensed.
 import logging
 import os
 
+from gaetk2.config import gaetkconfig, get_environment, get_release, is_development
 from gaetk2.tools import hujson2
-from gaetk2.tools.config import config as gaetkconfig
-from gaetk2.tools.config import get_release, is_development, get_environment
 
 logger = logging.getLogger(__name__)
 sentry_client = None

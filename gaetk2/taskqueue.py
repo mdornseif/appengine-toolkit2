@@ -14,7 +14,7 @@ import google.appengine.ext.deferred.deferred
 from google.appengine.api import taskqueue
 from google.appengine.ext import deferred
 
-from .tools.config import is_production
+from .config import is_production
 from .tools.unicode import slugify
 
 logger = logging.getLogger(__name__)

@@ -132,7 +132,7 @@ which you are encouraged extend to fit your needs.
 Error-Page for the Client
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If we are not running in production mode (see :func:`~gaetk2.tools.config.is_production()`) extensive traceback information is
+If we are not running in production mode (see :func:`~gaetk2.config.is_production()`) extensive traceback information is
 sent to the client using the :mod:`cgitb` module. Be aware that this might
 expose server secrets!
 
@@ -162,7 +162,7 @@ Medium Level Error Handling
 Errors occurring within the framework (e.g. during error handling or in
 code not based on :class:`gaetk2.handlers.base.BasicHandler` are handled by
 a WSGI-Middleware. This is usually installed automatically if
-:func:`gaetk2.tools.config.is_production()` by importing :func:`gaetk2.wsgi.webapp_add_wsgi_middleware`.
+:func:`gaetk2.config.is_production()` by importing :func:`gaetk2.wsgi.webapp_add_wsgi_middleware`.
 
 Error-Handling will be a little less sophisticated than `High Level Error
 Handling`.

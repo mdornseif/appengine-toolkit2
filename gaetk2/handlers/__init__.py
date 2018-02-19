@@ -28,3 +28,7 @@ class JsonHandler(JsonBasicHandler, AuthenticationReaderMixin):
 
 class AuthenticatedHandler(DefaultHandler, AuthenticationRequiredMixin):
     pass
+
+
+class AuthenticatedJsonHandler(JsonHandler, AuthenticationRequiredMixin):
+    pass
