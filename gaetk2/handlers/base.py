@@ -534,10 +534,7 @@ class BasicHandler(webapp2.RequestHandler):
 
         # bind session on dispatch (not in __init__)
         self.session = gaesessions.get_current_session()
-
-        # get_current_session() sometimes returns strange results
-        if self.session is None:
-            self.session = object()
+        sentry_client.note('storage', 'Session loaded', data=dict(session=self.session))
 
         try:
             self._call_all_inherited('pre_authentication_hook', method_name, *args, **kwargs)
