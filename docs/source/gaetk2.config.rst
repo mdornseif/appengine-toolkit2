@@ -12,7 +12,7 @@ Minimal content is::
 .. index::
    pair: gaetk2_config.py; GAETK2_SECRET
 
-``GAETK2_SECRET`` is used for Session generation etc. Try something like `(dd if=/dev/urandom count=1000 ) | shasum` to get a nice value for `GAETK2_SECRET`.
+``GAETK2_SECRET`` is used for Session generation etc. Try something like ``(dd if=/dev/urandom count=1000 ) | shasum`` to get a nice value for `GAETK2_SECRET`.
 
 .. index:: <entries>
 This directive contains one or more index entries. Each entry consists of a type and a value, separated by a colon.

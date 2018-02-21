@@ -138,6 +138,8 @@ Becomes that::
             raise exc.HTTP403_Forbidden('Dies ist ein reiner Kundenbereich')
 
 
+See :ref:`filters-gaetk1` on how to handle Templates.
+
 
 Templates
 ---------

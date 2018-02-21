@@ -27,11 +27,11 @@ Unfortunately this `is missing in most fonts and not well supported in browsers 
 
 
 Services provided
-=================
+-----------------
 
 
 Access Control
---------------
+~~~~~~~~~~~~~~
 
 These Access Control filters are somewhat more involved because they need the cooperation of the rest of gaetk2. They are meant to show certain parts of a template only to certain users.
 
@@ -48,7 +48,7 @@ See :meth:`gaetk2.handler.base.is_staff` and
 
 
 Encoding
---------
+~~~~~~~~
 
 Ensure a variable is a valid value for CSS, URL, XML attribute.
 
@@ -59,7 +59,8 @@ See also `urlencode <http://jinja.pocoo.org/docs/2.10/templates/#urlencode>`_, `
 
 
 Date-Formatting
----------------
+~~~~~~~~~~~~~~~
+
 
 * :func:`dateformat` - formats a ``date`` object.
 * :func:`datetimeformat` - formats a ``datetime`` object.
@@ -67,7 +68,8 @@ Date-Formatting
 
 
 Number-Formating
-----------------
+~~~~~~~~~~~~~~~~
+
 
 User-Readable Number formatting. All of these assume you are outputting HTML.
 
@@ -80,7 +82,7 @@ User-Readable Number formatting. All of these assume you are outputting HTML.
 * :func:`iban` - Format An International Banking Code.
 
 Text-Formatting
----------------
+~~~~~~~~~~~~~~~
 
 Many of these functions are most relevant for settings where you
 have ``<pre>>`` or want to reach a similar effect in HTML.
@@ -94,7 +96,7 @@ See also `urlize <http://jinja.pocoo.org/docs/2.10/templates/#urlize>`_, `indent
 
 
 Boolean-Formatting (and None)
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Displaying Booleans with the ability to distinguish between ``(True, False, None)``.
 
@@ -104,11 +106,16 @@ Displaying Booleans with the ability to distinguish between ``(True, False, None
 
 
 Misc
-----
+~~~~
 
 * :func:`plural` - Pluralize (works for German).
 
 
+.. todo::
+
+    * ``otag``
+
+.. filters-gaetk1:
 GAETK1 Compability
 ------------------
 
