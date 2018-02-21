@@ -14,6 +14,7 @@ _gaetk_registry = lib_config.LibConfigRegistry('gaetk2_config')
 gaetkconfig = _gaetk_registry.register(
     'GAETK2',
     dict(
+        SECRET='',  # needed for everything
         TEMPLATE_DIRS=['./templates'],
         # auth
         JWT_SECRET_KEY=None,
@@ -27,7 +28,6 @@ gaetkconfig = _gaetk_registry.register(
         BACKUP_FILESYSTEM='gs',
         BACKUP_QUEUE='default',
         BACKUP_BLACKLIST=[],
-        SECRET='',
         APP_NAME='',
         SENTRY_DSN='',
         SENTRY_PUBLIC_DSN='',
@@ -42,3 +42,5 @@ gaetkconfig.TEMPLATE_DIRS.append(
         os.path.dirname(__file__),
         '../..',
         'templates'))
+
+assert gaetkconfig.SECRET, "No gaetk2_config.SECRET provided"
