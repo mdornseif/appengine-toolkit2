@@ -34,9 +34,9 @@ widget_mapping = {
 
 def wtfbootstrap3(form):
     """changes a WTForms.Form Instance to use html5/bootstrap Widgets."""
-    logger.error('wtfbootstrap3 %s', form)
+    logger.debug('wtfbootstrap3 %s', form)
     for field in form:
-        logger.error('wtfbootstrap3.filed %r', field)
+        logger.debug('wtfbootstrap3.filed %r', field)
         if not hasattr(field.widget, '__webwidget__'):
             if field.type in widget_mapping:
                 field.widget = widget_mapping[field.type]
