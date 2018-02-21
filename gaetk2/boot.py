@@ -55,9 +55,8 @@ import requests    # isort:skip
 import requests_toolbelt.adapters.appengine    # isort:skip
 import urllib3   # isort:skip
 
-# do not use
-# requests_toolbelt.adapters.appengine.monkeypatch(validate_certificate=False)
-# because it breaks code like
+requests_toolbelt.adapters.appengine.monkeypatch(validate_certificate=False)
+# this breaks code like
 #    session = requests.session()
 #    session.mount('https://', appengine.AppEngineAdapter())
 #    return dropbox.Dropbox(access_token session=session)
