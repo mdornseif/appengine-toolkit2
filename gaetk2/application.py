@@ -260,12 +260,12 @@ class WSGIApplication(webapp2.WSGIApplication):
             tags = {'subsystem': 'googlecloud', 'api': 'CloudSQL'}
         # urlfetch
         if isinstance(exception, urllib3.exceptions.ProtocolError):
-            if 'Connection aborted' in str(exception):
+            if 'Connection aborted' in repr(exception):
                 status = 504  # Gateway Time-out
                 level = 'warning'
                 tags = {'subsystem': 'urlfetch', 'api': 'urllib3'}
         if isinstance(exception, requests.exceptions.ConnectionError):
-            if 'Connection closed unexpectedly by server' in str(exception):
+            if 'Connection closed unexpectedly by server' in repr(exception):
                 status = 504  # Gateway Time-out
                 level = 'warning'
                 tags = {'subsystem': 'urlfetch', 'api': 'requests'}
@@ -282,17 +282,17 @@ class WSGIApplication(webapp2.WSGIApplication):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'class': 'timeout', 'subsystem': 'urlfetch'}
-        if 'HTTPException: Deadline exceeded while waiting for HTTP response' in str(exception):
+        if 'HTTPException: Deadline exceeded while waiting for HTTP response' in repr(exception):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'class': 'timeout', 'subsystem': 'urlfetch'}
 
-        if 'ApiTooSlowError' in str(exception):
+        if 'ApiTooSlowError' in repr(exception):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'class': 'timeout'}
 
-        if 'dropboxapi' in str(exception):
+        if 'dropboxapi' in repr(exception):
             tags['api'] = 'Dropbox'
 
         return status, level, fingerprint, tags
