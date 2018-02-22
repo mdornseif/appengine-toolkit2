@@ -37,7 +37,7 @@ you can get a very smooth form handling experience.
 
         # Render form
         from gaetk2.forms import wtfbootstrap3
-        class View(gaetk.handlers.DefaultHandler):
+        class View(gaetk2.handlers.DefaultHandler):
             def get(self):
                 # instantiate form
                 form = LastschriftmandatForm()

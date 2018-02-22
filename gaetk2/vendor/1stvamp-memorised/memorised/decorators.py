@@ -13,7 +13,7 @@ from hashlib import md5
 
 from google.appengine.api import memcache
 
-from gaetk.lib.memorised import compat
+from . import compat
 
 __author__ = 'Wes Mason <wes [at] 1stvamp [dot] org>'
 __docformat__ = 'restructuredtext en'

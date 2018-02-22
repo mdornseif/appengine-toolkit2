@@ -77,10 +77,12 @@ The following Sample Implementation implements (parts) of a shopping cart to ill
             self.cart = self.session.get('cart3', {'items': []})
 
         def finished_hook(self, *args, **kwargs):
-            self.session['cart3'] = self.cart  # this marks session as dirty
-            # store cart len so client side code can read it
-            cart3_len = str(len(self.cart.get('items', [])))
-            self.response.set_cookie('cart3_len', cart3_len, max_age=7*24*60*60)
+            if hasattr(self, 'cart'):
+                # might be missing on authentication failures
+                self.session['cart3'] = self.cart  # this marks session as dirty
+                # store cart len so client side code can read it
+                cart3_len = str(len(self.cart.get('items', [])))
+                self.response.set_cookie('cart3_len', cart3_len, max_age=7*24*60*60)
 
         def handle_exception(self, e, debug):
             """On Exceptions flush the cart to provide a clean 'reboot'."""

@@ -50,6 +50,9 @@ class AuthenticationReaderMixin(object):
                 raise HTTP400_BadRequest(explanation='invalid credentials %r' % decoded)
             uid, secret = decoded.strip().split(':', 1)
             logger.debug('HTTP-Auth attempted for %r', uid)
+            sentry_client.note(
+                'auth', 'HTTP-Auth attempted for %r' % uid,
+                data=dict(auth_typ=auth_type, decoded=decoded))
 
             self.credential = self.get_credential(uid or ' *invalid* ')
             if self.credential and self.credential.secret == secret.strip():
@@ -132,7 +135,9 @@ class AuthenticationReaderMixin(object):
     def _login_user(self, via, jwtinfo=None):
         """Ensure the system knows that a user has been logged in."""
         # user did not exist before but we have a validated jwt
-        logger.info('logging in via %s', via)
+        sentry_client.note(
+            'auth', 'logging in via %s' % via,
+            data=dict(jwtinfo=jwtinfo, credential=self.credential))
         if not self.credential and jwtinfo:
             # create credential from JWT
             self.credential = allow_credential_from_jwt(jwtinfo)
@@ -165,12 +170,18 @@ class AuthenticationReaderMixin(object):
             else:
                 # fake email-address
                 os.environ['USER_EMAIL'] = '%s@auth.gaetk2.23.nu' % self.credential.uid
-        logger.debug(
-            '%s logged in via %s since %s sid:%s',
-            self.credential.uid,
-            self.session.get('login_via'),
-            self.session.get('login_time'),
-            getattr(self.session, 'sid', '?'))
+
+        sentry_client.note(
+            'auth', '%s logged in via %s since %s sid:%s' % (
+                self.credential.uid,
+                self.session.get('login_via'),
+                self.session.get('login_time'),
+                getattr(self.session, 'sid', '?')),
+            data=dict(
+                credential=self.credential,
+                login_via=self.session.get('login_via'),
+                login_time=self.session.get('login_time'),
+                sid=getattr(self.session, 'sid', '?')))
         sentry_client.user_context({
             'email': os.environ.get('USER_EMAIL'),
             'id': self.credential.uid,
