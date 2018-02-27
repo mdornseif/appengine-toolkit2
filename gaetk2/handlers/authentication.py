@@ -49,7 +49,6 @@ class AuthenticationReaderMixin(object):
             if ':' not in decoded:
                 raise HTTP400_BadRequest(explanation='invalid credentials %r' % decoded)
             uid, secret = decoded.strip().split(':', 1)
-            logger.debug('HTTP-Auth attempted for %r', uid)
             sentry_client.note(
                 'auth', 'HTTP-Auth attempted for %r' % uid,
                 data=dict(auth_typ=auth_type, decoded=decoded))
@@ -115,7 +114,7 @@ class AuthenticationReaderMixin(object):
         # https://cloud.google.com/appengine/docs/standard/python/config/cron#securing_urls_for_cron
         # X-Appengine-Cron: true
         if self.request.headers.get('X-AppEngine-QueueName'):
-            uid = 'X-AppEngine-Taskqueue-{}@auth.gaetk2.23.nu'.format(
+            uid = 'X-AppEngine-Taskqueue-{}'.format(
                 self.request.headers.get('X-AppEngine-QueueName'))
             self.credential = models.gaetk_Credential.create(
                 id=uid, uid=uid, text='created automatically via gaetk2')
@@ -219,12 +218,10 @@ class AuthenticationReaderMixin(object):
                     sysadmin=cred1.admin)
                 cred.put()
                 cred.populate(created_at=cred1.created_at, updated_at=cred1.updated_at)
-                if getattr(cred1, 'kundennr', None):
-                    cred.meta['designator'] = cred1.kundennr
-                    cred.org_designator = cred.meta['designator']
                 if getattr(cred1, 'source', None):
-                    cred.meta['designator'] = cred1.source.id()
-                    cred.org_designator = cred.meta['designator']
+                    cred.org_designator = cred1.source.id()
+                elif getattr(cred1, 'kundennr', None):
+                    cred.org_designator = cred1.kundennr
                 cred.put()
         if cred:
             if cred.meta is None:
