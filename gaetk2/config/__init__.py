@@ -10,6 +10,10 @@ import os
 import time
 import warnings
 
+import yaml
+
+from gaetk2.tools.caching import lru_cache
+
 from .runtime import get_config, set_config
 from .internal import gaetkconfig
 
@@ -21,10 +25,12 @@ __all__ = [
     'get_release',
     'get_revision',
     'get_version',
+    'get_productiondomain',
     'is_production',
 ]
 
 
+@lru_cache(1)
 def get_release():
     """Get the :term:`tagged version` of the current deployment.
 
@@ -46,6 +52,7 @@ def get_version():
     return get_release()
 
 
+@lru_cache(1)
 def get_revision():
     """Get the git SHA1 revision of the current deployment.
 
@@ -58,6 +65,12 @@ def get_revision():
     except IOError:
         version = 'HEAD'
     return version
+
+
+@lru_cache(1)
+def get_productiondomain(attr):
+    configyaml = yaml.load(open('gaetk-conf.yaml'))
+    return configyaml['productiondomain']
 
 
 def get_environment():
