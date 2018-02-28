@@ -50,7 +50,7 @@ class AuthenticationReaderMixin(object):
                 raise HTTP400_BadRequest(explanation='invalid credentials %r' % decoded)
             uid, secret = decoded.strip().split(':', 1)
             sentry_client.note(
-                'auth', 'HTTP-Auth attempted for %r' % uid,
+                'user', 'HTTP-Auth attempted for %r' % uid,
                 data=dict(auth_typ=auth_type, decoded=decoded))
 
             self.credential = self.get_credential(uid or ' *invalid* ')
@@ -135,7 +135,7 @@ class AuthenticationReaderMixin(object):
         """Ensure the system knows that a user has been logged in."""
         # user did not exist before but we have a validated jwt
         sentry_client.note(
-            'auth', 'logging in via %s' % via,
+            'user', 'logging in via %s' % via,
             data=dict(jwtinfo=jwtinfo, credential=self.credential))
         if not self.credential and jwtinfo:
             # create credential from JWT
@@ -171,7 +171,7 @@ class AuthenticationReaderMixin(object):
                 os.environ['USER_EMAIL'] = '%s@auth.gaetk2.23.nu' % self.credential.uid
 
         sentry_client.note(
-            'auth', '%s logged in via %s since %s sid:%s' % (
+            'user', '%s logged in via %s since %s sid:%s' % (
                 self.credential.uid,
                 self.session.get('login_via'),
                 self.session.get('login_time'),

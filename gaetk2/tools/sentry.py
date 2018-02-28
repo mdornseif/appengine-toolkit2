@@ -10,6 +10,7 @@ Copyright (c) 2018 Maximillian Dornseif. MIT Licensed.
 """
 import logging
 import os
+import warnings
 
 from gaetk2.config import gaetkconfig, get_environment, get_release, is_development
 from gaetk2.tools import hujson2
@@ -91,14 +92,21 @@ if gaetkconfig.SENTRY_DSN:
 
     def note(category, message=None, data=None):
         """bei Bedarf strukturiert loggen, Sentry breadcrumbs """
-        assert category in ['rpc', 'input', 'external', 'storage', 'auth', 'flow']
+        assert category in [
+            'http', 'navigation', 'user', 'rpc', 'input', 'external', 'storage', 'auth']
         if not data:
             data = dict()
 
         # see https://docs.sentry.io/clients/python/breadcrumbs/
+        # and https://github.com/getsentry/sentry/blob/master/src/sentry/static/sentry/less/group-detail.less
+        # for valid values
+        if category == 'auth':
+            category == 'user'
+            warnings.warn('use `user` instead of `auth`', DeprecationWarning, stacklevel=2)
+
         # 'flatten' data
         data = hujson2.loads(hujson2.dumps(data))
-
+        logger.debug("note: %s: %s %r", category, message, data)
         raven.breadcrumbs.record(
             data=data,
             category=category,
@@ -106,8 +114,8 @@ if gaetkconfig.SENTRY_DSN:
         )
 else:
     def note(category, message=None, data=None):
-        assert category in ['rpc', 'input', 'external', 'storage', 'auth', 'flow']
-        logger.debug("%s %r", message, data)
+        assert category in ['rpc', 'input', 'external', 'storage', 'auth', 'flow', 'navigation', 'http']
+        logger.debug("note: %s: %s %r", category, message, data)
 
 
 if not sentry_client:

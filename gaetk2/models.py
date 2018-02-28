@@ -50,9 +50,6 @@ class gaetk_Credential(ndb.Expando):
     def __str__(self):
         return str(self.uid)
 
-    def __repr__(self):
-        return "<gaetk_Credential %s>" % self.uid
-
     @classmethod
     def from_gaetk1(cls, cred1):
         """Generate `gaetk_Credential` from legacy `NdbCredential` and store it."""

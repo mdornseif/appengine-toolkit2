@@ -115,7 +115,7 @@ class WSGIApplication(webapp2.WSGIApplication):
             if getattr(e, attr, None):
                 notedata[attr] = getattr(e, attr)
         if notedata:
-            sentry_client.note('flow', message=u'HTTPException', data=notedata)
+            sentry_client.note('navigation', message=u'HTTPException', data=notedata)
 
         handler = self.error_handlers.get(code)
         if handler:
@@ -306,6 +306,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         # Its not well documented how to structure the data for sentry
         # https://gist.github.com/cgallemore/4507616
 
+        # see https://docs.sentry.io/clientdev/interfaces/user/
         env = request.environ
         sentry_client.user_context({
             'ip_address': env.get('REMOTE_ADDR'),
@@ -316,7 +317,6 @@ class WSGIApplication(webapp2.WSGIApplication):
             # USER_ORGANIZATION USER_IS_ADMIN
         })
 
-        # see https://docs.sentry.io/clientdev/interfaces/user/
         extra = {}
         for name in 'HTTP_REFERER HTTP_USER_AGENT'.split():
             if os.environ.get(name):

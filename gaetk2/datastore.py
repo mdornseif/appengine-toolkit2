@@ -28,7 +28,7 @@ class Model(ndb.Model):
 
     def as_dict(self):
         u"""Gibt eine Repräsentation des Objektes zurück."""
-        warnings.warn("`as_dict` is deprecated, use `to_dict)_`", DeprecationWarning, stacklevel=2)
+        warnings.warn("`as_dict` is deprecated, use `to_dict()`", DeprecationWarning, stacklevel=2)
         return self.to_dict()
 
 
