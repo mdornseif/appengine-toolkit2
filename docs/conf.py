@@ -63,7 +63,7 @@ author = u'Maximillian Dornseif'
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = u'2.2.1.dev0'
+release = u'2.2.1.dev2'
 # The short X.Y version.
 version = '.'.join(release.split('.')[:2])
 
