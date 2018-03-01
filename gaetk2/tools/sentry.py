@@ -82,6 +82,7 @@ if gaetkconfig.SENTRY_DSN:
             #         'name': 'mdornseif/appengine-toolkit2',
             #     }
             # }
+            include_paths=['modules', 'common'],
             exclude_paths=['google', 'raven', 'logging', 'site-packages'],
             auto_log_stacks=True,
             environment=get_environment(),
