@@ -123,7 +123,7 @@ def write_on_change2(obj, data):
 
 def update_obj(obj, **kwargs):
     """More modern Interface to :func:`write_on_change2`."""
-    return write_on_change2(obj, **kwargs)
+    return write_on_change2(obj, kwargs)
 
 
 def reload_obj(obj):
