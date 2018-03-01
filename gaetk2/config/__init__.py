@@ -68,7 +68,7 @@ def get_revision():
 
 
 @lru_cache(1)
-def get_productiondomain(attr):
+def get_productiondomain():
     configyaml = yaml.load(open('gaetk-conf.yaml'))
     return configyaml['productiondomain']
 
