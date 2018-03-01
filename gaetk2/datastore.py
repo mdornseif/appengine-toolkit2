@@ -96,7 +96,7 @@ def get_or_insert_if_new(cls, id, **kwds):
     return (ent, True)  # True meaning "created"
 
 
-def write_on_change2(instance, data):
+def write_on_change2(obj, data):
     """Apply new data to an entity and write to datastore if anything changed.
 
     This should save you money since reads are 3 times cheaper than writes.
@@ -109,16 +109,21 @@ def write_on_change2(instance, data):
           dict(id=123, amout_open=500, score=5, ...)
     """
 
-    assert instance
+    assert obj
     dirty = False
     for key, value in data.iteritems():
-        if value != getattr(instance, key, None):
-            setattr(instance, key, value)
+        if value != getattr(obj, key, None):
+            setattr(obj, key, value)
             dirty = True
     if dirty:
-        instance.put()
+        obj.put()
 
     return dirty
+
+
+def update_obj(obj, **kwargs):
+    """More modern Interface to :func:`write_on_change2`."""
+    return write_on_change2(obj, **kwargs)
 
 
 def reload_obj(obj):
