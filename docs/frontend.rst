@@ -59,7 +59,9 @@ There will be a list of breadcrumbs rendered above the Title.
 Progressive enhancements
 ------------------------
 
-* gaetkenhance-confirm
+..  todo::
+
+  * gaetkenhance-confirm
 
 
 Best Practices

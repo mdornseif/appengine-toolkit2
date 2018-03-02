@@ -158,7 +158,10 @@ Usually you want to use ``{% extends "gaetk_base_bs4.html" %}``.
 
 Breadcrubs are now implemented by gaetk. See :ref:`breadcrumbs`.
 
+Takeaways::
 
+  * ``.pull-left`` and ``.pull-right`` become ``.float-left`` and ``.float-right``.
+  * ``.btn-default`` becomes ``.btn-secondary``
 
 
 
