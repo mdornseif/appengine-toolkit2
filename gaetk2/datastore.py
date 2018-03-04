@@ -14,7 +14,6 @@ from google.appengine.ext import ndb
 class Model(ndb.Model):
     """Generic fields to keep datastore organized."""
 
-    # these fields work only if the user was logges in via google infrastructure
     created_at = ndb.DateTimeProperty(auto_now_add=True, indexed=True)
     # `updated_at` is needed for replication
     updated_at = ndb.DateTimeProperty(auto_now=True, indexed=True)
@@ -32,10 +31,15 @@ class Model(ndb.Model):
         return self.to_dict()
 
 
+class DeletableModel(Model):
+    """Functionality to implement (soft) delete."""
+    deleted = ndb.BooleanProperty(default=False, indexed=True)
+
+
 class AuditedModel(Model):
     """Fields to add an Audit-Trail to the Datastore."""
 
-    # these fields work only if the user was logges in via google infrastructure
+    # these fields work only if the user was logged in via google infrastructure
     created_by = ndb.UserProperty(required=False, auto_current_user_add=True, indexed=True)
     updated_by = ndb.UserProperty(required=False, auto_current_user=True, indexed=True)
 
