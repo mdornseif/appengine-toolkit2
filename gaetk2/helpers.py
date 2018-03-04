@@ -51,5 +51,4 @@ def abs_url(url):
         # when called in a taskqueue, we don't want to provide the .appspot.com name
         if os.environ.get('HTTP_HOST') == app_identity.get_default_version_hostname():
             return urlparse.urljoin('https://{}/'.format(get_productiondomain()), url)
-        return urlparse.urljoin('https://' + os.environ['HTTP_HOST'], url)
-    return urlparse.urljoin(os.environ.get('HTTP_ORIGIN', ''), url)
+    return urlparse.urljoin('https://' + os.environ['HTTP_HOST'], url)
