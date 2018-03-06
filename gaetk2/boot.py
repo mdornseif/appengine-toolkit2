@@ -90,3 +90,23 @@ logging.getLogger('raven').setLevel(logging.WARNING)
 # logging.Logger.manager.loggerDict['requests'].setLevel(logging.CRITICAL)
 
 # TODO: add sentry: https://docs.sentry.io/clients/python/integrations/logging/
+
+
+# pkg_resources.get_distribution() seems only to work for eggs, if you use 'vendoring'.
+# But several Google packages use it to get the current package version.
+# Monkey-Patching let's us use these Packages.
+# See https://github.com/lepture/flask-wtf/issues/261
+# and https://github.com/GoogleCloudPlatform/google-cloud-python/issues/1893
+try:
+    import pkg_resources
+    def get_distribution_dummy(name):
+        class DummyObj(object):
+            version = 'unknown'
+        return DummyObj()
+
+    pkg_resources.get_distribution = get_distribution_dummy
+    logging.debug('disabled `pkg_resources.get_distribution() for GAE compability`')
+except ImportError:
+    pass
+
+
