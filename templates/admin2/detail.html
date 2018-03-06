@@ -14,6 +14,22 @@
 {% endblock %}
 
 {% block maincontent %}
+  <div>
+    {% if obj.url %}
+      <a href="{{ obj.url }}"</a>
+      {% if obj.nicename %}
+        {{ obj.nicename }}
+      {% else %}
+        {% if obj.name %}
+          {{ obj.nicename }}
+        {% else %}
+          {{ obj.key.id() }}
+        {% endif %}
+      {% endif %}
+    </a>
+    {% endif %}
+  </div>
+
   <dl class="dl-horizontal">
     {% for field in admin_class.detail_fields %}
       <dt>{{ field }}</dt>
