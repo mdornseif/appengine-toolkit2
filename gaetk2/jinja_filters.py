@@ -437,7 +437,7 @@ def none(value, nonchar=u''):
 # Datastore Protocol
 
 def otag(obj):
-    """TBD."""
+    """Link like this: `<a href="obj.url">obj.designator</a>`."""
     if not getattr(obj, 'url'):
         return
     link = obj.url
@@ -453,6 +453,36 @@ def otag(obj):
         link, style, klass, jinja2.escape(designator)))
 
 
+def datastore(entity, attr=None, value=None, text=None):
+    """Generate HTML a-Tag to Google Datastore Query.
+
+        {{ credential|datastore }} -> queries for key
+        {{ credential|datastore('email') }} -> queries for email
+        {{ credential|datastore('name', '') }} -> queries for credential.name == ''
+        {{ credential|datastore(text='Search in Datastore') }} -> changes Link-Text
+    """
+
+    if not attr:
+        attr = '__key__'
+        value = entity.key.urlsafe()
+        typ = 'KEY'
+        qtext = "SELECT * FROM {} WHERE __key__ = KEY('{}')".format(entity._get_kind(), value)
+    else:
+        if not value:
+            value = getattr(entity, attr, '')
+        typ = 'STR'
+        qtext = "SELECT * FROM {} WHERE __key__ = '{}'".format(entity._get_kind(), value)
+    query = {
+        # TODO: auch INT? auch andere Vergleichsoperatoren?
+        'filter': '{}/{}|{}|EQ|{}/{}'.format(
+            len(attr), attr, typ, len(value), value),
+        'kind': entity._get_kind()}
+    url = 'https://console.cloud.google.com/datastore/entities/query?' + urllib.urlencode(query)
+    if text is None:
+        text = qtext
+    content = '<a href="{}">{}</a>'.format(url, jinja2.escape(text))
+    return Markup(content)
+
 # Misc
 
 def plural(value, singular_str, plural_str):
@@ -466,27 +496,6 @@ def plural(value, singular_str, plural_str):
     if value == 1:
         return singular_str
     return plural_str
-
-
-def datastore_query_link(entity, attr):
-    """Generate HTML Link to Google Datastore Query."""
-    value = getattr(entity, attr, '')
-    text = 'SELECT * FROM {} WHERE {}={}'.format(entity._get_kind(), attr, value)
-    url = _datastore_query(entity, attr)
-    content = '<a href="{}">{}</a>'.format(url, text)
-    return Markup(content)
-
-
-def _datastore_query(entity, attr):
-    """Generate URL for Google Datastore Query."""
-    value = getattr(entity, attr, '')
-    query = {
-        # TODO: auch INT? auch andere Vergleichsoperatoren?
-        'filter': '{}/{}|STR|EQ|{}/{}'.format(
-            len(attr), attr, len(value), value),
-        'kind': entity._get_kind()}
-    return 'https://console.cloud.google.com/datastore/entities/query?' + urllib.urlencode(query)
-    # https://console.cloud.google.com/datastore/entities/query?project=hudoraexpress&ns=&kind=pay_Kontovorgang
 
 
 def register_custom_filters(jinjaenv):
@@ -515,4 +524,5 @@ def register_custom_filters(jinjaenv):
     jinjaenv.filters['onoff'] = onoff
     jinjaenv.filters['none'] = none
     jinjaenv.filters['otag'] = otag
+    jinjaenv.filters['datastore'] = datastore
     jinjaenv.filters['plural'] = plural

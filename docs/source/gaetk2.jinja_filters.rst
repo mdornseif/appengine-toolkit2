@@ -105,15 +105,21 @@ Displaying Booleans with the ability to distinguish between ``(True, False, None
 * :func:`none` - Supress ``None`` output. See also `default <http://jinja.pocoo.org/docs/2.10/templates/#default>`_ in jinja2.
 
 
+Datastore Protocol
+~~~~~~~~~~~~~~~~~~
+
+gaetk2 has certain conventions how to structure your datastore models When followed
+vertain things work automagically.
+
+* :func:`otag` - Link to an Object by `designator`.
+* :func:`datastore` - Link to Admin-Console.
+
+
 Misc
 ~~~~
 
 * :func:`plural` - Pluralize (works for German).
 
-
-.. todo::
-
-    * ``otag``
 
 .. filters-gaetk1:
 GAETK1 Compability
