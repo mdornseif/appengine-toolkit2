@@ -40,7 +40,8 @@ def create_from_credential(credential):
         return
     if not credential.secret:
         return
-    assert credential.email
+    if not credential.email:
+        return
     if not getattr(credential, 'name', None):
         credential.name = credential.text
     if not getattr(credential, 'name', None):
