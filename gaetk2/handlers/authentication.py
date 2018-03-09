@@ -103,22 +103,30 @@ class AuthenticationReaderMixin(object):
                 self._clear_session()
 
         # 5. Login for Google Special Calls from Cron & TaskQueue
-        # TODO:
-        # x-appengine-user-is-admin
-        # x-appengine-auth-domain
-        # x-google-real-ip
-        # https://cloud.google.com/appengine/docs/standard/python/appidentity/
-        # X-Appengine-Inbound-Appid
-        # https://cloud.google.com/appengine/docs/standard/python/taskqueue/push/creating-handlers
         # X-AppEngine-QueueName
         # https://cloud.google.com/appengine/docs/standard/python/config/cron#securing_urls_for_cron
-        # X-Appengine-Cron: true
         if self.request.headers.get('X-AppEngine-QueueName'):
             uid = 'X-AppEngine-Taskqueue-{}'.format(
                 self.request.headers.get('X-AppEngine-QueueName'))
             self.credential = models.gaetk_Credential.create(
                 id=uid, uid=uid, text='created automatically via gaetk2')
             return self._login_user('AppEngine')
+        # X-Appengine-Inbound-Appid
+        # https://cloud.google.com/appengine/docs/standard/python/taskqueue/push/creating-handlers
+        ibaid = self.request.headers.get('X-Appengine-Inbound-Appid')
+        if ibaid:
+            if ibaid in gaetkconfig.INBOUD_APP_IDS:
+                uid = 'X-Appengine-Inbound-Appid-{}'.format(ibaid)
+                self.credential = models.gaetk_Credential.create(
+                    id=uid, uid=uid, text='created automatically via gaetk2')
+                return self._login_user('AppEngine')
+        # TODO:
+        # x-appengine-user-is-admin
+        # x-appengine-auth-domain
+        # x-google-real-ip
+        # https://cloud.google.com/appengine/docs/standard/python/appidentity/
+        # X-Appengine-Cron: true
+
         # 6. log in by Sentry bot
         # see https://blog.sentry.io/2017/06/15/notice-of-address-change
         if self.request.headers.get('X-Sentry-Token'):

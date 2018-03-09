@@ -32,6 +32,7 @@ gaetkconfig = _gaetk_registry.register(
         SENTRY_DSN='',
         SENTRY_PUBLIC_DSN='',
         SENTRY_SECURITY_TOKEN='',
+        INBOUD_APP_IDS=[],
     )
 )
 
