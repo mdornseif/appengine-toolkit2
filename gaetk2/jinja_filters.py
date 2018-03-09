@@ -483,6 +483,7 @@ def datastore(entity, attr=None, value=None, text=None):
     content = '<a href="{}">{}</a>'.format(url, jinja2.escape(text))
     return Markup(content)
 
+
 # Misc
 
 def plural(value, singular_str, plural_str):
