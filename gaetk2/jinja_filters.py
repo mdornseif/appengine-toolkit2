@@ -14,6 +14,7 @@ import warnings
 
 import jinja2
 from jinja2.utils import Markup
+from gaetk2.tools.datetools import convert_to_date, convert_to_datetime
 
 import markdown2
 
@@ -206,7 +207,6 @@ def dateformat(value, formatstring='%Y-%m-%d', nonchar=u''):
         {{ date.today()|dateformat }}
         {{ "20171224"|dateformat('%Y-%W') }}
     """
-    from huTools.calendar.formats import convert_to_date
     if not value:
         return nonchar
     return Markup(convert_to_date(value).strftime(formatstring).replace('-', '&#8209;'))
@@ -221,7 +221,6 @@ def datetimeformat(value, formatstring='%Y-%m-%d %H:%M', nonchar=u''):
         {{ datetime.now()|datetimeformat }}
         {{ "20171224T235959"|datetimeformat('%H:%M') }}
     """
-    from huTools.calendar.formats import convert_to_datetime
     if not value:
         return nonchar
     return Markup(convert_to_datetime(value).strftime(formatstring).replace('-', '&#8209;'))

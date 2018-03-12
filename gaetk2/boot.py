@@ -39,6 +39,7 @@ warnings.filterwarnings('ignore', message='decode_param_names is deprecated')
 warnings.filterwarnings('ignore', message='cgi.parse_qs is deprecated, use urlparse.parse_qs instead')
 warnings.filterwarnings('ignore', message='urllib3 is using URLFetch on Google App Engine sandbox')
 warnings.filterwarnings('ignore', message='Required is going away in WTForms 3.0, use DataRequired')
+warnings.filterwarnings('ignore', message='The TextField alias for StringField has been deprecated')
 
 # Include libraries
 # `google.appengine.ext.vendor.add` is just `site.addsitedir()` with path shuffling
