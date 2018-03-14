@@ -31,4 +31,3 @@ gaetk2\.application package
 
 .. automodule:: gaetk2.application
    :members:
-

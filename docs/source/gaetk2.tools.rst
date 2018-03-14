@@ -112,5 +112,3 @@ gaetk2\.tools\.structured_xls package
 .. automodule:: gaetk2.tools.structured_xls
     :members:
     :undoc-members:
-
-

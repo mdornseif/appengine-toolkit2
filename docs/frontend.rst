@@ -87,5 +87,3 @@ Table Styling
 
 Tagles we usually style with ``class="table table-striped table-sm"``.
 For large rows like Product Listing with Images we use ``class="table table-hover"``.
-
-

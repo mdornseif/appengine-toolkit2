@@ -32,7 +32,12 @@ class ModelExporter(object):
     Intatiate a :class:`ModelExporter` and call :meth:`to_xls` or :meth:`to_csv`
     to get an export of the Entities on Disk.
 
+    :class:`ModelExporter` can also be used to create a automated tabular HTML view
+    like in the admin interfave or in the ListViewer.
     """
+
+    # TODO: calling convention like ModelAdmin.
+    # eg: list_fields, order_field, ordering
 
     def __init__(self, model,
                  query=None, uid='', only=None, ignore=None, additional_fields=None, maxseconds=40):

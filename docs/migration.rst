@@ -73,20 +73,22 @@ Replace this::
 
     from google.appengine.ext.deferred import defer
     from gaetk.infrastructure import taskqueue_add_multi
-    from gaetk2.tools import hujson2
     from gaetk.tools import slugify
+    from huTools import hujson2
     from huTools.unicode import deUmlaut
     from huTools import cache
+    from huTools.calendar.formats import convert_to_date, convert_to_datetime
 
 
 With this::
 
     from gaetk2.taskqueue import defer
     from gaetk2.taskqueue import taskqueue_add_multi
-    from gaetk2.tools import hujson2
     from gaetk2.tools.unicode import slugify
+    from gaetk2.tools import hujson2
     from gaetk2.tools.unicode import de_umlaut
     from gaetk2.tools.caching import lru_cache, lru_cache_memcache
+    from gaetk2.tools.datetools import convert_to_date, convert_to_datetime
 
 
 s/import gaetk.handler/from gaetk2 import exc/
@@ -162,6 +164,4 @@ Takeaways::
 
   * ``.pull-left`` and ``.pull-right`` become ``.float-left`` and ``.float-right``.
   * ``.btn-default`` becomes ``.btn-secondary``
-
-
-
+  * ``.label`` becomes ``.badge`` and ``.label-default`` becomes ``.badge-secondary``.
