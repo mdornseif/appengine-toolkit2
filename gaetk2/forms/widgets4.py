@@ -1,19 +1,22 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.forms.widgets - wtforms extention to render Bootstrap/HTML5 fields.
 
 based on https://github.com/nickw444/wtforms-webwidgets
 
 Created by Maximillian Dornseif on 2017-02-28.
-Coded (c) 2017. No rights reserved.
+Coded (c) 2017, 2018. No rights reserved.
 """
+
+from __future__ import unicode_literals
 
 from abc import ABCMeta
 from functools import wraps
 
 import wtforms.widgets.core as wt_core
 import wtforms.widgets.html5 as wt_html5
+
 from wtforms.widgets.core import HTMLString
 
 
@@ -32,9 +35,10 @@ def custom_widget_wrapper(cls):
 
 def render_field_errors(field):
     """Render field errors as html."""
+    # https://getbootstrap.com/docs/4.0/components/forms/#server-side
     if field.errors:
-        html = u"""<p class="help-block">Error: {errors}</p>""".format(
-            errors=u'. '.join(field.errors)
+        html = '<div class="invalid-feedback">{errors}</div>'.format(
+            errors='. '.join(field.errors)
         )
         return HTMLString(html)
 
@@ -43,8 +47,9 @@ def render_field_errors(field):
 
 def render_field_description(field):
     """Render a field description as HTML."""
+    # https://getbootstrap.com/docs/4.0/components/forms/#help-text
     if hasattr(field, 'description') and field.description != '':
-        html = u"""<p class="help-block">{field.description}</p>"""
+        html = '<small class="form-text text-muted">field.description}</p>'
         html = html.format(
             field=field
         )
@@ -61,12 +66,12 @@ def form_group_wrapped(f):
     """
     @wraps(f)
     def wrapped(self, field, *args, **kwargs):
-        u"""Closure, die bootstrap-gemässes HTML um eine Form-Group baut."""
+        """Closure, die bootstrap-gemässes HTML um eine Form-Group baut."""
         classes = ['form-group']
         if field.errors:
-            classes.append('has-error')
+            classes.append('is-invalid')
 
-        html = u"""<div class="{classes}">{rendered_field}</div>""".format(
+        html = """<div class="{classes}">{rendered_field}</div>""".format(
             classes=' '.join(classes),
             rendered_field=f(self, field, *args, **kwargs)
         )
@@ -79,11 +84,11 @@ def meta_wrapped(f):
     """Add a field label, errors, and a description (if it exists) to a field."""
     @wraps(f)
     def wrapped(self, field, *args, **kwargs):
-        u"""Closure, die bootstrap-gemässes HTML um ein Feld baut."""
-        html = u"{label}{errors}{original}<small>{description}</small>".format(
-            label=field.label(class_='control-label'),
+        """Closure, die bootstrap-gemässes HTML um ein Feld baut."""
+        html = '{label}{errors}{original}{description}'.format(
+            label=field.label(),
+            errors=render_field_errors(field) or '',
             original=f(self, field, *args, **kwargs),
-            errors=render_field_errors(field) or u'',
             description=render_field_description(field)
         )
         return HTMLString(html)
@@ -99,9 +104,9 @@ def bootstrap_styled(cls=None, add_meta=True, form_group=True, input_class='form
         add_meta: bool:
     """
     def real_decorator(cls):
-        u"""Funktion (Closure), die wir on demand bauen und zurück geben."""
+        """Funktion (Closure), die wir on demand bauen und zurück geben."""
         class NewClass(cls):
-            u"""Klasse (Closure), die wir on demand bauen und zurück geben."""
+            """Klasse (Closure), die wir on demand bauen und zurück geben."""
 
             pass
 
@@ -111,7 +116,7 @@ def bootstrap_styled(cls=None, add_meta=True, form_group=True, input_class='form
         _call = newclass.__call__
 
         def call(*args, **kwargs):
-            u"""Handler für `NewClass.__call__`."""
+            """Handler für `NewClass.__call__`."""
             if input_class:
                 kwargs.setdefault('class', input_class)
 
@@ -144,11 +149,7 @@ class BootstrapPlainCheckboxRadio(wt_core.CheckboxInput, CustomWidgetMixin):
         if label in kwargs:
             label = kwargs.pop('label').strip()
 
-        html = u"""
-        <div class="{input_type}">
-            <label>{rendered_field}{label}</label>
-        </div>
-        """.format(
+        html = '<div class="{input_type}"><label>{rendered_field}{label}</label></div>'.format(
             label=label,
             input_type=self.input_type,
             rendered_field=super(BootstrapPlainCheckboxRadio, self).__call__(field, **kwargs)
