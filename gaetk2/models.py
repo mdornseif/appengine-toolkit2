@@ -4,7 +4,7 @@
 gaetk2.models - NDB Models for gaetk2.
 
 Created by Maximillian Dornseif on 2017-12-15.
-Copyright (c) 2017 HUDORA. MIT licensed.
+Copyright (c) 2017, 2018 HUDORA. MIT licensed.
 """
 
 from google.appengine.ext import ndb
@@ -12,7 +12,7 @@ from google.appengine.ext import ndb
 from .tools.ids import guid128
 
 
-class gaetk_Credential(ndb.Expando):
+class gaetk_Credential(ndb.Model):
     """Encodes a user and his permissions."""
     _default_indexed = True  # ensure additional properties get indexed
     uid = ndb.StringProperty(required=True)  # == key.id(), oder aus externem System
@@ -20,14 +20,16 @@ class gaetk_Credential(ndb.Expando):
     secret = ndb.StringProperty(required=True, indexed=False)  # "Password" - NOT user-settable
     name = ndb.StringProperty(required=False, indexed=False, default='')
     text = ndb.StringProperty(required=False, indexed=False)
-    permissions = ndb.StringProperty(repeated=True, indexed=True)
+    permissions = ndb.StringProperty(repeated=True, indexed=False)
 
     sysadmin = ndb.BooleanProperty(default=False, indexed=True)
     staff = ndb.BooleanProperty(default=False, indexed=True)
 
-    org_designator = ndb.StringProperty(required=False)  # ref to the "parent", e.g. Customer Number
     meta = ndb.JsonProperty(indexed=False, default={})
+    org_designator = ndb.StringProperty(required=False)  # ref to the "parent", e.g. Customer Number
     external_uid = ndb.StringProperty(required=False)
+
+    last_seen = ndb.DateTimeProperty(required=False, indexed=False)
 
     deleted = ndb.BooleanProperty(default=False)
     created_at = ndb.DateTimeProperty(auto_now_add=True)
@@ -62,7 +64,7 @@ class gaetk_Credential(ndb.Expando):
         if getattr(cred1, 'org_designator', None):
             cred2.meta['org_designator'] = cred1.kundennr
             cred2.org_designator = cred2.meta['org_designator']
-        if getattr(cred1, 'name', None):
+        if getattr(cred1, 'name', None) and not cred2.name:
             cred2.name = cred1.name
         cred2.put()
         return cred2
