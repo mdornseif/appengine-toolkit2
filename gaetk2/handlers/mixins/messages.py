@@ -4,8 +4,9 @@
 gaetk2/handlers/mixins.py - misc functionality to be added to gaetk handlers.
 
 Created by Maximillian Dornseif on 2010-10-03.
-Copyright (c) 2010-2017 HUDORA. MIT licensed.
+Copyright (c) 2010-2018 HUDORA. MIT licensed.
 """
+import hashlib
 import time
 
 import jinja2
@@ -28,7 +29,8 @@ class MessagesMixin(object):
         html = jinja2.escape(text)
         self._expire_messages()
         messages = self.session.get('_gaetk_messages', [])
-        messages.append(dict(type=typ, html=html, expires=time.time() + ttl))
+        msgid = "msg{}".format(hashlib.md5(html.encode('utf-8', errors='replace')).hexdigest())
+        messages.append(dict(type=typ, html=html, expires=time.time() + ttl, id=msgid))
         # We can't use `.append()` because this doesn't result in automatic session saving.
         self.session['_gaetk_messages'] = messages
 

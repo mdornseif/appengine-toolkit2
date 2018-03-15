@@ -103,7 +103,21 @@ html {
     {% endblock header %}</header>
 
     <!-- Begin page content -->
-    <div id="bs4container" class="container-fluid gaetk_content">{% block content %}
+    <div id="bs4container" class="container-fluid gaetk_content">
+
+    {# display session specific messages #}
+    {% if _gaetk_messages is defined -%}
+      <div id="gaetkalerts">
+        {% for message in _gaetk_messages -%}
+          <div id="{{ message.id }}" class="alert alert-{% if message.type == 'error' %}danger{% else %}{{ message.type }}{% endif %}">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <p>{{ message.html }}</p>
+          </div>
+        {%- endfor %}
+      </div>
+    {%- endif %}
+
+    {% block content %}
 
     {% if breadcrumbs and breadcrumbs|length > 1 %}
       <nav id="gaetkbreadcrumbs" aria-label="breadcrumb">
