@@ -4,8 +4,10 @@
 gaetk2.taskqueue
 
 Created by Maximillian Dornseif on 2011-01-07.
-Copyright (c) 2011, 2012, 2016, 2017 Cyberlogi/HUDORA. All rights reserved.
+Copyright (c) 2011, 2012, 2016-2018 Cyberlogi/HUDORA. All rights reserved.
 """
+import datetime
+import hashlib
 import logging
 import re
 import zlib
@@ -16,6 +18,8 @@ from google.appengine.ext import deferred
 
 from .config import is_production
 from .tools.unicode import slugify
+from .tools.datetools import date_trunc
+
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +83,11 @@ def defer(obj, *args, **kwargs):
             - url: /_ah/queue/deferred(.*)
               script: gaetk2.views.default.application
               login: admin
-      """
+
+    Parameters starting with ``_`` are handed down to
+    `taskqueue.add() <https://cloud.google.com/appengine/docs/standard/python/refdocs/modules/google/appengine/api/taskqueue/taskqueue#add>`_
+
+    """
 
     suffix = '{0}({1!s},{2!r})'.format(
         obj.__name__,
@@ -107,8 +115,29 @@ def defer(obj, *args, **kwargs):
 def _to_str(value):
     """Convert all datatypes to str"""
     if isinstance(value, basestring):
-        value = slugify(repr(value))
+        value = slugify(str(value))
     value = str(value)
     if len(value) > 20:
         value = '{}...'.format(value[:20])
     return value
+
+
+def defer_once_per_hour(obj, *args, **kwargs):
+    """Like :func:`defer()` but only once per hour.
+
+    Eexecutes the same function with the same parameters not more
+    often than once per hour. The heuristic for doing so are not
+    exact so do not rely on this mechanism for anything importatant.
+
+    This is more for updating cloud services with statistics etc.
+    """
+    key = ','.join(unicode(arg) for arg in args)
+    key += ','.join('{}={}'.format(
+        key, unicode(value)) for (key, value) in kwargs.items())
+    key = key.encode('utf-8', errors='replace')
+    name = '{0}.{1}-{2}-{3}'.format(
+        obj.__module__, obj.__name__,
+        date_trunc('hour', datetime.datetime.now()).strftime('%Y%m%dT%H'),
+        hashlib.md5(key).hexdigest()
+    )
+    return defer(obj, _name=slugify(name), *args, **kwargs)
