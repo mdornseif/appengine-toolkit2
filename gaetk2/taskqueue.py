@@ -85,7 +85,8 @@ def defer(obj, *args, **kwargs):
               login: admin
 
     Parameters starting with ``_`` are handed down to
-    `taskqueue.add() <https://cloud.google.com/appengine/docs/standard/python/refdocs/modules/google/appengine/api/taskqueue/taskqueue#add>`_
+    `taskqueue.add() <https://cloud.google.com/appengine/docs/standard/python/refdocs/
+    google.appengine.api.taskqueue.taskqueue#google.appengine.api.taskqueue.taskqueue.add>`_
 
     """
 
@@ -115,7 +116,11 @@ def defer(obj, *args, **kwargs):
 def _to_str(value):
     """Convert all datatypes to str"""
     if isinstance(value, basestring):
-        value = slugify(str(value))
+        try:
+            value = value.encode('ascii', errors='replace')[:50]
+        except UnicodeDecodeError:  # how can this happen?
+            value = repr(value)
+        value = slugify(value)
     value = str(value)
     if len(value) > 20:
         value = '{}...'.format(value[:20])
