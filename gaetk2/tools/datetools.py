@@ -8,7 +8,7 @@ by Maximillian Dornseif and Christian Klein on 2007-06-24.
 And on workdays.py created by Christian Klein on 2006-11-28.
 Copyright (c) 2007, 2010, 2012, 2013, 2018 HUDORA GmbH. MIT licensed.
 """
-
+import calendar
 import datetime
 import doctest
 import email.utils
@@ -234,6 +234,90 @@ def get_quarter(date):
     return (date.month - 1) / 3 + 1
 
 
+def get_yearspan(date):
+    """Gibt den ersten und letzten Tag des Jahres zurück in dem `date` liegt
+
+    >>> get_yearspan(datetime.date(1980, 5, 4))
+    (datetime.date(1980, 1, 1), datetime.date(1980, 12, 31))
+    >>> get_yearspan(datetime.date(1986, 3, 11))
+    (datetime.date(1986, 1, 1), datetime.date(1986, 12, 31))
+    """
+    startdate = date_trunc('year', date)
+    enddate = type(startdate)(startdate.year, 12, 31)
+    return startdate, enddate
+
+
+def get_tertialspan(date):
+    """Gibt den ersten und den letzten Tag des Tertials zurück in dem `date` liegt
+
+    >>> get_tertialspan(datetime.date(1978, 9, 23))
+    (datetime.date(1978, 9, 1), datetime.date(1978, 12, 31))
+    """
+    startdate = date_trunc('tertial', date)
+    enddate = date_trunc('tertial', startdate + datetime.timedelta(days=130)) - datetime.timedelta(days=1)
+    return startdate, enddate
+
+
+def get_quarterspan(date):
+    """Gibt den ersten und den letzten Tag des Quartals zurück in dem `date` liegt
+
+    >>> get_quarterspan(datetime.date(1978, 6, 12))
+    (datetime.date(1978, 4, 1), datetime.date(1978, 6, 30))
+    """
+
+    startdate = date_trunc('quarter', date)
+    # The date 100 days after the beginning of a quarter is always right inside the next quarter
+    enddate = date_trunc('quarter', startdate + datetime.timedelta(days=100)) - datetime.timedelta(days=1)
+    return startdate, enddate
+
+
+def get_monthspan(date):
+    """Gibt den ersten und letzten Tag des Monats zurück in dem `date` liegt
+
+    >>> get_monthspan(datetime.date(1980, 5, 4))
+    (datetime.date(1980, 5, 1), datetime.date(1980, 5, 31))
+    """
+    startdate = date_trunc('month', date)
+    _, days = calendar.monthrange(startdate.year, startdate.month)
+    enddate = type(startdate)(startdate.year, startdate.month, days)
+    return startdate, enddate
+
+
+def get_weekspan(date):
+    """Gibt den ersten und den letzten Tag der Woche, in der `date` liegt, zurück.
+
+    Dabei ist Montag der erste Tag der woche und Sonntag der letzte.
+
+    >>> get_weekspan(datetime.date(2011, 3, 23))
+    (datetime.date(2011, 3, 21), datetime.date(2011, 3, 27))
+    """
+    startdate = date_trunc('week', date)
+    enddate = startdate + datetime.timedelta(days=6)
+    return startdate, enddate
+
+
+def get_timespan(period, date):
+    """
+    Get given timespan for date
+
+    Convenience function as a wrapper for the other get_*span functions
+    """
+    if period == "year":
+        return get_yearspan(date)
+    elif period == "tertial":
+        return get_tertialspan(date)
+    elif period == "quarter":
+        get_quarterspan(date)
+    elif period == "month":
+        return get_monthspan(date)
+    elif period == "week":
+        return get_weekspan(date)
+    elif period == "day":
+        return date, date
+    else:
+        raise ValueError("Unknown truncation type %s" % trtype)
+
+
 STATIC_GERMAN_HOLIDAYS = ((1, 1),    # Neujahr
                           (5, 1),    # Tag der Arbeit
                           (10, 3),   # Tag der deutschen Einheit
@@ -453,6 +537,252 @@ class _FormatsTests(unittest.TestCase):
                          datetime.datetime(2013, 9, 3, 21, 39, 9))
         self.assertEqual(convert_to_datetime('2013-12-03 13:14'),
                          datetime.datetime(2013, 12, 3, 13, 14, 0, 0))
+
+
+class _WeekspanTestCase(unittest.TestCase):
+    """Unittests for get_weekspan"""
+
+    def test_monday(self):
+        """get_weekspan for a monday"""
+        date = datetime.date(1981, 5, 4)
+        self.assertEqual(date.isoweekday(), 1)
+        start_date, end_date = get_weekspan(date)
+        self.assertEqual(start_date.isoweekday(), 1)
+        self.assertEqual(end_date.isoweekday(), 7)
+        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+
+    def test_tuesday(self):
+        """get_weekspan for a tuesday"""
+        date = datetime.date(1982, 5, 4)
+        self.assertEqual(date.isoweekday(), 2)
+        start_date, end_date = get_weekspan(date)
+        self.assertEqual(start_date.isoweekday(), 1)
+        self.assertEqual(end_date.isoweekday(), 7)
+        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+
+    def test_wednesday(self):
+        """get_weekspan for a wednesday"""
+        date = datetime.date(1988, 5, 4)
+        self.assertEqual(date.isoweekday(), 3)
+        start_date, end_date = get_weekspan(date)
+        self.assertEqual(start_date.isoweekday(), 1)
+        self.assertEqual(end_date.isoweekday(), 7)
+        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+
+    def test_thursday(self):
+        """get_weekspan for a thursday"""
+        date = datetime.date(1989, 5, 4)
+        self.assertEqual(date.isoweekday(), 4)
+        start_date, end_date = get_weekspan(date)
+        self.assertEqual(start_date.isoweekday(), 1)
+        self.assertEqual(end_date.isoweekday(), 7)
+        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+
+    def test_friday(self):
+        """get_weekspan for a friday"""
+        date = datetime.date(1984, 5, 4)
+        self.assertEqual(date.isoweekday(), 5)
+        start_date, end_date = get_weekspan(date)
+        self.assertEqual(start_date.isoweekday(), 1)
+        self.assertEqual(end_date.isoweekday(), 7)
+        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+
+    def test_saturday(self):
+        """get_weekspan for a saturday"""
+        date = datetime.date(1985, 5, 4)
+        self.assertEqual(date.isoweekday(), 6)
+        start_date, end_date = get_weekspan(date)
+        self.assertEqual(start_date.isoweekday(), 1)
+        self.assertEqual(end_date.isoweekday(), 7)
+        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+
+    def test_sunday(self):
+        """get_weekspan for a sunday"""
+        date = datetime.date(1980, 5, 4)
+        self.assertEqual(date.isoweekday(), 7)
+        start_date, end_date = get_weekspan(date)
+        self.assertEqual(start_date.isoweekday(), 1)
+        self.assertEqual(end_date.isoweekday(), 7)
+        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+
+
+class _MonthSpanTestCase(unittest.TestCase):
+    """Unittests for get_monthspan"""
+
+    def test_january(self):
+        date = datetime.date(1980, 1, 1)
+        start_date, end_date = get_monthspan(date)
+        self.assertTrue(isinstance(start_date, datetime.date))
+        self.assertTrue(isinstance(end_date, datetime.date))
+        self.assertEqual(start_date, datetime.date(1980, 1, 1))
+        self.assertEqual(end_date, datetime.date(1980, 1, 31))
+        date = datetime.datetime(1980, 1, 31)
+        start_date, end_date = get_monthspan(date)
+        self.assertTrue(isinstance(start_date, datetime.datetime))
+        self.assertTrue(isinstance(end_date, datetime.datetime))
+        self.assertEqual(start_date, datetime.datetime(1980, 1, 1))
+        self.assertEqual(end_date, datetime.datetime(1980, 1, 31))
+
+    def test_february(self):
+        date = datetime.date(1945, 2, 19)
+        start_date, end_date = get_monthspan(date)
+        self.assertTrue(isinstance(start_date, datetime.date))
+        self.assertTrue(isinstance(end_date, datetime.date))
+        self.assertEqual(start_date, datetime.date(1945, 2, 1))
+        self.assertEqual(end_date, datetime.date(1945, 2, 28))
+        date = datetime.datetime(1945, 2, 1)
+        start_date, end_date = get_monthspan(date)
+        self.assertTrue(isinstance(start_date, datetime.datetime))
+        self.assertTrue(isinstance(end_date, datetime.datetime))
+        self.assertEqual(start_date, datetime.datetime(1945, 2, 1))
+        self.assertEqual(end_date, datetime.datetime(1945, 2, 28))
+
+    def test_february_leap(self):
+        date = datetime.date(1980, 2, 19)
+        start_date, end_date = get_monthspan(date)
+        self.assertTrue(isinstance(start_date, datetime.date))
+        self.assertTrue(isinstance(end_date, datetime.date))
+        self.assertEqual(start_date, datetime.date(1980, 2, 1))
+        self.assertEqual(end_date, datetime.date(1980, 2, 29))
+        date = datetime.datetime(1980, 2, 19)
+        start_date, end_date = get_monthspan(date)
+        self.assertTrue(isinstance(start_date, datetime.datetime))
+        self.assertTrue(isinstance(end_date, datetime.datetime))
+        self.assertEqual(start_date, datetime.datetime(1980, 2, 1))
+        self.assertEqual(end_date, datetime.datetime(1980, 2, 29))
+
+    def test_june(self):
+        date = datetime.date(1978, 6, 12)
+        start_date, end_date = get_monthspan(date)
+        self.assertTrue(isinstance(start_date, datetime.date))
+        self.assertTrue(isinstance(end_date, datetime.date))
+        self.assertEqual(start_date, datetime.date(1978, 6, 1))
+        self.assertEqual(end_date, datetime.date(1978, 6, 30))
+        date = datetime.datetime(1978, 6, 12)
+        start_date, end_date = get_monthspan(date)
+        self.assertTrue(isinstance(start_date, datetime.datetime))
+        self.assertTrue(isinstance(end_date, datetime.datetime))
+        self.assertEqual(start_date, datetime.datetime(1978, 6, 1))
+        self.assertEqual(end_date, datetime.datetime(1978, 6, 30))
+
+
+class _QuarterspanTestCase(unittest.TestCase):
+    """Unittests for get_quarterspan"""
+
+    def test_first(self):
+        """Tests for first quarter of a year"""
+        start_date, end_date = get_quarterspan(datetime.date(1980, 1, 1))
+        self.assertTrue(start_date < end_date)
+        self.assertEqual(start_date, datetime.date(1980, 1, 1))
+        self.assertEqual(end_date, datetime.date(1980, 3, 31))
+
+        start_date, end_date = get_quarterspan(datetime.date(1980, 2, 29))
+        self.assertTrue(start_date < end_date)
+        self.assertEqual(start_date, datetime.date(1980, 1, 1))
+        self.assertEqual(end_date, datetime.date(1980, 3, 31))
+
+        start_date, end_date = get_quarterspan(datetime.date(1980, 3, 31))
+        self.assertTrue(start_date < end_date)
+        self.assertEqual(start_date, datetime.date(1980, 1, 1))
+        self.assertEqual(end_date, datetime.date(1980, 3, 31))
+
+    def test_second(self):
+        """Tests for second quarter of a year"""
+        start_date, end_date = get_quarterspan(datetime.date(1980, 4, 1))
+        self.assertTrue(start_date < end_date)
+        self.assertEqual(start_date, datetime.date(1980, 4, 1))
+        self.assertEqual(end_date, datetime.date(1980, 6, 30))
+
+        start_date, end_date = get_quarterspan(datetime.date(1980, 5, 4))
+        self.assertTrue(start_date < end_date)
+        self.assertEqual(start_date, datetime.date(1980, 4, 1))
+        self.assertEqual(end_date, datetime.date(1980, 6, 30))
+
+        start_date, end_date = get_quarterspan(datetime.date(1980, 6, 30))
+        self.assertTrue(start_date < end_date)
+        self.assertEqual(start_date, datetime.date(1980, 4, 1))
+        self.assertEqual(end_date, datetime.date(1980, 6, 30))
+
+    def test_third(self):
+        """Tests for third quarter of a year"""
+        start_date, end_date = get_quarterspan(datetime.date(1980, 7, 1))
+        self.assertTrue(start_date < end_date)
+        self.assertEqual(start_date, datetime.date(1980, 7, 1))
+        self.assertEqual(end_date, datetime.date(1980, 9, 30))
+
+        start_date, end_date = get_quarterspan(datetime.date(1980, 8, 4))
+        self.assertTrue(start_date < end_date)
+        self.assertEqual(start_date, datetime.date(1980, 7, 1))
+        self.assertEqual(end_date, datetime.date(1980, 9, 30))
+
+        start_date, end_date = get_quarterspan(datetime.date(1980, 9, 30))
+        self.assertTrue(start_date < end_date)
+        self.assertEqual(start_date, datetime.date(1980, 7, 1))
+        self.assertEqual(end_date, datetime.date(1980, 9, 30))
+
+    def test_fourth(self):
+        """Tests the fourth quarter of a year"""
+        start_date, end_date = get_quarterspan(datetime.date(1980, 10, 1))
+        self.assertTrue(start_date < end_date)
+        self.assertEqual(start_date, datetime.date(1980, 10, 1))
+        self.assertEqual(end_date, datetime.date(1980, 12, 31))
+
+        start_date, end_date = get_quarterspan(datetime.date(1980, 10, 1))
+        self.assertTrue(start_date < end_date)
+        self.assertEqual(start_date, datetime.date(1980, 10, 1))
+        self.assertEqual(end_date, datetime.date(1980, 12, 31))
+
+        start_date, end_date = get_quarterspan(datetime.date(1980, 12, 31))
+        self.assertTrue(start_date < end_date)
+        self.assertEqual(start_date, datetime.date(1980, 10, 1))
+        self.assertEqual(end_date, datetime.date(1980, 12, 31))
+
+    def test_all(self):
+        """Tests the whole year"""
+
+        # year = 1980  #unused
+        date = datetime.date(1980, 1, 1)
+        while date < datetime.date(1981, 1, 1):
+            if date.month <= 3:
+                mindate, maxdate = datetime.date(1980, 1, 1), datetime.date(1980, 3, 31)
+            elif date.month <= 6:
+                mindate, maxdate = datetime.date(1980, 4, 1), datetime.date(1980, 6, 30)
+            elif date.month <= 9:
+                mindate, maxdate = datetime.date(1980, 7, 1), datetime.date(1980, 9, 30)
+            else:
+                mindate, maxdate = datetime.date(1980, 10, 1), datetime.date(1980, 12, 31)
+
+            startdate, enddate = get_quarterspan(date)
+            self.assertTrue(startdate >= mindate)
+            self.assertTrue(startdate <= maxdate)
+            self.assertTrue(enddate >= mindate)
+            self.assertTrue(enddate <= maxdate)
+
+            date += datetime.timedelta(days=1)
+
+
+class _TertialspanTestCase(unittest.TestCase):
+    """Unittests for get_tertialspan"""
+
+    def test_all(self):
+        """Tests the whole year"""
+
+        date = datetime.date(1980, 1, 1)
+        while date < datetime.date(1981, 1, 1):
+            if date.month <= 4:
+                mindate, maxdate = datetime.date(1980, 1, 1), datetime.date(1980, 4, 30)
+            elif date.month <= 8:
+                mindate, maxdate = datetime.date(1980, 5, 1), datetime.date(1980, 8, 31)
+            else:
+                mindate, maxdate = datetime.date(1980, 9, 1), datetime.date(1980, 12, 31)
+
+            startdate, enddate = get_tertialspan(date)
+            self.assertTrue(startdate >= mindate)
+            self.assertTrue(startdate <= maxdate)
+            self.assertTrue(enddate >= mindate)
+            self.assertTrue(enddate <= maxdate)
+
+            date += datetime.timedelta(days=1)
 
 
 class _WorkdayTests(unittest.TestCase):
