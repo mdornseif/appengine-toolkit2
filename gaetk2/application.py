@@ -287,7 +287,7 @@ class WSGIApplication(webapp2.WSGIApplication):
             level = 'warning'
             tags = {'class': 'timeout', 'subsystem': 'urlfetch'}
 
-        if 'ApiTooSlowError' in repr(exception):
+        if 'ApiTooSlowError' in repr(exception.__class__) or unicode(exception).endswith('timed out'):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'class': 'timeout'}

@@ -158,11 +158,13 @@ html {
       {% block footer -%}<div class="container"></div>{%- endblock footer %}
     </footer>
 {% if gaetk_production and gaetk_sentry_dsn %}
-    <script src="https://cdn.ravenjs.com/3.20.1/raven.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.ravenjs.com/3.20.1/raven.min.js" crossorigin="anonymous"></script>
+  <script>
     Raven.config(gaetk_sentry_dsn, {
       release: '{{ gaetk_release }}',
       ignoreUrls: [/http:\/\/dev-.*\.appspot\.com\/.*/]
     }).install()
+  </script>
 {% endif %}
     {% block footerscripts %}{% endblock footerscripts %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>

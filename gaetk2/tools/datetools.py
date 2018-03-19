@@ -315,7 +315,7 @@ def get_timespan(period, date):
     elif period == "day":
         return date, date
     else:
-        raise ValueError("Unknown truncation type %s" % trtype)
+        raise ValueError("Unknown truncation type %s" % period)
 
 
 STATIC_GERMAN_HOLIDAYS = ((1, 1),    # Neujahr
