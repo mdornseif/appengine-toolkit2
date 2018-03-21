@@ -7,13 +7,13 @@
 <h2>{{ topic|none|capitalize }}</h2>
 
 <ul>
+  {% for link in item.layout.links %}
+    <li><a href="{{link.1}}">{{link.0}}</a></li>
+  {% endfor %}
   {% for madmin in item.modeladmins %}
     <li><a href="/admin2/q/{{ madmin.kind }}/">
       <i class="fa fa-database" aria-hidden="true"></i> {{ madmin.name }}</a>
     </li>
-  {% endfor %}
-  {% for link in item.layout.links %}
-    <li><a href="{{link.1}}">{{link.0}}</a></li>
   {% endfor %}
 </ul>
 {% endfor %}
