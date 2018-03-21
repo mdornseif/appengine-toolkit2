@@ -145,7 +145,10 @@ class WSGIApplication(webapp2.WSGIApplication):
         status, level, fingerprint, tags = self.classify_exception(request, exception)
 
         # Make sure we have at least some decent infotation in the logfile
-        logger.exception(u'Exception caught for path %s: %s', request.path, exception)
+        if level == 'error':
+            logger.exception(u'Exception caught for path %s: %s', request.path, exception)
+        else:
+            logger.info(u'Exception caught for path %s: %s', request.path, exception, exc_info=True)
         response.set_status(status)
 
         if not is_development():
