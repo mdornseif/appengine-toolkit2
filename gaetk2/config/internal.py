@@ -6,9 +6,14 @@ gaetk2.config.internal - Configuration via appengine_config.py.
 Created by Maximillian Dornseif on 2017-05-25.
 Copyright (c) 2017, 2018 HUDORA. MIT licensed.
 """
+import logging
 import os
 
 from google.appengine.api import lib_config
+
+
+logger = logging.getLogger(__name__)
+
 
 _gaetk_registry = lib_config.LibConfigRegistry('gaetk2_config')
 gaetkconfig = _gaetk_registry.register(
@@ -44,4 +49,5 @@ gaetkconfig.TEMPLATE_DIRS.append(
         '../..',
         'templates'))
 
-assert gaetkconfig.SECRET, "No gaetk2_config.SECRET provided"
+if not gaetkconfig.SECRET:
+    logger.warning('No gaetk2_config.SECRET provided')

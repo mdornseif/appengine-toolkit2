@@ -32,7 +32,7 @@ Usually the `WSGI Application` is :class:`gaetk2.applicationWSGIApplication` whi
 
 All your handlers should inherit their main functionality from :class:`gaetk2.handler.base.BasicHandler` which is a heavily modified `webapp2.RequestHandler <http://webapp2.readthedocs.io/en/latest/api/webapp2.html#webapp2.RequestHandler>`_.
 
-Usually you will overwrite ``get()``, ``post()``, ``head()``, ``options()``, ``put()``, ``delete()`` or ``trace()`` to handle the respective HTTP-Methods. See the `webapp2 Request Handler Documentation <http://webapp2.readthedocs.io/en/latest/guide/handlers.html>`_ for an overview.
+Usually you will overwrite ``get()``, ``post()``, ``head()``, ``options()``, ``put()``, ``delete()`` or ``trace()`` to handle the respective HTTP-Methods. See the `webapp2 Request Handler Documentation <http://webapp2.readthedocs.io/en/latest/guide/handlers.html>`_ for an overview. These functions access the request via ``self.request`` - see `webapp2 Request data Documentation <http://webapp2.readthedocs.io/en/latest/guide/request.html>`_. Output is generated via ``self.respomse`` or returning a response Object - see `webapp2  Documentation on Returned values <http://webapp2.readthedocs.io/en/latest/guide/handlers.html#returned-values>`_.
 
 To allow easy subclassing and Multiple inheritance :class:`~gaetk2.handler.base.BasicHandler` will ensure that a list of hook function in all parent classes is called. Before the request the following functions are called:
 

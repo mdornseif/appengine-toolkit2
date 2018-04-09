@@ -1,4 +1,17 @@
-<nav aria-label="Page navigation">
+<nav aria-label="Page navigation" class=gaetkpagination>
+  {% if total %}
+    <div class="float-right dropdown show limitchooser">
+      <a class="btn btn-light btn-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+       <i class="fa fa-cogs" aria-hidden="true"></i> {{ limit }} / {{ total }}
+      </a>
+      <div class="dropdown-menu">
+        <a class="dropdown-item" href="?{{ limit_qs }}&limit=25">25</a>
+        <a class="dropdown-item" href="?{{ limit_qs }}&limit=50">50</a>
+        <a class="dropdown-item" href="?{{ limit_qs }}&limit=100">100</a>
+        <a class="dropdown-item" href="?{{ limit_qs }}&limit=500">500</a>
+      </div>
+    </div>
+  {% endif %}
   <ul class="pagination justify-content-center">
     <li class="page-item {% if not prev_objects %} disabled{% endif %}">
       <a class="page-link" href="?{{ prev_qs|e }}" aria-label="Previous">
@@ -6,12 +19,16 @@
         <span class="sr-only">previous</span>
       </a>
     </li>
-{#
-    <li class="page-item"><a class="page-link" href="#">1</a></li>
-    <li class="page-item"><a class="page-link" href="#">2</a></li>
-    <li class="page-item"><a class="page-link" href="#">3</a></li>
-#}
-     <li class="page-item {% if not more_objects %} disabled{% endif %}">
+    {% for page in pages %}
+	  <li class="page-item {{ page.class }}">
+	    {% if page.link %}
+  	      <a class="page-link" href="{{ page.link }}">{{ page.text }}</a>
+  	    {% else %}
+  	      <span class="page-link">{{ page.text }}</span>
+		{% endif %}
+  	   </li>
+	{% endfor %}
+     <li class="page-item {% if not next_objects %} disabled{% endif %}">
       <a class="page-link" href="?{{ next_qs|e }}" aria-label="Next">
         <span aria-hidden="true">&raquo;</span>
         <span class="sr-only">next</span>
@@ -19,3 +36,15 @@
     </li>
   </ul>
 </nav>
+<!--
+	prev_objects={{ prev_objects }}
+	prev_qs={{ prev_qs }}
+    prev_start={{ prev_start }}
+	next_objects={{ next_objects }}
+    next_start={{ next_start }}
+    next_qs={{ next_qs }}
+    limit={{ limit }}
+    total={{ total }}
+    cursor={{ cursor }}
+-->
+
