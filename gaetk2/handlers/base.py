@@ -17,11 +17,11 @@ import webapp2
 from google.appengine.api import memcache, users
 from google.appengine.api.app_identity import get_application_id
 
-from .. import exc, jinja_filters
-from ..tools import hujson2
-from ..config import gaetkconfig
-from ..config import get_release, is_development, is_production
-from ..tools.sentry import sentry_client
+from gaetk2 import exc, jinja_filters
+from gaetk2.tools import hujson2
+from gaetk2.config import gaetkconfig
+from gaetk2.config import get_release, is_development, is_production
+from gaetk2.tools.sentry import sentry_client
 
 try:
     # if mixing gaetk1 and gaetk2 we need to use the same module
@@ -57,6 +57,9 @@ class BasicHandler(webapp2.RequestHandler):
         :meth:`is_sysadmin`, :meth:`is_staff` and :meth:`has_permission`
         are meant to work with
         :class:`~gaetk2.handlers.authentication.AuthenticationReaderMixin`
+        for ``self.request`` see `webapp2 Documentation
+        <http://webapp2.readthedocs.io/en/latest/guide/request.html
+        #common-request-attributes>`_
 
     Attributes:
         credential: authenticated user, see :class:`~gaetk2.handlers.authentication.AuthenticationReaderMixin`
@@ -244,6 +247,7 @@ class BasicHandler(webapp2.RequestHandler):
             request=self.request,
             credential=self.credential,
             gaetk_logout_url='/gaetk2/auth/logout',
+            gaetk_path=self.request.path,
             is_staff=self.is_staff(),
             is_sysadmin=self.is_sysadmin(),
         )
@@ -329,6 +333,9 @@ class BasicHandler(webapp2.RequestHandler):
 
     def response_overwrite(self, response, method, *args, **kwargs):
         """Function to transform response. To be overwritten."""
+        if hasattr(self, 'response_overwrite_overwrite'):  # hack for JsonMixin
+            return self.response_overwrite_overwrite(
+                response, method, *args, **kwargs)
         return response
 
     def finished_hook(self, method, *args, **kwargs):
@@ -405,6 +412,7 @@ class BasicHandler(webapp2.RequestHandler):
         values = self._reduce_all_inherited('build_context', values)
         # for debugging provide access to all variables in gaetk_localcontext
         if is_development():
+            logger.info('gaetk_*context')
             try:
                 values['gaetk_globalcontext_json'] = hujson2.htmlsafe_json_dumps(env.globals)
                 values['gaetk_localcontext_json'] = hujson2.htmlsafe_json_dumps(values)
@@ -552,7 +560,7 @@ class BasicHandler(webapp2.RequestHandler):
         except BaseException, e:
             return self.handle_exception(e, self.app.debug)
 
-        if response:
+        if response and not getattr(self, '_gaetk2_allow_strange_responses', False):
             assert isinstance(response, webapp2.Response)
 
         self._set_cache_headers()
