@@ -56,13 +56,42 @@ If you add something like this to your template Variables::
 There will be a list of breadcrumbs rendered above the Title.
 
 
+Snippets
+--------
+
+Snippets are gaetk2's stab at simple CMS functionality. You still write
+hardcoded HTML-Templates. But inside you can insert parts editable by
+your staff in the browser without the need to update the application.
+
+This happens by adding ``show_snippet`` template tags::
+
+    {{ show_snippet('welcome') }}
+
+When the resulting page is rendered there will be no text because
+the snippet has no content so far. But there should be an edit icons.
+
+.. image:: http://filez.foxel.org/103F2Z0S3d1i/Image%202018-04-11%20at%208.07.06%20PM.jpg
+
+If you click on it you will be redirected to an editing page where you can
+change the Snippet. You can also provide a default text to be used for initial
+snippet content::
+
+    {{ show_snippet('welcome', 'Welcome to our Site!') }}
+
+..  todo::
+
+  * insert ``show_snippet`` into template contest to make it usable
+  * remove pagedown_bootstrap and replace it with something usable
+
+
 Progressive enhancements
 ------------------------
 
 ..  todo::
 
-  * gaetkenhance-confirm
-
+  * gaetkenhance-confirm, table
+  * ChiqView
+  * Breadcrumbs with hooks
 
 Best Practices
 --------------

@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.admin.views - administrationsinterface - inspieriert von Django.
 
 Created by Christian Klein on 2011-08-10.
 Copyright (c) 2011, 2013-2015, 2017-2018 HUDORA GmbH. MIT Licensed.
 """
+from __future__ import unicode_literals
+
 import logging
 
 from google.appengine.api import app_identity
@@ -13,13 +15,16 @@ from google.appengine.api import app_identity
 # from gaetk2.admin import search
 # from gaetk2.admin.models import DeletedObject
 import gaetk2.admin
+
 from gaetk2.admin import autodiscover
 from gaetk2.application import Route, WSGIApplication
+from gaetk2.ext import snippets
 from gaetk2.helpers import check404
 
 from .. import exc
 from ..handlers import AuthenticatedHandler
 from ..handlers.mixins.paginate import PaginateMixin
+
 
 # import gaetk.handler
 # import gaetk.snippets
@@ -203,12 +208,12 @@ class AdminChangeHandler(_AbstractAdminHandler):
 autodiscover()
 application = WSGIApplication(([
     # (r'^/admin2/_undelete/(.+)', AdminUndeleteHandler),
-    # (r'^/admin2/snippet/edit/', gaetk.snippets.SnippetEditHandler),
     Route('/admin2/', AdminIndexHandler),
     Route('/admin2/q/<kind>/', AdminListHandler),
     Route('/admin2/q/<kind>/export_xls/', AdminExportXLSHandler),
     Route('/admin2/q/<kind>/export_csv/', AdminExportCSVHandler),
     Route('/admin2/q/<kind>/search/', AdminSearchHandler),
     Route('/admin2/e/<kind>/<objectid>/', AdminDetailHandler),
+    Route('/admin2/snippet/edit/', snippets.SnippetEditHandler),
     # Route('/admin2/e/<kind>/<action_or_objectid>/', AdminChangeHandler),
 ]))
