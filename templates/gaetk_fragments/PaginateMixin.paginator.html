@@ -1,17 +1,24 @@
 <nav aria-label="Page navigation" class=gaetkpagination>
   {% if total %}
-    <div class="float-right dropdown show limitchooser">
-      <a class="btn btn-light btn-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-       <i class="fa fa-cogs" aria-hidden="true"></i> {{ limit }} / {{ total }}
-      </a>
-      <div class="dropdown-menu">
-        <a class="dropdown-item" href="?{{ limit_qs }}&limit=25">25</a>
-        <a class="dropdown-item" href="?{{ limit_qs }}&limit=50">50</a>
-        <a class="dropdown-item" href="?{{ limit_qs }}&limit=100">100</a>
-        <a class="dropdown-item" href="?{{ limit_qs }}&limit=500">500</a>
-      </div>
-    </div>
+    {% if limit >= total and limit <= 25 %}
+      <!-- nothing to choose -->
+    {% else %}
+	  <div class="float-right dropdown show limitchooser">
+	    <a class="btn btn-light btn-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+	     <i class="fa fa-cogs" aria-hidden="true"></i> {{ limit }} / {{ total }}
+	    </a>
+	    <div class="dropdown-menu">
+	      <a class="dropdown-item" href="?{{ limit_qs }}&limit=25">25</a>
+	      <a class="dropdown-item" href="?{{ limit_qs }}&limit=50">50</a>
+	      <a class="dropdown-item" href="?{{ limit_qs }}&limit=100">100</a>
+	      <a class="dropdown-item" href="?{{ limit_qs }}&limit=500">500</a>
+	    </div>
+	  </div>
+    {% endif %}
   {% endif %}
+  {% if total and limit >= total %}
+    <!-- nothing to paginate -->
+  {% else %}
   <ul class="pagination justify-content-center">
     <li class="page-item {% if not prev_objects %} disabled{% endif %}">
       <a class="page-link" href="?{{ prev_qs|e }}" aria-label="Previous">
@@ -35,6 +42,7 @@
       </a>
     </li>
   </ul>
+  {% endif %}
 </nav>
 <!--
 	prev_objects={{ prev_objects }}
@@ -47,4 +55,3 @@
     total={{ total }}
     cursor={{ cursor }}
 -->
-
