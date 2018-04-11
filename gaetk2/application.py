@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.application - WSGI Application for webapp2.
 
 Created by Maximillian Dornseif on 2018-01-11.
 Copyright (c) 2018 Maximillian Dornseif. MIT Licensed.
 """
+from __future__ import unicode_literals
+
 import cgitb
 import logging
 import os
@@ -15,17 +17,19 @@ import google.appengine.api.urlfetch_errors
 import google.appengine.runtime
 import google.appengine.runtime.apiproxy_errors
 import google.storage.speckle.python.api.rdbms
+
+from google.appengine.ext import ndb
+
 import jinja2
 import requests.exceptions
 import urllib3.exceptions
 import webapp2
-from google.appengine.ext import ndb
-from webapp2 import Route
 
 from gaetk2 import exc
-from gaetk2.config import gaetkconfig
-from gaetk2.config import is_development
+from gaetk2.config import gaetkconfig, is_development
 from gaetk2.tools.sentry import sentry_client
+from webapp2 import Route
+
 
 __all__ = ['WSGIApplication', 'Route']
 
@@ -56,7 +60,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                 # webapp2 conly catches `Exception` not `BaseException`
                 except BaseException as e:
                     logger.debug(
-                        "Exception %r via %s %s %s", e, request.route,
+                        'Exception %r via %s %s %s', e, request.route,
                         request.route_args, request.route_kwargs)
                     # logger.debug('called from %s %s', self.__class__.__name__, self.__class__.__module__)
                     try:
@@ -79,7 +83,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                     logger.info('_internal_error')
                     return self._internal_error(e)(environ, start_response)
             except:
-                logger.critical("uncaught error")
+                logger.critical('uncaught error')
                 raise
 
     def handle_exception(self, request, response, e):
@@ -115,7 +119,7 @@ class WSGIApplication(webapp2.WSGIApplication):
             if getattr(e, attr, None):
                 notedata[attr] = getattr(e, attr)
         if notedata:
-            sentry_client.note('navigation', message=u'HTTPException', data=notedata)
+            sentry_client.note('navigation', message='HTTPException', data=notedata)
 
         handler = self.error_handlers.get(code)
         if handler:
@@ -138,7 +142,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                         level='info',
                         tags={'httpcode': code, 'type': 'Exception'},
                         extra=notedata)
-                logging.debug("HTTP exception:", exc_info=True)
+                logging.debug('HTTP exception:', exc_info=True)
                 raise
 
     def default_exception_handler(self, request, response, exception):
@@ -146,9 +150,9 @@ class WSGIApplication(webapp2.WSGIApplication):
 
         # Make sure we have at least some decent infotation in the logfile
         if level == 'error':
-            logger.exception(u'Exception caught for path %s: %s', request.path, exception)
+            logger.exception('Exception caught for path %s: %s', request.path, exception)
         else:
-            logger.info(u'Exception caught for path %s: %s', request.path, exception, exc_info=True)
+            logger.info('Exception caught for path %s: %s', request.path, exception, exc_info=True)
         response.set_status(status)
 
         if not is_development():
@@ -161,25 +165,25 @@ class WSGIApplication(webapp2.WSGIApplication):
                     fingerprint=fingerprint,
                     tags=tags,
                 )
-                logger.info("pushing to sentry: %s", event_id)
+                logger.info('pushing to sentry: %s', event_id)
             else:
-                logger.info("sentry not configured")
+                logger.info('sentry not configured')
 
             # render error page for the client
             # we do not use jinja2 here to avoid an additional error source.
             with open(os.path.join(os.path.dirname(__file__), '..', 'templates/error/500.html')) as fileobj:
                 # set sentry_event_id for GetSentry User Feedback
                 template = fileobj.read().decode('utf-8')
-                template = template.replace(u"'{{sentry_event_id}}'", u"'%s'" % event_id)
+                template = template.replace("'{{sentry_event_id}}'", "'%s'" % event_id)
                 template = template.replace(
-                    u"'{{sentry_public_dsn}}'",
-                    u"'%s'" % gaetkconfig.SENTRY_PUBLIC_DSN)
-                template = template.replace(u"{{exception_text}}", jinja2.escape(u"%s" % exception))
+                    "'{{sentry_public_dsn}}'",
+                    "'%s'" % gaetkconfig.SENTRY_PUBLIC_DSN)
+                template = template.replace('{{exception_text}}', jinja2.escape('%s' % exception))
                 response.clear()
                 response.out.body = template.encode('utf-8')
         else:
             # On development servers display a nice traceback via `cgitb`.
-            logger.info(u"not pushing to sentry, cgitb()")
+            logger.info('not pushing to sentry, cgitb()')
             response.clear()
             handler = cgitb.Hook(file=response.out).handle
             handler()
@@ -377,5 +381,6 @@ class WSGIApplication(webapp2.WSGIApplication):
 
     def fix_unicode_headers(self, response):
         """Ensure all Headers are Unicode."""
-        for name, val in response.headers.items():
-            response.headers[str(name)] = str(val)
+        if hasattr(response, 'headers'):
+            for name, val in response.headers.items():
+                response.headers[str(name)] = str(val)

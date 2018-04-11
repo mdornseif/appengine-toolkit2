@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.taskqueue
 
 Created by Maximillian Dornseif on 2011-01-07.
 Copyright (c) 2011, 2012, 2016-2018 Cyberlogi/HUDORA. All rights reserved.
 """
+from __future__ import unicode_literals
+
 import datetime
 import hashlib
 import logging
@@ -13,12 +15,13 @@ import re
 import zlib
 
 import google.appengine.ext.deferred.deferred
+
 from google.appengine.api import taskqueue
 from google.appengine.ext import deferred
 
 from .config import is_production
-from .tools.unicode import slugify
 from .tools.datetools import date_trunc
+from .tools.unicode import slugify
 
 
 logger = logging.getLogger(__name__)
@@ -64,7 +67,7 @@ def taskqueue_add_multi_payload(name, url, payloadlist, **kwargs):
             tasks = []
     if tasks:
         taskqueue.Queue(name=name).add(tasks)
-    logger.debug(u'%d tasks queued to %s', len(payloadlist), url)
+    logger.debug('%d tasks queued to %s', len(payloadlist), url)
 
 
 # See also https://github.com/freshplanet/AppEngine-Deferred
@@ -90,7 +93,7 @@ def defer(obj, *args, **kwargs):
 
     """
 
-    suffix = '{0}({1!s},{2!r})'.format(
+    suffix = '{}({!s},{!r})'.format(
         obj.__name__,
         ','.join(_to_str(arg) for arg in args),
         ','.join('%s=%s' % (
@@ -99,14 +102,16 @@ def defer(obj, *args, **kwargs):
     suffix = re.sub(r'-+', '-', suffix.replace(' ', '-'))
     suffix = re.sub(r'[^/A-Za-z0-9_,.:@&+$\(\)\-]+', '', suffix)
     url = google.appengine.ext.deferred.deferred._DEFAULT_URL + '/' + suffix[:200]
-    kwargs["_url"] = kwargs.pop("_url", url)
+    kwargs['_url'] = kwargs.pop('_url', url)
     # kwargs["_queue"] = kwargs.pop("_queue", 'workersq')
     if is_production():
         # we only route to the workers backend/module on production machines
         pass
         # kwargs["_target"] = kwargs.pop("_target", 'workers')
     try:
-        return deferred.defer(obj, *args, **kwargs)
+        task = deferred.defer(obj, *args, **kwargs)
+        logging.debug('started task %r', task.name)
+        return task.name
     except taskqueue.TaskAlreadyExistsError:
         logger.info('Task already exists')
     except taskqueue.TombstonedTaskError:
@@ -140,7 +145,7 @@ def defer_once_per_hour(obj, *args, **kwargs):
     key += ','.join('{}={}'.format(
         key, unicode(value)) for (key, value) in kwargs.items())
     key = key.encode('utf-8', errors='replace')
-    name = '{0}.{1}-{2}-{3}'.format(
+    name = '{}.{}-{}-{}'.format(
         obj.__module__, obj.__name__,
         date_trunc('hour', datetime.datetime.now()).strftime('%Y%m%dT%H'),
         hashlib.md5(key).hexdigest()

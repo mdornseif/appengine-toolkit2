@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.admin.modeladmin
 
 Created by Christian Klein on 2011-08-22.
 Copyright (c) 2011, 2014, 2017 HUDORA GmbH. All rights reserved.
 """
+from __future__ import unicode_literals
+
 import cgi
 import collections
 import datetime
@@ -18,6 +20,7 @@ import wtforms
 
 from . import util
 from .. import exc, modelexporter
+
 
 # from gaetk.admin.models import DeletedObject
 
@@ -50,6 +53,7 @@ class ModelAdmin(object):
     """TBD"""
 
     detail_fields = ()
+    """TBD"""
 
     order_field = '-created_at'
     """Sorting. Beware of datastore indices!"""
@@ -149,7 +153,7 @@ class ModelAdmin(object):
             # fallback
             query = self.model.query()
         if ordering:
-            attr, direction = ordering  # pylint: disable=unpacking-non-sequence
+            attr, direction = ordering
             prop = self.model._properties.get(attr)
             if prop:
                 if direction == '-':
@@ -243,7 +247,7 @@ class ModelAdmin(object):
                 key = obj.put()
                 handler.add_message(
                     'success',
-                    u'<strong><a href="/admin/{}/{}/{}/">{} {}</a></strong> wurde gespeichert.'.format(
+                    '<strong><a href="/admin/{}/{}/{}/">{} {}</a></strong> wurde gespeichert.'.format(
                         util.get_app_name(self.model),
                         self.model._get_kind(),
                         key.urlsafe(),
@@ -307,7 +311,7 @@ class ModelAdmin(object):
                 key = obj.put()
                 handler.add_message(
                     'success',
-                    u'<strong><a href="/admin/{}/{}/{}/">{} {}</a></strong> wurde angelegt.'.format(
+                    '<strong><a href="/admin/{}/{}/{}/">{} {}</a></strong> wurde angelegt.'.format(
                         util.get_app_name(self.model),
                         self.model._get_kind(),
                         key.urlsafe(),
@@ -355,14 +359,14 @@ class ModelAdmin(object):
         """
         if handler.request.method != 'POST':
             raise exc.HTTP400_BadRequest(
-                u'Falsche Request Methode für diesen Aufruf: %s' % handler.request.method)
+                'Falsche Request Methode für diesen Aufruf: %s' % handler.request.method)
         # Instanzen sammeln und dann gemeinsam löschen
         keys = []
         for object_id in handler.request.get_all('object_id'):
             obj = self.get_object(object_id)
             if obj is None:
-                raise exc.HTTP404_NotFound(u'Keine Instanz zu ID %s gefunden.' % object_id)
-            logger.info(u'Delete %s', object_id)
+                raise exc.HTTP404_NotFound('Keine Instanz zu ID %s gefunden.' % object_id)
+            logger.info('Delete %s', object_id)
             if issubclass(self.model, ndb.Model):
                 keys.append(ndb.Key(urlsafe=object_id))
             elif issubclass(self.model, db.Model):
