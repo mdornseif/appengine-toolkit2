@@ -1,10 +1,12 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """gaetk2.tools.auth0.py  Tools for working with auth0
 
 Created by Maximillian Dornseif on 2017-12-05.
 Copyright 2017 HUDROA. MIT Licensed.
 """
+
+from __future__ import unicode_literals
 
 import logging
 
@@ -14,6 +16,7 @@ from auth0.v3.authentication import GetToken
 from auth0.v3.exceptions import Auth0Error
 from auth0.v3.management import Auth0
 from gaetk2.config import gaetkconfig
+
 
 logger = logging.getLogger(__name__)
 
@@ -49,17 +52,17 @@ def create_from_credential(credential):
 
     auth0api = Auth0(gaetkconfig.AUTH0_DOMAIN, get_auth0_access_token())
     payload = {
-        "connection": 'DefaultDatabase',
-        "email": credential.email,
-        "password": credential.secret,
-        "user_id": credential.uid,
-        "user_metadata": {
-            "name": credential.name,
-            "nickname": "User fuer {}".format(credential.org_designator)
+        'connection': 'DefaultDatabase',
+        'email': credential.email,
+        'password': credential.secret,
+        'user_id': credential.uid,
+        'user_metadata': {
+            'name': credential.name,
+            'nickname': 'User fuer {}'.format(credential.org_designator)
         },
-        "email_verified": True,
-        "verify_email": False,
-        "app_metadata": {
+        'email_verified': True,
+        'verify_email': False,
+        'app_metadata': {
             'org_designator': credential.org_designator,
             'permissions': credential.permissions,
         }
@@ -68,8 +71,8 @@ def create_from_credential(credential):
     try:
         newuser = auth0api.users.create(payload)
     except Auth0Error as ex:
-        if ex.status_code == 400 and ex.message == u'The user already exists.':
-            logger.info("The user already exists: %s %r %s", credential.uid, ex, payload)
+        if ex.status_code in [400, 409] and ex.message == 'The user already exists.':
+            logger.info('The user already exists: %s %r %s', credential.uid, ex, payload)
             try:
                 newuser = auth0api.users.get('auth0|{}'.format(credential.uid))
             except:
@@ -100,13 +103,13 @@ def create_from_credential(credential):
             logger.error('%r newuser = %s %s', 'auth0|{}'.format(credential.uid), newuser, ex)
             raise
     except:
-        logger.warn("payload = %s", payload)
+        logger.warn('payload = %s', payload)
         raise
     if newuser is None or (newuser.get('error')):
-        logger.warn("reply=%s payload = %s", newuser, payload)
-        raise RuntimeError("Auth0-Fehler: %s" % newuser)
+        logger.warn('reply=%s payload = %s', newuser, payload)
+        raise RuntimeError('Auth0-Fehler: %s' % newuser)
 
-    logger.info("new auth0 user %s", newuser)
+    logger.info('new auth0 user %s', newuser)
     credential.meta['auth0_user_id'] = credential.external_uid = newuser['user_id']
     credential.put()
     return
