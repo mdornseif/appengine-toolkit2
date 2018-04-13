@@ -59,20 +59,20 @@ handlers:
 # `libraries:` unfortunately is ignored during including
 
 skip_files:
-- .*/requirements.txt
-- .*\.graffle
-- .*\.jar
-- .*MANIFEST.in
-- .*PKG-INFO
-- ^(.*/)?(CHANGES|LICENSE|AUTHORS)
-- ^(.*/)?.*\.py[co]
-- ^(.*/)?.*~
-- ^(.*/)?.*\.bak
-- ^(.*/)?.*\.so
+- .*/requirements.txt$
+- .*\.graffle$
+- .*\.jar$
+- .*MANIFEST.in$
+- .*PKG-INFO$
+- ^(.*/)?(CHANGES|LICENSE|AUTHORS)$
+- ^(.*/)?.*\.py[co]$
+- ^(.*/)?.*~$
+- ^(.*/)?.*\.bak$
+- ^(.*/)?.*\.so$
 - ^(.*/)?\..*
 - ^(.*/)?\.[^c].*
-- ^(.*/)?app\.yaml
-- ^(.*/)?index\.yaml
+- ^(.*/)?app\.yaml$
+- ^(.*/)?index\.yaml$
 - ^(.*/)?lib/.*/(tests|testsuite)/.*
 - ^(.*/)?lib/.*google_appengine/.*
 - ^(.*/)?lib/CentralServices/keys/.*
