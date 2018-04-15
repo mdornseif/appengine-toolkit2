@@ -1,28 +1,32 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.views.login - generic logout & authentication views.
 
 based on EDIhub:login.py
 
 Created by Maximillian Dornseif on 2010-09-24.
-Copyright (c) 2010, 2014, 2015 HUDORA. MIT licensed.
+Copyright (c) 2010, 2014, 2015, 2018 HUDORA. MIT licensed.
 """
+from __future__ import unicode_literals
+
 import hashlib
 import logging
 import os
+
 from datetime import datetime, timedelta
 
-from gaetk2.tools import hujson2
 from google.appengine.api import users
 
+from gaetk2 import exc
+from gaetk2.application import Route, WSGIApplication
+from gaetk2.config import gaetkconfig
+from gaetk2.handlers import DefaultHandler, JsonHandler
+from gaetk2.handlers.authentication import AuthenticationReaderMixin
+from gaetk2.models import gaetk_Credential
+from gaetk2.tools import hujson2
 from jose import jwt
 
-from ..application import WSGIApplication
-from ..exc import HTTP400_BadRequest, HTTP403_Forbidden, HTTP404_NotFound
-from ..handlers import DefaultHandler, JsonHandler
-from ..handlers.auth import gaetk_Credential
-from ..config import config
 
 logger = logging.getLogger(__name__)
 
@@ -45,33 +49,39 @@ class Debug(JsonHandler):
             google_user=users.get_current_user(),
             credential=self.credential,
             uid=self.session.get('uid'),
-            # headers=self.request.headers,
+            headers=self.request.headers,
         )
 
 
-class GetJWTtxt(DefaultHandler):
-    """Create our own hudora-specific JWT."""
+class GetJWTtxt(DefaultHandler, AuthenticationReaderMixin):
+    """Create our own hudora-specific JWT and send it to the client."""
 
     def get_jwt(self):
+        """Build a JWT access token."""
         iat = datetime.utcnow()
         nbf = iat + timedelta(seconds=0)
-        exp = iat + timedelta(seconds=3600)
-        jti = hashlib.md5(os.urandom(128)).hexdigest()
+        exp = iat + timedelta(seconds=3600*12)
+        jti = hashlib.sha256(os.urandom(256)).hexdigest()
 
         jwt_payload = {
-            'exp': exp, 'iat': iat, 'nbf': nbf, 'jti': jti,  # 'aud': 'hudora.de',
+            'exp': exp, 'iat': iat, 'nbf': nbf, 'jti': jti,
             'sub': self.credential.uid,
-            "Email": self.credential.email
+            'aud': gaetkconfig.JWT_AUDIENCE,
+            # "Email": self.credential.email
         }
-        return jwt.encode(jwt_payload, config.JWT_SECRET_KEY, algorithm='HS256')
+        # See https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
+        # we could use Scopes
+        logger.debug('jwt_payload = %s', jwt_payload)
+        return jwt.encode(jwt_payload, gaetkconfig.JWT_SECRET_KEY, algorithm='HS256')
 
     def get(self):
         """Build JWT and return it as plaintext."""
-
-        if not self.credential:
-            self.return_text('// NAK - unauthenticated')
-
-        self.return_text('// ACK - ' + self.get_jwt())
+        if not gaetkconfig.JWT_SECRET_KEY:
+            raise exc.HTTP403_Forbidden('nicht freigeschaltet.')
+        elif not self.credential:
+            raise exc.HTTP401_Unauthorized('Sie sind scheinbar nicht angemeldet.')
+        else:
+            self.return_text(self.get_jwt())
 
 
 class LogoutHandler(DefaultHandler):
@@ -79,7 +89,7 @@ class LogoutHandler(DefaultHandler):
 
     def get(self):
         """Logout user and terminate the current session."""
-        logger.info("forcing logout")
+        logger.info('forcing logout')
 
         # log out Google and either redirect to 'continue' or display
         # the default logout confirmation page
@@ -97,10 +107,10 @@ class LogoutHandler(DefaultHandler):
 
         user = users.get_current_user()
         if user:
-            logger.info("Google User %s", user)
+            logger.info('Google User %s', user)
             path = self.request.path
             logout_url = users.create_logout_url(path)
-            logger.info("logging out via %s", logout_url)
+            logger.info('logging out via %s', logout_url)
             self.redirect(logout_url)
         else:
             if continue_url:
@@ -115,17 +125,17 @@ class CredentialsHandler(JsonHandler):
     def authenticationchecker(self, *args, **kwargs):
         """Only admin users are allowed to access credentials."""
         if not self.is_sysadmin():
-            raise HTTP403_Forbidden
+            raise exc.HTTP403_Forbidden
 
     def get(self):
         """Returns information about the credential referenced by parameter `uid`."""
         uid = self.request.get('uid')
         if not uid:
-            raise HTTP404_NotFound
+            raise exc.HTTP404_NotFound
 
         credential = self.get_credential(uid)
         if credential is None:
-            raise HTTP404_NotFound
+            raise exc.HTTP404_NotFound
 
         return dict(
             uid=credential.uid, admin=credential.admin, text=credential.text,
@@ -172,8 +182,8 @@ class CredentialsHandler(JsonHandler):
             credential.email = email
             credential.permissions = []
             for permission in permissions:
-                if permission not in getattr(config, 'ALLOWED_PERMISSIONS', []):
-                    raise HTTP400_BadRequest("invalid permission %r" % permission)
+                if permission not in getattr(gaetkconfig, 'ALLOWED_PERMISSIONS', []):
+                    raise exc.HTTP400_BadRequest('invalid permission %r' % permission)
                 credential.permissions.append(permission)
             credential.put()
         else:
@@ -181,7 +191,7 @@ class CredentialsHandler(JsonHandler):
             credential = gaetk_Credential.create(
                 admin=admin, text=text, email=email)
 
-        self.response.headers["Content-Type"] = "application/json"
+        self.response.headers['Content-Type'] = 'application/json'
         self.response.set_status(201)
         self.response.out.write(hujson2.dumps(dict(
             uid=credential.uid, secret=credential.secret,
@@ -193,9 +203,9 @@ class CredentialsHandler(JsonHandler):
 
 
 application = WSGIApplication([
-    (r'^/gaetk2/auth/debug$', Debug),
-    (r'^/gaetk2/auth/getjwt.txt$', GetJWTtxt),
-    (r'^/gaetk2/auth/logout$', LogoutHandler),
+    Route('/gaetk2/auth/debug', Debug),
+    Route('/gaetk2/auth/getjwt.txt', GetJWTtxt),
+    Route('/gaetk2/auth/logout', LogoutHandler),
 ])
 
 #     (r'auth/credentials$', CredentialsHandler),

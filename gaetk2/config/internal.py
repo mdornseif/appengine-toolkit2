@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.config.internal - Configuration via appengine_config.py.
 
 Created by Maximillian Dornseif on 2017-05-25.
 Copyright (c) 2017, 2018 HUDORA. MIT licensed.
 """
+from __future__ import unicode_literals
+
 import logging
 import os
 
@@ -23,6 +25,7 @@ gaetkconfig = _gaetk_registry.register(
         TEMPLATE_DIRS=['./templates'],
         # auth
         JWT_SECRET_KEY=None,
+        JWT_AUDIENCE=None,
         OAUTH_GOOGLE_CONFIG={},  # see https://console.developers.google.com/apis/credentials?project=huwawi2
         OAUTH_GOOGLE_ALLOWED_DOMAINS=['hudora.de'],
         AUTH0_DOMAIN='*unset*',

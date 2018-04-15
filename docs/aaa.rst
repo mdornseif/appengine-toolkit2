@@ -71,8 +71,25 @@ Sentry `uses a bilateral token to authenticate these calles <https://blog.sentry
 If you set ``GAETK2_SENTRY_SECURITY_TOKEN`` in :file:`appengine_config` to the same value than in the Sentry Web Page Settings section all calls from the Sentry Sertver will be authenticated automatically with a ``uid`` of ``X-Sentry-Token@auth.gaetk2.23.nu``.
 
 
+How JWTs work in gaetk2
+^^^^^^^^^^^^^^^^^^^^^^^
+
+``/gaetk2/auth/getjwt.txt`` can be requested to get a JWT. To access ``getjwt.txt`` you have to be already authenticated by other means. The JWT  will be returnesd as a plain text string. See `jwt.io <https://jwt.io/>`_ for more information on how JWTs are constucted.
+
+The token obtained this way can be used to authenticate to oter parts
+of the gaetk2 app. This is done doing HTTP-Requests with an Authorisation-Header::
+
+    Authorization: bearer <your token>
+
+The tokens provided by ``/gaetk2/auth/getjwt.txt`` are only calid for a limited time.
+
+:class:`AuthenticationReaderMixin` can load credentials from the tokens provided by ``/gaetk2/auth/getjwt.txt``. It also can load credentials based on data provided by Auth0. More documentation is needed.
+
+
+
+
 Authorisation
-^^^^^^^^^^^^^
+-------------
 
 Currently gaetk2 assumes each user which is authenticated is also authorized.
 Needs work.

@@ -8,19 +8,24 @@ AuthenticationReaderMixin - Authentication MixIns for gaetk2.
 Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2010-2018 HUDORA. MIT licensed.
 """
+from __future__ import unicode_literals
+
 import datetime
+import json
 import logging
 import os
 import urllib
 
 from google.appengine.api import users
 
+import requests
+
+from gaetk2 import exc, models
+from gaetk2.config import gaetkconfig
+from gaetk2.tools.caching import lru_cache_memcache
+from gaetk2.tools.sentry import sentry_client
 from jose import jwt
 
-from .. import models
-from ..exc import HTTP302_Found, HTTP400_BadRequest, HTTP401_Unauthorized
-from ..config import gaetkconfig
-from ..tools.sentry import sentry_client
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +52,7 @@ class AuthenticationReaderMixin(object):
             # If the Client send us invalid credentials, let him know , else parse into
             # username and password
             if ':' not in decoded:
-                raise HTTP400_BadRequest(explanation='invalid credentials %r' % decoded)
+                raise exc.HTTP400_BadRequest(explanation='invalid credentials %r' % decoded)
             uid, secret = decoded.strip().split(':', 1)
             sentry_client.note(
                 'user', 'HTTP-Auth attempted for %r' % uid,
@@ -63,7 +68,7 @@ class AuthenticationReaderMixin(object):
                     self.request.headers.get('Authorization'),
                     self.credential, self.credential.secret, secret.strip())
                 logger.info('Falsches credential oder kein secret')
-                raise HTTP401_Unauthorized(
+                raise exc.HTTP401_Unauthorized(
                     'Invalid HTTP-Auth Infomation',
                     headers={'WWW-Authenticate': 'Basic realm="API Login"'})
 
@@ -71,15 +76,40 @@ class AuthenticationReaderMixin(object):
         if self.request.headers.get('Authorization', '').lower().startswith('bearer '):
             auth_type, token = self.request.headers.get('Authorization').split(None, 1)
             unverified_header = jwt.get_unverified_header(token)
-            # TODO: get public key
-            userdata = jwt.decode(
-                token,
-                gaetkconfig.JWT_SECRET_KEY,
-                algorithms=unverified_header['alg'],
-                # audience=API_AUDIENCE,
-                # issuer="https://"+AUTH0_DOMAIN+"/"
-            )
-            logger.warn('jwt: %s', userdata)
+            if gaetkconfig.JWT_SECRET_KEY and unverified_header['alg'] == 'HS256':
+                # gaetk2 JWT for internal use
+                userdata = jwt.decode(
+                    token,
+                    gaetkconfig.JWT_SECRET_KEY,
+                    algorithms=[unverified_header['alg']],
+                    audience=gaetkconfig.JWT_AUDIENCE,
+                    # issuer="https://"+AUTH0_DOMAIN+"/"
+                )
+                # 'sub': u'm.dornseif@hudora.de'}
+                self.credential = self.get_credential(userdata['sub'])
+                if self.credential:
+                    # We do not check the password because get_current_user() is trusted
+                    return self._login_user('gaetk2 JWT')
+                raise RuntimeError('JWT not found %s' % userdata['sub'])
+            else:
+                # Auth0 JWT
+                # see https://github.com/auth0-samples/auth0-python-api-samples/blob/master/00-Starter-Seed/server.py#L112
+                rsa_key = get_jwt_key(unverified_header['kid'])
+                userdata = jwt.decode(
+                    token,
+                    rsa_key,
+                    algorithms=['RS256'],
+                    audience=gaetkconfig.JWT_AUDIENCE,
+                    # issuer="https://"+AUTH0_DOMAIN+"/"
+                )
+                # u'sub': u'auth0|u37170004',
+                # u'scope': u'openid',
+                # For Auth0 / OpenID authentication there sould always be an user in our database
+                self.credential = models.gaetk_Credential.query(models.gaetk_Credential.external_uid==userdata['sub']).get()
+                if self.credential:
+                    # We do not check the password because get_current_user() is trusted
+                    return self._login_user('Auth0 JWT')
+                raise RuntimeError('JWT not found %s' % userdata['sub'])
 
         # 3. Check for App Engine / Google Apps based Login
         user = users.get_current_user()
@@ -137,7 +167,16 @@ class AuthenticationReaderMixin(object):
                         id=uid, uid=uid, text='created automatically via gaetk2')
                     return self._login_user('Sentry')
 
-        logger.info('user unauthenticated')
+
+        logger.info(
+            'user unauthenticated: Authorization:%r User:%r Session:%r QueueName:%r Appid:%r Sentry:%r',
+            self.request.headers.get('Authorization', ''),
+            users.get_current_user(),
+            self.session,
+            self.request.headers.get('X-AppEngine-QueueName'),
+            self.request.headers.get('X-Appengine-Inbound-Appid'),
+            self.request.headers.get('X-Sentry-Token')
+            )
 
     def _login_user(self, via, jwtinfo=None):
         """Ensure the system knows that a user has been logged in."""
@@ -152,11 +191,11 @@ class AuthenticationReaderMixin(object):
                 # here we could redirect the user to a page
                 # explaining that we couldn't match the data
                 # given by him to our local database.
-                raise HTTP401_Unauthorized(explanation="Couldn't assign {} to a local user".format(jwtinfo))
+                raise exc.HTTP401_Unauthorized(explanation="Couldn't assign {} to a local user".format(jwtinfo))
 
         # ensure that users with empty password are never logged in
         if self.credential and not self.credential.secret:
-            raise HTTP401_Unauthorized(explanation='Account %s disabled' % self.credential.uid)
+            raise exc.HTTP401_Unauthorized(explanation='Account %s disabled' % self.credential.uid)
 
         assert self.credential, 'unknown user via %r' % via
 
@@ -259,6 +298,24 @@ def allow_credential_from_jwt(jwt):
         return None
 
 
+@lru_cache_memcache(ttl=60 * 60 * 12)
+def get_jwt_key(kid):
+    # from https://github.com/auth0-samples/auth0-python-api-samples/blob/master/00-Starter-Seed/server.py
+    url = 'https://{}/.well-known/jwks.json'.format(gaetkconfig.AUTH0_DOMAIN)
+    response = requests.get(url)
+    jwks = json.loads(response.content)
+    rsa_key = {}
+    for key in jwks['keys']:
+        if key['kid'] == kid:
+            rsa_key = {
+                'kty': key['kty'],
+                'kid': key['kid'],
+                'use': key['use'],
+                'n': key['n'],
+                'e': key['e']
+            }
+    return rsa_key
+
 class AuthenticationRequiredMixin(AuthenticationReaderMixin):
     """Class which adds authorisation."""
 
@@ -267,7 +324,7 @@ class AuthenticationRequiredMixin(AuthenticationReaderMixin):
 
         if self.credential and not self.credential.secret:
             logger.debug('%r %r %r', method, args, kwargs)
-            raise HTTP401_Unauthorized('Account disabled')
+            raise exc.HTTP401_Unauthorized('Account disabled')
 
         if not self.credential:
             # Login not successful
@@ -283,10 +340,10 @@ class AuthenticationRequiredMixin(AuthenticationReaderMixin):
                     '/_ah/login_required?continue=%s' % urllib.quote(self.request.url))
                 logger.info('enforcing interactive login as %s', absolute_url)
                 logger.info('session %r', self.session)
-                raise HTTP302_Found(location=absolute_url)
+                raise exc.HTTP302_Found(location=absolute_url)
             else:
                 # We assume the access came via cURL et al, request Auth via 401 Status code.
                 logger.info(
                     'requesting HTTP-Auth %s %s', self.request.remote_addr,
                     self.request.headers.get('Authorization'))
-                raise HTTP401_Unauthorized(headers={'WWW-Authenticate': 'Basic realm="API Login"'})
+                raise exc.TTP401_Unauthorized(headers={'WWW-Authenticate': 'Basic realm="API Login"'})
