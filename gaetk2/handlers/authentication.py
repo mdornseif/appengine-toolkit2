@@ -346,4 +346,4 @@ class AuthenticationRequiredMixin(AuthenticationReaderMixin):
                 logger.info(
                     'requesting HTTP-Auth %s %s', self.request.remote_addr,
                     self.request.headers.get('Authorization'))
-                raise exc.TTP401_Unauthorized(headers={'WWW-Authenticate': 'Basic realm="API Login"'})
+                raise exc.HTTP401_Unauthorized(headers={'WWW-Authenticate': 'Basic realm="API Login"'})
