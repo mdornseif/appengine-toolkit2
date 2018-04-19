@@ -27,7 +27,6 @@ handlers:
   static_dir: lib/appengine-toolkit2/static
   http_headers:
     Access-Control-Allow-Origin: "*"
-
 - url: /favicon\.ico
   static_files: static/icons/favicon.ico
   upload: static/icons/favicon.ico
@@ -42,9 +41,19 @@ handlers:
 - url: /(robots.txt|version.txt|_ah/warmup)
   script: gaetk2.views.default.application
 
-# Out Django-Inspired Admin Interface
+# Our Django-Inspired Admin Interface
 - url: /admin2/.*
   script: gaetk2.admin.views.application
+
+- url: /gaetk2/auth/.*
+  script: gaetk2.views.login.application
+- url: /gaetk2/test/.*
+  script: gaetk2.views.selftest.application
+- url: /gaetk2/auth/auth0/.*
+  script: gaetk2.views.login_auth0.application
+- url: /gaetk2/auth/google/.*
+  script: gaetk2.views.login_google.application
+
 
 # Unfortunately not allowed in includes
 # error_handlers:
