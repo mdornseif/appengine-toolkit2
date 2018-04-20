@@ -15,6 +15,7 @@ remove them on a case by case basis in derivered classes.
 * :func:`copy_entity()` - can write an entity with a different key to the datastore
 * :func:`update_obj()` - basically implements conditional ``put()``
 * :func:`reload_obj()` - forces an object to be re-read from disk
+* :func:`apply_to_all_entities()`  - iterates over a table executing a function ("mapper")
 
 
 Data Model Conventions

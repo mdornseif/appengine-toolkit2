@@ -4,11 +4,17 @@
 gaetk2.datastore - Helper for ndb datastore usage.
 
 Created by Maximillian Dornseif on 2011-01-07.
-Copyright (c) 2011, 2012, 2016, 2017 Cyberlogi/HUDORA. All rights reserved.
+Copyright (c) 2011, 2012, 2016, 2017, 2018 Cyberlogi/HUDORA. All rights reserved.
 """
+import logging
 import warnings
 
 from google.appengine.ext import ndb
+
+from gaetk2.taskqueue import defer
+
+
+logger = logging.getLogger(__name__)
 
 
 class Model(ndb.Model):
@@ -133,3 +139,70 @@ def update_obj(obj, **kwargs):
 def reload_obj(obj):
     """Returns a reloaded Entity from disk."""
     return obj.key.get(use_cache=False, use_memcache=False)
+
+
+def apply_to_all_entities(func, model, batch_size=0, num_updated=0, num_processed=0, cursor=None):
+    """Appliy a certain task all entities of `model`.
+
+    It scans every entity in the datastore for the
+    model, exectues `func(entity)` on it and re-saves it
+    if func trturns true.
+    Tries to keep `updated_at` and `updated_by` unchanged.
+
+    Example:
+        def _fixup_MyModel_updatefunc(obj):
+            if obj.wert_waehrung is not None:
+                obj.wert_waehrung = int(obj.wert_waehrung)
+                return True
+            return False
+
+        def fixup_MyModel():
+            apply_to_all_entities(_fixup_app_angebotspos_updatefunc, MyModel)
+    """
+    # from https://cloud.google.com/appengine/articles/update_schema
+
+    # Get all of the entities for this Model.
+    query = model.query()
+    if not batch_size:
+        objects, next_cursor, more = query.fetch_page(
+            5, start_cursor=cursor)
+    else:
+        batch_size = 100
+        objects, next_cursor, more = query.fetch_page(
+            batch_size, start_cursor=cursor)
+
+    updated_now = 0
+    for obj in objects:
+        num_processed += 1
+        if 'updated_at' in obj._properties:
+            obj._properties['updated_at'].auto_now = False
+            obj._properties['updated_at']._auto_now = False
+        if 'updated_by' in obj._properties:
+            obj._properties['updated_by'].auto_current_user = False
+            obj._properties['updated_by']._auto_current_user = False
+
+        if func(obj):
+            obj.put() # use_cache=False, use_memcache=False)
+            num_updated += 1
+            updated_now += 1
+
+        if 'updated_at' in obj._properties:
+            obj._properties['updated_at'].auto_now = True
+            obj._properties['updated_at']._auto_now = True
+        if 'updated_by' in obj._properties:
+            obj._properties['updated_by'].auto_current_user = True
+            obj._properties['updated_by']._auto_current_user = True
+    logger.debug(
+        'Put %s entities to Datastore for a total of %s/%s', updated_now,
+        num_updated, num_processed)
+
+    # If there are more entities, re-queue this task for the next page.
+    if more:
+        defer(
+            apply_to_all_entities, func, model,
+            batch_size=100, cursor=next_cursor,
+            num_updated=num_updated, num_processed=num_processed)
+    else:
+        logger.info(
+            'update_schema_task complete with %s entities resulting in %s updates!',
+                            num_processed, num_updated)
