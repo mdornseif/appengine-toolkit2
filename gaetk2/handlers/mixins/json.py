@@ -36,5 +36,8 @@ class JsonMixin(object):
         """Function to transform response. To be overwritten."""
         # do serialisation bef ore generating Content-Type Header so Errors will display nicely
         content = self.serialize(response) + '\n'
-        self.response.headers[b'Content-Type'] = b'application/json'
-        return webapp2.Response(content)
+        self.response.headers[str('Content-Type')] = str('application/json')
+        self.response.write(content)
+        # self.response.cache_control = 'public'
+        self.response.cache_control.max_age = self.default_cachingtime
+        return self.response
