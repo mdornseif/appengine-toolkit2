@@ -4,6 +4,7 @@
 backup.py - Trigger scheduled Backups via Cron.
 
 See https://cloud.google.com/appengine/articles/scheduled_backups
+also https://cloud.google.com/datastore/docs/schedule-export
 
 Created by Christian Klein on 2017-02-17.
 Copyright (c) 2017 HUDORA. MIT Licensed.

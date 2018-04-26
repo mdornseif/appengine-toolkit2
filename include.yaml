@@ -105,3 +105,21 @@ skip_files:
 - lib/.*/site-packages
 - lib/site-packages/.*\.dist-info
 - lib/python*.*
+# development-tools
+- lib/site-packages/cssutils.*
+- lib/site-packages/docutils.*
+- lib/site-packages/dodgy.*
+- lib/site-packages/doit.*
+- lib/site-packages/flake8.*
+- lib/site-packages/mock.*
+- lib/site-packages/nose.*
+- lib/site-packages/NoseGAE.*
+- lib/site-packages/PIL.*
+- lib/site-packages/prospector.*
+- lib/site-packages/pycparser.*
+- lib/site-packages/pydocstyle.*
+- lib/site-packages/pyflakes.*
+- lib/site-packages/pylint.*
+- lib/site-packages/pylint_.*
+- lib/site-packages/raven/contrib.*
+

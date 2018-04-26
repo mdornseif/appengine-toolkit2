@@ -29,7 +29,7 @@ force_alphabetical_sort_within_sections = true
 lines_between_types = 1
 lines_after_imports = 2
 add_imports = from __future__ import unicode_literals
-known_third_party = cs, gaetk, google, huTools, wtforms_appengine
+known_third_party = cs, gaetk, google, huTools, wtforms_appengine, lxml, cloudstorage
 known_first_party = gaetk2
 virtual_env = .
 
