@@ -66,9 +66,11 @@ class GetJWTtxt(DefaultHandler, AuthenticationReaderMixin):
         jwt_payload = {
             'exp': exp, 'iat': iat, 'nbf': nbf, 'jti': jti,
             'sub': self.credential.uid,
-            'aud': gaetkconfig.JWT_AUDIENCE,
+            'iss': 'http://auth.gaetk2.23.nu/',
             # "Email": self.credential.email
         }
+        if gaetkconfig.JWT_AUDIENCE:
+            jwt_payload['aud'] = gaetkconfig.JWT_AUDIENCE[0]
         # See https://auth0.com/docs/api-auth/tutorials/adoption/api-tokens
         # we could use Scopes
         logger.debug('jwt_payload = %s', jwt_payload)

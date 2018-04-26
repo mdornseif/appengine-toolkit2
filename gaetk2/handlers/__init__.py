@@ -22,7 +22,7 @@ class DefaultHandler(BasicHandler, MessagesMixin, AuthenticationReaderMixin):
 
 class JsonHandler(JsonBasicHandler, AuthenticationReaderMixin):
     """Send JSON data to client and load self.credential if Authentication is provided."""
-
+    # use JsonMixin
     pass
 
 

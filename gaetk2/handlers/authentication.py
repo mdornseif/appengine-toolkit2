@@ -22,6 +22,7 @@ import requests
 
 from gaetk2 import exc, models
 from gaetk2.config import gaetkconfig
+from gaetk.helpers import check404
 from gaetk2.tools.caching import lru_cache_memcache
 from gaetk2.tools.sentry import sentry_client
 from jose import jwt
@@ -67,49 +68,36 @@ class AuthenticationReaderMixin(object):
                     'failed HTTP-Login from %s/%s %s %s %r %r', uid, self.request.remote_addr,
                     self.request.headers.get('Authorization'),
                     self.credential, self.credential.secret, secret.strip())
-                logger.info('Falsches credential oder kein secret')
+                logger.info('Falsches Credential oder kein secret')
                 raise exc.HTTP401_Unauthorized(
                     'Invalid HTTP-Auth Infomation',
                     headers={'WWW-Authenticate': 'Basic realm="API Login"'})
 
-        # 2. Check for valid Authentication via JWT
+        # 2. Check for valid Authentication via JWT via GAETK2 or Auth0 Tokens
         if self.request.headers.get('Authorization', '').lower().startswith('bearer '):
             auth_type, token = self.request.headers.get('Authorization').split(None, 1)
             unverified_header = jwt.get_unverified_header(token)
             if gaetkconfig.JWT_SECRET_KEY and unverified_header['alg'] == 'HS256':
                 # gaetk2 JWT for internal use
-                userdata = jwt.decode(
-                    token,
-                    gaetkconfig.JWT_SECRET_KEY,
-                    algorithms=[unverified_header['alg']],
-                    audience=gaetkconfig.JWT_AUDIENCE,
-                    # issuer="https://"+AUTH0_DOMAIN+"/"
-                )
+                userdata = self.decode_jwt(token, gaetkconfig.JWT_SECRET_KEY, algorithms=['HS256'])
                 # 'sub': u'm.dornseif@hudora.de'}
-                self.credential = self.get_credential(userdata['sub'])
-                if self.credential:
-                    # We do not check the password because get_current_user() is trusted
-                    return self._login_user('gaetk2 JWT')
-                raise RuntimeError('JWT not found %s' % userdata['sub'])
+                self.credential = check404(self.get_credential(userdata['sub']))
+                # We do not check the password because get_current_user() is trusted
+                return self._login_user('gaetk2 JWT')
             else:
-                # Auth0 JWT
-                # see https://github.com/auth0-samples/auth0-python-api-samples/blob/master/00-Starter-Seed/server.py#L112
-                rsa_key = get_jwt_key(unverified_header['kid'])
-                userdata = jwt.decode(
-                    token,
-                    rsa_key,
-                    algorithms=['RS256'],
-                    audience=gaetkconfig.JWT_AUDIENCE,
-                    # issuer="https://"+AUTH0_DOMAIN+"/"
-                )
+                # Auth0 JWT, see http://filez.foxel.org/2P2o1O3j2f1N
+                userdata = self.decode_jwt(token, get_jwt_key(unverified_header['kid']), algorithms=['RS256'])
+                # For Auth0 / OpenID authentication there should always be an user in our database
                 # u'sub': u'auth0|u37170004',
                 # u'scope': u'openid',
-                # For Auth0 / OpenID authentication there sould always be an user in our database
-                self.credential = models.gaetk_Credential.query(models.gaetk_Credential.external_uid==userdata['sub']).get()
-                if self.credential:
-                    # We do not check the password because get_current_user() is trusted
-                    return self._login_user('Auth0 JWT')
-                raise RuntimeError('JWT not found %s' % userdata['sub'])
+                self.credential = models.gaetk_Credential.query(
+                    models.gaetk_Credential.external_uid == userdata['sub']).get()
+                if not self.credential:
+                    # we might want to create a credential from Auth0
+                    logger.info('%s', userdata)
+                self.credential = check404(self.credential, "%s not found" % userdata['sub'])
+                # We do not check the password because get_current_user() is trusted
+                return self._login_user('Auth0 JWT')
 
         # 3. Check for App Engine / Google Apps based Login
         user = users.get_current_user()
@@ -167,7 +155,6 @@ class AuthenticationReaderMixin(object):
                         id=uid, uid=uid, text='created automatically via gaetk2')
                     return self._login_user('Sentry')
 
-
         logger.info(
             'user unauthenticated: Authorization:%r User:%r Session:%r QueueName:%r Appid:%r Sentry:%r',
             self.request.headers.get('Authorization', ''),
@@ -176,7 +163,49 @@ class AuthenticationReaderMixin(object):
             self.request.headers.get('X-AppEngine-QueueName'),
             self.request.headers.get('X-Appengine-Inbound-Appid'),
             self.request.headers.get('X-Sentry-Token')
+        )
+
+    def decode_jwt(self, token, key, algorithms=['RS256']):
+        """Decode data from JWT and handle common failures."""
+        # See http://python-jose.readthedocs.io/en/latest/jwt/api.html#jose.jwt.decode
+        try:
+            userdata = jwt.decode(
+                token,
+                key,
+                algorithms=algorithms,
+                audience=gaetkconfig.JWT_AUDIENCE[0],
+                issuer=[
+                    "https://{}/".format(gaetkconfig.AUTH0_DOMAIN),
+                    'http://auth.gaetk2.23.nu/'],
+                # options={'verify_aud': True, 'verify_iss': True}
             )
+            # Auth0:
+            #  "iss": "https://hudora.eu.auth0.com/",
+            #  "sub": "auth0|u37170004",
+            #  "aud": [
+            # "http://express.hudora.de/api",
+            # "https://hudora.eu.auth0.com/userinfo"
+            # "azp": "DskApXURKtg2Va1AggqpFs91L6A3iwua",
+            # "scope": "openid"
+            # GAETK2:
+            # {u'sub': u'auth0|u37170004',
+            #  u'iss': u'https://hudora.eu.auth0.com/',
+            #  u'exp': 1524316780,
+            # u'scope':
+            # u'openid',
+            #  u'azp': u'DskApXURKtg2Va1AggqpFs91L6A3iwua',
+            # u'iat': 1524309580,
+            # u'aud': [u'http://express.hudora.de/api',
+            # u'https://hudora.eu.auth0.com/userinfo']
+            # }
+        except jwt.ExpiredSignatureError:
+            logger.debug('token: %s audience: %s', token, gaetkconfig.JWT_AUDIENCE)
+            raise exc.HTTP400_BadRequest('ExpiredSignatureError')
+        except jwt.JWTClaimsError, e:
+            logger.debug('audience: %s', gaetkconfig.JWT_AUDIENCE)
+            logger.debug('claims: %s', jwt.get_unverified_claims(token))
+            raise exc.HTTP400_BadRequest('Wrong Claim: %s' % e)
+        return userdata
 
     def _login_user(self, via, jwtinfo=None):
         """Ensure the system knows that a user has been logged in."""
@@ -191,11 +220,12 @@ class AuthenticationReaderMixin(object):
                 # here we could redirect the user to a page
                 # explaining that we couldn't match the data
                 # given by him to our local database.
-                raise exc.HTTP401_Unauthorized(explanation="Couldn't assign {} to a local user".format(jwtinfo))
+                raise exc.HTTP401_Unauthorized(
+                    explanation="Couldn't assign {} to a local user".format(jwtinfo))
 
         # ensure that users with empty password are never logged in
         if self.credential and not self.credential.secret:
-            raise exc.HTTP401_Unauthorized(explanation='Account %s disabled' % self.credential.uid)
+            raise exc.HTTP403_Forbidden(explanation='Account %s disabled' % self.credential.uid)
 
         assert self.credential, 'unknown user via %r' % via
 
@@ -240,6 +270,7 @@ class AuthenticationReaderMixin(object):
     def _interactive_client(self):
         """Check if we cvan redirect the client for login."""
         if (self.request.is_xhr or self.request.get('no401redirect') == '1' or
+                'xmlhttprequest' in self.request.headers.get('X-Requested-With', '').lower() or
                 # ES6 Fetch API
                 'Fetch' in self.request.headers.get('X-Requested-With', '') or
                 # JSON only client
@@ -300,7 +331,9 @@ def allow_credential_from_jwt(jwt):
 
 @lru_cache_memcache(ttl=60 * 60 * 12)
 def get_jwt_key(kid):
+    """Get the public key via http."""
     # from https://github.com/auth0-samples/auth0-python-api-samples/blob/master/00-Starter-Seed/server.py
+    # This is only as secure as our HTTP connection is secure ...
     url = 'https://{}/.well-known/jwks.json'.format(gaetkconfig.AUTH0_DOMAIN)
     response = requests.get(url)
     jwks = json.loads(response.content)
@@ -324,7 +357,7 @@ class AuthenticationRequiredMixin(AuthenticationReaderMixin):
 
         if self.credential and not self.credential.secret:
             logger.debug('%r %r %r', method, args, kwargs)
-            raise exc.HTTP401_Unauthorized('Account disabled')
+            raise exc.HTTP403_Forbidden('Account disabled')
 
         if not self.credential:
             # Login not successful
