@@ -6,8 +6,6 @@ gaetk2/handlers/mixins.py - misc functionality to be added to gaetk handlers.
 Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2018 Maximillian Dornseif. MIT licensed.
 """
-import webapp2
-
 from gaetk2.tools import hujson2
 
 

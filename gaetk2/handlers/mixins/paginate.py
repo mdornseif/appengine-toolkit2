@@ -125,7 +125,7 @@ class PaginateMixin(object):
             # can we do this in the background?
 
         clean_qs = {k: self.request.get(k) for k in self.request.arguments()
-                         if k not in ['start', 'cursor', 'cursor_start']}
+                    if k not in ['start', 'cursor', 'cursor_start']}
         objects, cursor, start, ret = self._paginate_query(query, defaultcount)
         ret['limit_qs'] = urllib.urlencode(
             {

@@ -60,7 +60,7 @@ class GetJWTtxt(DefaultHandler, AuthenticationReaderMixin):
         """Build a JWT access token."""
         iat = datetime.utcnow()
         nbf = iat + timedelta(seconds=0)
-        exp = iat + timedelta(seconds=3600*12)
+        exp = iat + timedelta(seconds=3600 * 12)
         jti = hashlib.sha256(os.urandom(256)).hexdigest()
 
         jwt_payload = {

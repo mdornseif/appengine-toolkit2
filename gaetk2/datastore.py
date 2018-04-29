@@ -182,7 +182,7 @@ def apply_to_all_entities(func, model, batch_size=0, num_updated=0, num_processe
             obj._properties['updated_by']._auto_current_user = False
 
         if func(obj):
-            obj.put() # use_cache=False, use_memcache=False)
+            obj.put()  # use_cache=False, use_memcache=False)
             num_updated += 1
             updated_now += 1
 
@@ -205,4 +205,4 @@ def apply_to_all_entities(func, model, batch_size=0, num_updated=0, num_processe
     else:
         logger.info(
             'update_schema_task complete with %s entities resulting in %s updates!',
-                            num_processed, num_updated)
+            num_processed, num_updated)
