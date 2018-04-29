@@ -162,7 +162,7 @@ class TestClient(object):
         typ = kwargs.pop('typ', u'').lower()
         for url in args:
             path = urlparse.urlparse(url).path
-            if typ == 'json' or path.endswith('.json'):
+            if typ == 'json' or path.endswith('json'):
                 checkers = [_responds_json]
             elif path.endswith('.pdf'):
                 checkers = [_responds_pdf]
