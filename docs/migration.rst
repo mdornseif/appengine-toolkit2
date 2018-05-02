@@ -73,10 +73,12 @@ Replace this::
 
     from google.appengine.ext.deferred import defer
     from gaetk.infrastructure import taskqueue_add_multi
+    from gaetk.infrastructure import query_iterator
     from gaetk.tools import slugify
     from huTools import hujson2
     from huTools.unicode import deUmlaut
     from huTools import cache
+    from huTools.calendar.tools import date_trunc
     from huTools.calendar.formats import convert_to_date, convert_to_datetime
 
 
@@ -84,10 +86,12 @@ With this::
 
     from gaetk2.taskqueue import defer
     from gaetk2.taskqueue import taskqueue_add_multi
+    from gaetk2.datastore import query_iterator
     from gaetk2.tools.unicode import slugify
     from gaetk2.tools import hujson2
     from gaetk2.tools.unicode import de_umlaut
     from gaetk2.tools.caching import lru_cache, lru_cache_memcache
+    from gaetk2.tools.datetools import date_trunc
     from gaetk2.tools.datetools import convert_to_date, convert_to_datetime
 
 
