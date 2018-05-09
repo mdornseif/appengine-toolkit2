@@ -17,6 +17,8 @@ from gaetk2.application import Route, WSGIApplication
 from gaetk2.handlers import DefaultHandler
 from gaetk2.config import get_release, get_revision, get_version, is_development, is_production
 
+from . import backup
+
 
 class RobotTxtHandler(DefaultHandler):
     """Handler for `robots.txt`.
@@ -94,5 +96,7 @@ application = WSGIApplication([
     Route('/revision.txt', RevisionHandler),
     Route('/release.txt', ReleaseHandler),
     Route('/_ah/warmup', WarmupHandler),
+    Route('/_ah/warmup', WarmupHandler),
+    Route('/gaetk2/backup/', backup.BackupHandler),
     (r'^/_ah/queue/deferred.*', google.appengine.ext.deferred.deferred.TaskHandler),
 ])

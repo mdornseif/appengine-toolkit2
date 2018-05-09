@@ -38,8 +38,10 @@ handlers:
 # /browserconfig.xml
 
 # Simple minded handlers for simple tasks
-- url: /(robots.txt|version.txt|_ah/warmup)
+- url: /(robots.txt|version.txt|_ah/warmup|/gaetk2/backup/)
   script: gaetk2.views.default.application
+- url: /gaetk2/load_into_bigquery
+  script: gaetk2.views.load_into_bigquery.application
 
 # Our Django-Inspired Admin Interface
 - url: /admin2/.*

@@ -6,7 +6,8 @@ Subpackages
 
 .. toctree::
 
-    gaetk2.config.rst
+    gaetk2.config
+    gaetk2.views
     gaetk2.application
     gaetk2.wsgi
     gaetk2.handlers.rst

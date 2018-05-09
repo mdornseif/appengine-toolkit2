@@ -31,11 +31,11 @@ gaetkconfig = _gaetk_registry.register(
         AUTH0_DOMAIN='*unset*',
         AUTH0_CLIENT_ID='*unset*',
         AUTH0_CLIENT_SECRET=None,
-        # Backup To Google CloudStorage (or BlobStore)
-        BACKUP_GS_BUCKET=None,
-        BACKUP_FILESYSTEM='gs',
+        # Backup To Google CloudStorage
+        BACKUP_BUCKET=None,
         BACKUP_QUEUE='default',
-        BACKUP_BLACKLIST=[],
+        BIGQUERY_PROJECT=None,
+        BIGQUERY_DATASET=None,
         APP_NAME='',
         SENTRY_DSN='',
         SENTRY_PUBLIC_DSN='',

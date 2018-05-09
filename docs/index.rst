@@ -42,8 +42,10 @@ Features
    errorhandling.rst
    aaa.rst
    frontend.rst
+   backupreplication.rst
    howto.rst
    migration.rst
+   commands.rst
    source/gaetk2.rst
 
 
