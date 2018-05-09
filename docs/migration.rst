@@ -94,6 +94,8 @@ Add configuration to ``gaetk2_config.py``::
 	GAETKK2_BIGQUERY_PROJECT = 'myproject'
 	GAETK2_BIGQUERY_DATASET = 'mydataset'
 
+Then check if you can remove `gaetk_replication`. See :ref:`backupreplication` for further Information on how it all is supposed to play together.
+
 
 Replace Imports
 ---------------
