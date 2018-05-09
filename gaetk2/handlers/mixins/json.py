@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
-gaetk2/handlers/mixins.py - misc functionality to be added to gaetk handlers.
+gaetk2/handlers/mixins/json.py - misc functionality to be added to gaetk handlers.
 
 Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2018 Maximillian Dornseif. MIT licensed.
 """
+from __future__ import unicode_literals
+
 from gaetk2.tools import hujson2
 
 

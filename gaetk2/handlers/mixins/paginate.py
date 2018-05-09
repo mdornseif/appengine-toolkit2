@@ -222,7 +222,7 @@ class PaginateMixin(object):
         return objects, cursor, start, ret
 
     def get_paginator_template(self, values):
-        env = self._create_jinja2env()
+        env = self.get_jinja2env()
         template = env.get_template('gaetk_fragments/PaginateMixin.paginator.html')
         values = self._reduce_all_inherited('build_context', values)
         return template.render(values)

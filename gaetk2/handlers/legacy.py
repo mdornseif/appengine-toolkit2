@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2/handlers/legacy.py - emulate gaetk Version 1 interfaces.
 
 Created by Maximillian Dornseif on 2017-06-26.
 Copyright (c) 2017, 2018 HUDORA. MIT licnsed.
 """
+from __future__ import unicode_literals
+
 import warnings
 
 from gaetk2.config import get_release, is_production
@@ -20,7 +22,7 @@ class Gaetk1Mixin(PaginateMixin, MultirenderMixin):
     def abort(self, code, *args, **kwargs):
         """Emulate ambigus Method."""
         warnings.warn(
-            "abort() hides control flow. `raise WSGIHTTPException` instead.",
+            'abort() hides control flow. `raise WSGIHTTPException` instead.',
             DeprecationWarning, stacklevel=2)
         return super(Gaetk1Mixin, self).abort(code, *args, **kwargs)
 
@@ -28,7 +30,7 @@ class Gaetk1Mixin(PaginateMixin, MultirenderMixin):
                  body=None):
         """Emulate ambigus Method."""
         warnings.warn(
-            "redirect() hides control flow. `raise HTTPRedirection` instead.",
+            'redirect() hides control flow. `raise HTTPRedirection` instead.',
             DeprecationWarning, stacklevel=2)
         return super(Gaetk1Mixin, self).redirect(
             uri, permanent=permanent, abort=abort, code=code, body=body)
@@ -37,7 +39,7 @@ class Gaetk1Mixin(PaginateMixin, MultirenderMixin):
                     _body=None, *args, **kwargs):
         """Emulate ambigus Method."""
         warnings.warn(
-            "redirect_to() hides control flow. `raise HTTPRedirection` instead.",
+            'redirect_to() hides control flow. `raise HTTPRedirection` instead.',
             DeprecationWarning, stacklevel=2)
         return super(Gaetk1Mixin, self).redirect_to(
             _name, _permanent=_permanent, _abort=_abort, _code=_code,
@@ -46,16 +48,16 @@ class Gaetk1Mixin(PaginateMixin, MultirenderMixin):
     def is_admin(self):
         """Emulate ambigus Method."""
         warnings.warn(
-            "use is_admin() is ambigus, use `is_sysadmin()` instead.",
+            'use is_admin() is ambigus, use `is_sysadmin()` instead.',
             DeprecationWarning, stacklevel=2)
         return self.is_sysadmin()
 
     def create_jinja2env(self):
         """Emulate old - and unneeded - Method."""
         warnings.warn(
-            "use create_jinja2env() is not needed anymore, use `add_jinja2env_globals()` instead.",
+            'use create_jinja2env() is not needed anymore, use `add_jinja2env_globals()` instead.',
             DeprecationWarning, stacklevel=2)
-        return self._create_jinja2env()
+        return self.get_jinja2env()
 
     def add_jinja2env_globals(self, env):
         """Set variables to be used in the supplied bootstrap templates."""

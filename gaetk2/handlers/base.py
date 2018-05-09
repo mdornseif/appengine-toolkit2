@@ -1,27 +1,31 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.handlers.base - default Request Handler for gaetk2.
 
 Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2010-2018 HUDORA. All rights reserved.
 """
+from __future__ import unicode_literals
+
 import inspect
 import logging
 import os
+import os.path
 import time
 import urlparse
 
-import jinja2
-import webapp2
 from google.appengine.api import memcache, users
 from google.appengine.api.app_identity import get_application_id
 
+import jinja2
+import webapp2
+
 from gaetk2 import exc, jinja_filters
-from gaetk2.tools import hujson2
-from gaetk2.config import gaetkconfig
-from gaetk2.config import get_release, is_development, is_production
+from gaetk2.config import gaetkconfig, get_release, is_development, is_production
+from gaetk2.tools import hujson2, introspection
 from gaetk2.tools.sentry import sentry_client
+
 
 try:
     # if mixing gaetk1 and gaetk2 we need to use the same module
@@ -48,7 +52,7 @@ class BasicHandler(webapp2.RequestHandler):
     :meth:`render()` in there. See :ref:`gaetk2.handlers` for examples.
 
     For Returning Data to the user you can access the `self.response` object
-    or use :meth:`return_text` and :meth:`render`. See :meth:`_create_jinja2env`
+    or use :meth:`return_text` and :meth:`render`. See :meth:`get_jinja2env`
     to understand the jinja2 context being used.
 
     Helper functions are :meth:`abs_url()` and :meth:`is_production`.
@@ -213,7 +217,7 @@ class BasicHandler(webapp2.RequestHandler):
         self._render_to_fd(values, template_name, self.response.out)
         delta = time.time() - start
         if delta > 500:
-            logger.warn("rendering took %d ms", (delta * 1000.0))
+            logger.warn('rendering took %d ms', (delta * 1000.0))
 
     def return_text(self, text, status=200, content_type='text/plain', encoding='utf-8'):
         """Quick and dirty sending of some plaintext to the client.
@@ -289,7 +293,7 @@ class BasicHandler(webapp2.RequestHandler):
             calframe = inspect.getouterframes(curframe, 2)
             callfile = calframe[1][1].split('/')[-1]
             callfunc = calframe[1][3]
-            message = "{} {}(): {}".format(callfile, callfunc, message)
+            message = '{} {}(): {}'.format(callfile, callfunc, message)
             logger.debug(message, *args)
             # filename, lineno, function, code_context, index).
 
@@ -347,7 +351,7 @@ class BasicHandler(webapp2.RequestHandler):
 
     def clear_session(self):
         """Terminate the session reliably."""
-        logger.info("clearing session")
+        logger.info('clearing session')
         self.session['uid'] = None
         if self.session and self.session.is_active():
             self.session.terminate()
@@ -355,7 +359,7 @@ class BasicHandler(webapp2.RequestHandler):
 
     # internal stuff
 
-    def _create_jinja2env(self):
+    def get_jinja2env(self):
         """Initialise and return a jinja2 Environment instance."""
         global _jinja_env_cache
 
@@ -379,13 +383,15 @@ class BasicHandler(webapp2.RequestHandler):
 
         return _jinja_env_cache
 
+    # internal stuff
+
     def _jinja2_exception_handler(self, traceback):
         """Is called during Jinja2 Exception processing to provide logging."""
         global _jinja_env_cache
         # see http://flask.pocoo.org/snippets/74/
         # here we still get the correct traceback information, it will be discarded later on
         logger.info('Template globals = %s', getattr(_jinja_env_cache, 'globals', None))
-        logger.exception("Template Exception %s", traceback.render_as_text())
+        logger.exception('Template Exception %s', traceback.render_as_text())
         sentry_client.captureException(exc_info=traceback.exc_info)
 
     def _render_to_fd(self, values, template_name, fd):
@@ -393,7 +399,7 @@ class BasicHandler(webapp2.RequestHandler):
 
         Per default the template is provided with output of ``build_context(values)``.
         """
-        env = self._create_jinja2env()
+        env = self.get_jinja2env()
         try:
             template = env.get_template(template_name)
         except jinja2.TemplateNotFound:
@@ -401,9 +407,9 @@ class BasicHandler(webapp2.RequestHandler):
             raise jinja2.TemplateNotFound(template_name)
         except (jinja2.TemplateAssertionError, jinja2.TemplateRuntimeError):
             # better logging
-            logger.debug("values=%r", values)
-            logger.debug("env.globals=%r", env.globals.keys())
-            logger.debug("env.filters=%r", env.filters.keys())
+            logger.debug('values=%r', values)
+            logger.debug('env.globals=%r', env.globals.keys())
+            logger.debug('env.filters=%r', env.filters.keys())
             raise
 
         # to collect template variables from all Parent-Classes and MisIns.
@@ -469,19 +475,19 @@ class BasicHandler(webapp2.RequestHandler):
         for cls in reversed(self.__class__.__mro__):
             if funcname in cls.__dict__:
                 x = cls.__dict__[funcname]
-                if hasattr(x, "__get__"):
+                if hasattr(x, '__get__'):
                     x = x.__get__(self)
                 if callable(x):
                     if self.debug_hooks:
-                        logger.debug("calling %s.%s(*%r, **%r)", cls, funcname, args, kwargs)
+                        logger.debug('calling %s.%s(*%r, **%r)', cls, funcname, args, kwargs)
                     try:
                         x(*args, **kwargs)
                     except BaseException as e:
                         if not isinstance(e, exc.HTTPException):
-                            logger.exception("failure calling %s.%s(*%r, **%r)", cls, funcname, args, kwargs)
+                            logger.exception('failure calling %s.%s(*%r, **%r)', cls, funcname, args, kwargs)
                         raise
                 else:
-                    logger.warn("not clallable: %r", x)
+                    logger.warn('not clallable: %r', x)
 
     def _reduce_all_inherited(self, funcname, initial):
         """In all SuperClasses call `funcname` with the output of the previus call."""
@@ -498,18 +504,18 @@ class BasicHandler(webapp2.RequestHandler):
         for cls in reversed(self.__class__.__mro__):
             if funcname in cls.__dict__:
                 x = cls.__dict__[funcname]
-                if hasattr(x, "__get__"):
+                if hasattr(x, '__get__'):
                     x = x.__get__(self)
                 if callable(x):
                     if self.debug_hooks:
-                        logger.debug("reducing %s.%s(%r)", cls, funcname, ret)
+                        logger.debug('reducing %s.%s(%r)', cls, funcname, ret)
                     try:
                         ret = x(ret)
                     except:
-                        logger.debug("error reducing %s.%s(%r)", cls, funcname, ret)
+                        logger.debug('error reducing %s.%s(%r)', cls, funcname, ret)
                         raise
                 else:
-                    logger.warn("not callable: %r", x)
+                    logger.warn('not callable: %r', x)
                 if ret is None:
                     raise RuntimeError('%s.%s did not provide a return value' % (cls, funcname))
         return ret
@@ -550,7 +556,24 @@ class BasicHandler(webapp2.RequestHandler):
             self._call_all_inherited('authentication_hook', method_name, *args, **kwargs)
             self._call_all_inherited('authorisation_hook', method_name, *args, **kwargs)
             self._call_all_inherited('method_preperation_hook', method_name, *args, **kwargs)
-            response = method(*args, **kwargs)
+            try:
+                response = method(*args, **kwargs)
+            except TypeError:
+                # parameter missmatch is the error we see most often
+                # so help to pin down where it happens
+                klass = introspection.get_class_that_defined_method(method)
+                methname = method.__name__
+                sourcepos = '{}:{}'.format(
+                    os.path.basename(method.__func__.__code__.co_filename),
+                    method.__func__.__code__.co_firstlineno)
+                logger.debug(
+                    'method called: %s.%s(%r) from %s',
+                    klass.__name__,
+                    methname,
+                    (args, kwargs),
+                    sourcepos)
+                logger.debug('defined at: %s %s', klass, sourcepos)
+                raise
             response = self.response_overwrite(response, method, *args, **kwargs)
         except exc.HTTPException as e:
             # for HTTP exceptions execute `finished_hooks`
@@ -611,7 +634,7 @@ class JsonBasicHandler(BasicHandler):
         # If we have gotten a `callback` parameter, we expect that this is a
         # [JSONP](http://en.wikipedia.org/wiki/JSONP#JSONP) can and therefore add the padding
         if self.request.get('callback', None):
-            response = "%s (%s)" % (self.request.get('callback', None), response)
+            response = '%s (%s)' % (self.request.get('callback', None), response)
             self.response.headers['Content-Type'] = 'text/javascript'
         else:
             self.response.headers['Content-Type'] = 'application/json'
