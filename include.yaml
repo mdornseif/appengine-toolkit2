@@ -40,6 +40,7 @@ handlers:
 # Simple minded handlers for simple tasks
 - url: /(robots.txt|version.txt|_ah/warmup|/gaetk2/backup/)
   script: gaetk2.views.default.application
+# separate handler to defer bigquery library loading
 - url: /gaetk2/load_into_bigquery
   script: gaetk2.views.load_into_bigquery.application
 
@@ -124,4 +125,3 @@ skip_files:
 - lib/site-packages/pylint.*
 - lib/site-packages/pylint_.*
 - lib/site-packages/raven/contrib.*
-

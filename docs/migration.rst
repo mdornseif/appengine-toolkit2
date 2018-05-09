@@ -65,6 +65,35 @@ Try ``grep GAETK2_ >> gaetk2_config.py``. Minimal contents would be::
     GAETK2_SECRET='13f221234567890fae123-c0decafe'
     GAETK2_TEMPLATE_DIRS=['./templates', './lib/CentralServices/templates']
 
+Backup and BigQuery Loading
+---------------------------
+
+Remove `/gaetk_replication/bigquery/cron` and `/gaetk/backup/` from ``cron.yaml`` and add instead::
+
+	cron:
+	- description: Scheduled Backup and Source for BigQuery
+	  url: /gaetk2/backup/
+	  schedule:  every day 03:01
+	  timezone: Europe/Berlin
+	- description: Backup loading into BigQuery
+	  url: /gaetk2/load_into_bigquery
+	  schedule:  every day 05:01
+	  timezone: Europe/Berlin
+
+
+Be sure to include the handlers in ``app.yaml``::
+
+	includes:
+	- lib/appengine-toolkit2/include.yaml
+
+
+Add configuration to ``gaetk2_config.py``::
+
+	GAETK2_BACKUP_BUCKET = 'my-backups-eu-nearline'
+	GAETK2_BACKUP_QUEUE = 'backup'
+	GAETKK2_BIGQUERY_PROJECT = 'myproject'
+	GAETK2_BIGQUERY_DATASET = 'mydataset'
+
 
 Replace Imports
 ---------------

@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2/views/default.py - handlers implementing common views for gaetk2.
 
 Created by Maximillian Dornseif on 2011-01-09.
 Copyright (c) 2011, 2015, 2017, 2018 HUDORA. MIT licensed.
 """
+from __future__ import unicode_literals
+
 import logging
 import os
 
@@ -14,8 +16,8 @@ import google.appengine.api.memcache
 import google.appengine.ext.deferred.deferred
 
 from gaetk2.application import Route, WSGIApplication
-from gaetk2.handlers import DefaultHandler
 from gaetk2.config import get_release, get_revision, get_version, is_development, is_production
+from gaetk2.handlers import DefaultHandler
 
 from . import backup
 
@@ -80,9 +82,9 @@ class WarmupHandler(DefaultHandler):
         import gaetk2.tools.http
         # http://groups.google.com/group/google-appengine-python/browse_thread/thread/efbcffa181c32f33
         datetime.datetime.strptime('2000-01-01', '%Y-%m-%d').date()
-        logging.debug(u"is_production=%s is_development=%s", is_production(), is_development())
-        logging.debug(u"SERVER_SOFTWARE %r", os.environ.get('SERVER_SOFTWARE', ''))
-        logging.debug(u"SERVER_NAME %r", os.environ.get('SERVER_NAME', ''))
+        logging.debug('is_production=%s is_development=%s', is_production(), is_development())
+        logging.debug('SERVER_SOFTWARE %r', os.environ.get('SERVER_SOFTWARE', ''))
+        logging.debug('SERVER_NAME %r', os.environ.get('SERVER_NAME', ''))
         return repr([gaetk2.tools.http, jinja2, gaetk2.admin, gaetk2.modelexporter])
 
     def get(self):

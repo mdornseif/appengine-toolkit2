@@ -39,13 +39,14 @@ Following Parameters in :file:`gaetk2_config.py` (see :mod:`gaetk2.config`) defi
 To use the functionality, you have to add two handlers to ``cron.yaml``::
 
 	cron:
-	- description: Scheduled Backup - für BigQuery
+	- description: Scheduled Backup and Source for BigQuery
 	  url: /gaetk2/backup/
-	  schedule:  every day 04:01
+	  schedule:  every day 03:01
 	  timezone: Europe/Berlin
-	- description: Replikation zu BigQuery
-	  url: /gaetk_replication/bigquery/cron
+	- description: Backup loading into BigQuery
+	  url: /gaetk2/load_into_bigquery
 	  schedule:  every day 05:01
 	  timezone: Europe/Berlin
+
 
 See :class:`gaetk2.views.backup.BackupHandler` and :class:`gaetk2.views.load_into_bigquery.BqReplication` for the actual implementation.
