@@ -20,7 +20,6 @@ from google.appengine.api import taskqueue
 from google.appengine.api.app_identity import get_application_id, get_default_gcs_bucket_name
 from google.appengine.ext.db.metadata import Kind
 
-from gaetk2.application import Route, WSGIApplication
 from gaetk2.config import gaetkconfig
 from gaetk2.handlers import DefaultHandler
 
@@ -85,10 +84,3 @@ def _get_all_datastore_kinds():
     for kind in Kind.all():
         if not kind.kind_name.startswith('_'):
             yield kind.kind_name
-
-
-application = WSGIApplication([
-    ('/gaetk2/backup/', BackupHandler),
-    Route('/gaetk2/backup/', BackupHandler),
-    ('.*', BackupHandler),
-])

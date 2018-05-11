@@ -98,7 +98,6 @@ application = WSGIApplication([
     Route('/revision.txt', RevisionHandler),
     Route('/release.txt', ReleaseHandler),
     Route('/_ah/warmup', WarmupHandler),
-    Route('/_ah/warmup', WarmupHandler),
     Route('/gaetk2/backup/', backup.BackupHandler),
     (r'^/_ah/queue/deferred.*', google.appengine.ext.deferred.deferred.TaskHandler),
 ])
