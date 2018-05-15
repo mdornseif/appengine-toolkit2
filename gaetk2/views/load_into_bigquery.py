@@ -21,8 +21,6 @@ import logging
 import re
 import time
 
-import google.cloud.exceptions
-
 from google.appengine.api.app_identity import get_application_id, get_default_gcs_bucket_name
 from google.cloud import bigquery
 from huTools.calendar.formats import convert_to_date
