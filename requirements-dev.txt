@@ -1,5 +1,6 @@
 bumpversion
 doit<0.30
+# flake8==3.4.1
 flake8==2.6.2
 futures
 glob2
@@ -12,3 +13,4 @@ premailer==3.1.1
 prospector
 pylint
 PyYAML
+requests
