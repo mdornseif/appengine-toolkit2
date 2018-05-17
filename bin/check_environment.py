@@ -13,7 +13,7 @@ import sys
 
 
 config = dict(
-    GAE_VERSION='1.9.51'
+    GAE_VERSION='1.9.69'
 )
 
 
@@ -23,12 +23,12 @@ config = dict(
 tools = collections.OrderedDict([
     ('python --version', 'Irgendwas ist ganz fishy, weenn Python nicht gefunden wird'),
     ('pip --version', 'https://pip.pypa.io/en/stable/installing/'),
-    ('brew --version', 'https://docs.brew.sh/Installation.html'),
+    # ('brew --version', 'https://docs.brew.sh/Installation.html'),
     ('git --version', 'brew install git'),
     ('make --version', 'https://developer.apple.com/downloads/index.action'),
     ('npm bin', 'https://nodejs.org/en/'),
     ('yarn --version', 'brew install yarn'),
-    ('gcloud --version', 'https://cloud.google.com/sdk/downloads'),
+    # ('gcloud --version', 'https://cloud.google.com/sdk/downloads'),
 ])
 
 for command, doc in tools.items():
