@@ -24,11 +24,12 @@ tools = collections.OrderedDict([
     ('python --version', 'Irgendwas ist ganz fishy, weenn Python nicht gefunden wird'),
     ('pip --version', 'https://pip.pypa.io/en/stable/installing/'),
     # ('brew --version', 'https://docs.brew.sh/Installation.html'),
-    ('git --version', 'brew install git'),
     ('make --version', 'https://developer.apple.com/downloads/index.action'),
     ('npm bin', 'https://nodejs.org/en/'),
+    ('gcloud --version', 'https://cloud.google.com/sdk/downloads'),
+    ('docker --version', 'https://docs.docker.com/docker-for-mac/'),
+    ('git --version', 'brew install git'),
     ('yarn --version', 'brew install yarn'),
-    # ('gcloud --version', 'https://cloud.google.com/sdk/downloads'),
 ])
 
 for command, doc in tools.items():
