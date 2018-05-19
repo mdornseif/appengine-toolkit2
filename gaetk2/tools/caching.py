@@ -14,6 +14,9 @@ from functools import update_wrapper
 # from http://code.activestate.com/recipes/578078-py26-and-py30-backport-of-python-33s-lru-cache/
 # with added TTL
 
+HITS, MISSES = 0, 1                     # names for the stats fields
+PREV, NEXT, KEY, RESULT = 0, 1, 2, 3    # names for the link fields
+
 _CacheInfo = namedtuple("CacheInfo", ["hits", "misses", "maxsize", "currsize"])
 
 
@@ -56,7 +59,6 @@ def lru_cache(maxsize=64, typed=False, ttl=60 * 60 * 12):
         cache = dict()
         maxage = dict()                 # stores the timestamp after wich result should be regeneratd
         stats = [0, 0]                  # make statistics updateable non-locally
-        HITS, MISSES = 0, 1             # names for the stats fields
         make_key = _make_key
         cache_get = cache.get           # bound method to lookup key or return None
         maxage_get = maxage.get
@@ -65,7 +67,6 @@ def lru_cache(maxsize=64, typed=False, ttl=60 * 60 * 12):
         root = []                       # root of the circular doubly linked list
         root[:] = [root, root, None, None]      # initialize by pointing to self
         nonlocal_root = [root]                  # make updateable non-locally
-        PREV, NEXT, KEY, RESULT = 0, 1, 2, 3    # names for the link fields
 
         if maxsize == 0:
 
