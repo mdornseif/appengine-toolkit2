@@ -351,12 +351,11 @@ class WSGIApplication(webapp2.WSGIApplication):
             # 'query_string': request.query_string, - read by reaven vrom the environment
             # 'method': request.method, - read by reaven vrom the environment
             'cookies': request.cookies,
-            'headers': request.headers,
+            'headers': request.headers,  # seems to be ignored
             'env': request.environ,
-
         }
         if request.method in ['POST', 'PUT']:
-            http['data'] = request.body
+            http['data'] = {'raw': request.body}
 
         # see also https://docs.sentry.io/clientdev/interfaces/http/
         sentry_client.http_context(http)
