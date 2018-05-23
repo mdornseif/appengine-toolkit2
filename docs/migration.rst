@@ -28,7 +28,7 @@ Change configuration-files
 
 In :file:`app.yaml` make sure :file:`lib/appengine-toolkit2/include.yaml`
 is included and ``jinja2`` is not included via Google (we need jinja 2.10,
-Google provides 2.6)::
+`Google provides 2.6 <https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27>`_)::
 
     includes:
     - lib/appengine-toolkit2/include.yaml
@@ -42,6 +42,9 @@ Google provides 2.6)::
       version: "1.6.1"
     - name: PIL
       version: latest
+
+Usually you can remove the ``skip_files`` section, because :file:`lib/appengine-toolkit2/include.yaml` should contain all the necessary exclusions.
+
 
 Your :file:`requirements.txt` should end with
 ``-r lib/appengine-toolkit2/requirements-lib.txt``.
@@ -102,6 +105,7 @@ Replace Imports
 
 Replace this::
 
+    from gaetk.helpers import check404
     from google.appengine.ext.deferred import defer
     from gaetk.infrastructure import taskqueue_add_multi
     from gaetk.infrastructure import query_iterator
@@ -109,12 +113,15 @@ Replace this::
     from huTools import hujson2
     from huTools.unicode import deUmlaut
     from huTools import cache
+    from gaetk.tools import hd_cache
     from huTools.calendar.tools import date_trunc
     from huTools.calendar.formats import convert_to_date, convert_to_datetime
+    from gaetk import configuration
 
 
 With this::
 
+    from gaetk2.helpers import check404
     from gaetk2.taskqueue import defer
     from gaetk2.taskqueue import taskqueue_add_multi
     from gaetk2.datastore import query_iterator
@@ -122,9 +129,10 @@ With this::
     from gaetk2.tools import hujson2
     from gaetk2.tools.unicode import de_umlaut
     from gaetk2.tools.caching import lru_cache, lru_cache_memcache
+    from gaetk2.tools.caching import lru_cache, lru_cache_memcache
     from gaetk2.tools.datetools import date_trunc
     from gaetk2.tools.datetools import convert_to_date, convert_to_datetime
-
+    from gaetk2.config import runtime as configuration
 
 s/import gaetk.handler/from gaetk2 import exc/
 /raise gaetk.handler.HTTP/raise exc.HTTP/
@@ -148,8 +156,6 @@ Change your views / handlers
 .. todo::
 
 
-    * Replace `default_template_vars()` with `build_context()` - no `super()` calls necessary anymore.
-    * Authentication has changed significanty. `authchecker()` now handled by `pre_authentication_hook()`, `authentication_hook` and `authorisation_hook()`.
     * if you used the `get_impl()` pattern to wrap your handler functions, you don't need that anymore. The often used `read_basedata()` can be moved into `method_preperation_hook()`.
     * Replace `self.is_admin()` with `self.is_staff()` (or `self.is_sysadmin()`).
     * attrencode to xmlattr:
@@ -157,7 +163,36 @@ Change your views / handlers
         to ``<meta property="og:price:amount" {{ {'content': preis|euroword}|xmlattr }} />``
     * ``authchecker`` to ``authorisation_hook``
 
+Replace `default_template_vars()` with `build_context()` - no `super()` calls necessary anymore.
 
+This::
+
+    def default_template_vars(self, uservalues):
+        u"""Default variablen für Breadcrumbs etc."""
+        myvalues = dict()
+        myvalues.update(super(AbstractAuiHandler, self).default_template_vars(uservalues))
+        myvalues.update(
+            navsection='artikel',
+            artikelnavsection=getattr(self, 'artikelnavsection', ''),
+        )
+        # stellt sicher, dass die Werte aus `uservalues` Vorrang haben
+        myvalues.update(uservalues)
+        return myvalues
+
+Becomes that::
+
+    def build_context(self, uservalues):
+        u"""Add Messages to context."""
+        myvalues = dict(
+            navsection='artikel',
+            artikelnavsection=getattr(self, 'artikelnavsection', '')
+        )
+        myvalues.update(uservalues)
+        return myvalues
+
+
+
+Authentication has changed significanty. `authchecker()` now handled by `pre_authentication_hook()`, `authentication_hook` and `authorisation_hook()`.
 
 This::
 
@@ -169,7 +204,7 @@ This::
 
 Becomes that::
 
-    def (self, method_name, *args, **kwargs):
+    def authorisation_hook(self, method_name, *args, **kwargs):
         u"""Sicherstellen, dass nur kunden diese seite sehen düfen."""
         if self.credential.get_typ() == 'source':
             raise exc.HTTP403_Forbidden('Dies ist ein reiner Kundenbereich')

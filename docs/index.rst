@@ -10,6 +10,7 @@ what an Web Application might need.
 Features
 --------
 
+* Infrastructure for Continuous Integration and Continuous Delivery
 * Sane Error Logging and Reporting with nice tracebacks during development. Including Error Reporting to `Sentry <http://sentry.io/>`_. See :ref:`error-handling`.
 * A configuration Framework in :mod:`~gaetk2.config`
 * A Simple, roubust framework for acceptance tests in :mod:`~gaetk2.resttestlib`
@@ -43,6 +44,7 @@ Features
    aaa.rst
    frontend.rst
    backupreplication.rst
+   deployment.rst
    howto.rst
    migration.rst
    commands.rst

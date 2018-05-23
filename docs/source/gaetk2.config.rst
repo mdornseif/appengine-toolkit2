@@ -49,3 +49,8 @@ Module contents
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. automodule:: gaetk2.config.runtime
+    :members:
+    :undoc-members:
+    :show-inheritance:
