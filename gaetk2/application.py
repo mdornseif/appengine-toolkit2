@@ -294,7 +294,8 @@ class WSGIApplication(webapp2.WSGIApplication):
             level = 'warning'
             tags = {'class': 'timeout', 'subsystem': 'urlfetch'}
 
-        if 'ApiTooSlowError' in repr(exception.__class__) or unicode(exception).endswith('timed out'):
+        k = repr(exception.__class__)
+        if 'ApiTooSlowError' in k or 'TimeoutError' in k or unicode(exception).endswith('timed out'):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'class': 'timeout'}
@@ -352,11 +353,12 @@ class WSGIApplication(webapp2.WSGIApplication):
             'cookies': request.cookies,
             'headers': request.headers,
             'env': request.environ,
-            # data - to slow & risky to read
 
         }
+        if request.method in ['POST', 'PUT']:
+            http['data'] = request.body
+
         # see also https://docs.sentry.io/clientdev/interfaces/http/
-        # https://docs.pylonsproject.org/projects/webob/en/stable/api/request.html
         sentry_client.http_context(http)
 
         # some are set in sentry.py

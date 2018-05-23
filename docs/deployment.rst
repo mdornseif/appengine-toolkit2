@@ -1,3 +1,6 @@
+Deployment, CI & CD
+===================
+
 Outline
 -------
 
@@ -29,7 +32,7 @@ The `mdornseif/gae <https://hub.docker.com/r/mdornseif/gae/>`_ image is well sui
 
 If you have `Docker installed <https://docs.docker.com/docker-for-mac/>`_, it is easy to get a shell inside the container ready for building::
 
-    docker run --rm -ti mdornseif/gae --rm bash
+    docker run --rm -ti mdornseif/gae bash
 
 Docker containers are destroyed after each run so do not save anything important in them.
 To keep data permanently store it on the host system. To exchange data between the container and your host computer you can mount a directory via `-v` (mount)::
@@ -41,7 +44,7 @@ To keep data permanently store it on the host system. To exchange data between t
 When you want to checkout something from inside the docker container you
 need SSH keys. It is somewhat difficult to that.
 
-..warning::
+.. warning::
 
     The way described here is inherently insecure. Do only use it unless you are the only user on the host and the host does only run trusted processes. Also only run a single trusted container.
 
@@ -86,7 +89,7 @@ So the branches with special meaning are::
 Checks
 ------
 
-..todo::
+.. todo::
 
 	docker run --env-file env.list --env CHECKOUT_KEY="`cat yourkey`" -ti mdornseif/gae doit check
 
