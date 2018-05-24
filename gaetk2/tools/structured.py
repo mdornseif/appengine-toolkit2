@@ -1,14 +1,17 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 structured.py - handle structured data/dicts/objects
 
 Created by Maximillian Dornseif on 2009-12-27.
 Copyright (c) 2009-2011, 2015 HUDORA. MIT licensed.
 """
+from __future__ import unicode_literals
+
 import csv
 import sys
 import unittest
 import xml.etree.cElementTree as ET
+
 from StringIO import StringIO
 
 
@@ -213,7 +216,7 @@ def list2csv(datalist):
     """Export a list of dicts to CSV."""
     data = x2tabular(datalist)
     fileobj = StringIO()
-    csvwriter = csv.writer(fileobj, dialect='excel', delimiter=str('\t'))
+    csvwriter = csv.writer(fileobj, dialect='excel', delimiter=b'\t')
 
     def fixer(row):
         return [unicode(x).encode('utf-8') for x in row]
@@ -249,10 +252,10 @@ def dict2xls(data, datanodename='objects'):
 
 def indent(elem, level=0):
     """XML prettyprint: Prints a tree with each node indented according to its depth."""
-    i = "\n" + level * " "
+    i = '\n' + level * ' '
     if len(elem):
         if not elem.text or not elem.text.strip():
-            elem.text = i + " "
+            elem.text = i + ' '
         if not elem.tail or not elem.tail.strip():
             elem.tail = i
         for child in elem:
@@ -273,10 +276,10 @@ class TestCase(unittest.TestCase):
     def test_dict2xml(self):
         """Most basic test for dict2xml"""
 
-        data = {"guid": "3104247-7",
-                "menge": 7,
-                "artnr": "14695",
-                "batchnr": "3104247"}
+        data = {'guid': '3104247-7',
+                'menge': 7,
+                'artnr': '14695',
+                'batchnr': '3104247'}
 
         self.assertEqual(
             dict2xml(data, roottag='warenzugang'),

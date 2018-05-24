@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.modelexporter Export db/ndb Tables / Models.
 
 Created by Dr. Maximillian Dornseif on 2014-12-10.
 Copyright (c) 2014-2017 HUDORA GmbH. MIT Licensed.
 """
+from __future__ import unicode_literals
+
 import csv
 import datetime
 import time
@@ -93,7 +95,7 @@ class ModelExporter(object):
                 self.uid]))
         else:
             output.writerow(fixer(['# Exported at:', str(datetime.datetime.now())]))
-        output.writerow(fixer(self.fields + [u'Datenbankschlüssel']))
+        output.writerow(fixer(self.fields + ['Datenbankschlüssel']))
 
     def create_row(self, output, data, fixer=lambda x: x):
         """Generates a single output row.
@@ -122,7 +124,7 @@ class ModelExporter(object):
         `csv.writer <https://docs.python.org/2/library/csv.html>`_
         options.
         """
-        return csv.writer(fileobj, dialect='excel', delimiter=str('\t'))
+        return csv.writer(fileobj, dialect='excel', delimiter=b'\t')
 
     def to_csv(self, fileobj):
         """Generate CSV in fileobj.

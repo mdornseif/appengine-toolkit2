@@ -1,17 +1,20 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.wsgi - WSGI Middlewares.
 
 Created by Maximillian Dornseif on 2018-01-11.
 Copyright (c) 2018 Maximillian Dornseif. MIT Licensed.
 """
+from __future__ import unicode_literals
+
 # WARNING
 # =======
 # since we are imported by `appengine_config.py` we can not use
 # gaetk2.config.gaetkconfig at module level because this
 # wants to read from appengine_config.py via `lib_config`
 import logging
+
 
 try:
     # if mixing gaetk1 and gaetk2 we need to use the same module
@@ -63,8 +66,6 @@ def webapp_add_wsgi_middleware(application):
         gaetk2.tools.sentry.setup_logging()
 
     application = wrap_session(application)
-    # if ist_entwicklungsversion():
-    #     app = gae_mini_profiler.profiler.ProfilerWSGIMiddleware(app)
     if not gaetk2.config.is_development():
         application = wrap_errorhandling(application)
     return application
