@@ -96,7 +96,7 @@ if gaetkconfig.SENTRY_DSN:
         assert category in [
             'http', 'navigation', 'user', 'rpc', 'input', 'external', 'storage', 'auth']
         if not data:
-            data = dict()
+            data = {}
 
         # see https://docs.sentry.io/clients/python/breadcrumbs/
         # and https://github.com/getsentry/sentry/blob/master/src/sentry/static/sentry/less/group-detail.less
@@ -106,7 +106,19 @@ if gaetkconfig.SENTRY_DSN:
             warnings.warn('use `user` instead of `auth`', DeprecationWarning, stacklevel=2)
 
         # 'flatten' data
-        data = hujson2.loads(hujson2.dumps(data))
+        jsondata = hujson2.dumps(data)
+        data = hujson2.loads(jsondata)
+        if len(jsondata) > 10000:
+            # shorten data
+            try:
+                if hasattr(data, 'items'):
+                    for key, value in data.items():
+                        data[key] = value[:200]
+                else:
+                    data = data[:1024]
+            except Exception, e:
+                data = {'error': 'data too big', 'exception': str(e)}
+
         logger.debug("note: %s: %s %r", category, message, data)
         raven.breadcrumbs.record(
             data=data,
