@@ -21,17 +21,19 @@ import logging
 import re
 import time
 
-from google.appengine.api.app_identity import get_application_id, get_default_gcs_bucket_name
+from google.appengine.api.app_identity import get_application_id
+from google.appengine.api.app_identity import get_default_gcs_bucket_name
 from google.cloud import bigquery
-from huTools.calendar.formats import convert_to_date
 
 import cloudstorage
 
 from gaetk2 import exc
-from gaetk2.application import Route, WSGIApplication
+from gaetk2.application import Route
+from gaetk2.application import WSGIApplication
 from gaetk2.config import gaetkconfig
 from gaetk2.handlers import DefaultHandler
 from gaetk2.taskqueue import defer
+from gaetk2.tools.datetools import convert_to_date
 
 
 logger = logging.getLogger(__name__)
@@ -108,12 +110,12 @@ class BqReplication(DefaultHandler):
         bucketpath = '/{}/'.format(bucketpath.strip('/'))
         logger.info('searching backups in %r', bucketpath)
 
-        objs = cloudstorage.listbucket(bucketpath, delimiter='/')
+        objs = cloudstorage.listbucket(bucketpath, delimiter=b'/')
         subdirs = sorted((obj.filename for obj in objs if obj.is_dir), reverse=True)
         # Find Path of newest available backup
         # typical path:
         # '/appengine-backups-eu-nearline/hudoraexpress/2017-05-02/ag9...EM.ArtikelBild.backup_info'
-        dirs = dict()
+        dirs = {}
         for subdir in subdirs:
             try:
                 datum = convert_to_date(subdir.rstrip('/').split('/')[-1])

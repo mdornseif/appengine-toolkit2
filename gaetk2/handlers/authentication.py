@@ -22,7 +22,7 @@ import requests
 
 from gaetk2 import exc, models
 from gaetk2.config import gaetkconfig
-from gaetk.helpers import check404
+from gaetk2.helpers import check404
 from gaetk2.tools.caching import lru_cache_memcache
 from gaetk2.tools.sentry import sentry_client
 from jose import jwt
@@ -275,7 +275,7 @@ class AuthenticationReaderMixin(object):
             # HTTP_X_APPENGINE_CRON   true
             # USER_ORGANIZATION USER_IS_ADMIN
         })
-        self.response.headers.add_header('X-uid', str(self.credential.uid))
+        self.response.headers.add_header(b'X-uid', str(self.credential.uid))
 
     def _interactive_client(self):
         """Check if we cvan redirect the client for login."""
