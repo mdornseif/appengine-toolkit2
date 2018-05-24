@@ -180,11 +180,13 @@ class WSGIApplication(webapp2.WSGIApplication):
                     "'%s'" % gaetkconfig.SENTRY_PUBLIC_DSN)
                 template = template.replace('{{exception_text}}', jinja2.escape('%s' % exception))
                 response.clear()
+                response.headers['Content-Type'] = b'text/html'
                 response.out.body = template.encode('utf-8')
         else:
             # On development servers display a nice traceback via `cgitb`.
             logger.info('not pushing to sentry, cgitb()')
             response.clear()
+            response.headers['Content-Type'] = b'text/html'
             handler = cgitb.Hook(file=response.out).handle
             handler()
 
