@@ -26,12 +26,14 @@ indent_style = space
 indent_size = 4
 # for isort
 force_alphabetical_sort_within_sections = true
+force_single_line = true
 lines_between_types = 1
 lines_after_imports = 2
 add_imports = from __future__ import unicode_literals
-known_third_party = cs, gaetk, google, huTools, wtforms_appengine, lxml, cloudstorage
+known_third_party = cs, gaetk, gaetk2, google, huTools, wtforms_appengine
 known_first_party = gaetk2
 virtual_env = .
+skip=appengine_config.py
 
 [*.js]
 indent_style = space

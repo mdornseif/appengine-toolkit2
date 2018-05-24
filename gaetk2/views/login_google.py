@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2/views/login_google.py - use Google OAuth Connect.
 
@@ -8,6 +8,8 @@ based on EDIhub/login.py
 Created by Maximillian Dornseif on 2010-09-24.
 Copyright (c) 2010, 2014, 2015 HUDORA. MIT licensed..
 """
+from __future__ import unicode_literals
+
 import base64
 import json
 import logging
@@ -15,12 +17,15 @@ import os
 import unicodedata
 import urllib
 
-from ..application import WSGIApplication
-from ..exc import HTTP302_Found, HTTP403_Forbidden
-from ..handlers import AuthenticationReaderMixin, BasicHandler
-from ..tools import http
-from ..config import config
-from ..tools.ids import guid128
+from gaetk2.application import WSGIApplication
+from gaetk2.config import gaetkconfig
+from gaetk2.exc import HTTP302_Found
+from gaetk2.exc import HTTP403_Forbidden
+from gaetk2.handlers import AuthenticationReaderMixin
+from gaetk2.handlers import BasicHandler
+from gaetk2.tools import http
+from gaetk2.tools.ids import guid128
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,27 +66,27 @@ class LoginGoogleHandler(BasicHandler, AuthenticationReaderMixin):
 
         # First try the host the current request came from
         callback_url = self.request.host_url + callbackpath
-        if callback_url not in config.OAUTH_GOOGLE_CONFIG['redirect_uris']:
-            logger.critical("%s not valid", callback_url)
+        if callback_url not in gaetkconfig.OAUTH_GOOGLE_CONFIG['redirect_uris']:
+            logger.critical('%s not valid', callback_url)
             # this did not work. Try to get the Servername from the
             # environment and enforce https
             callback_url = 'https://' + os.environ.get('SERVER_NAME') + callbackpath
-            if callback_url not in config.OAUTH_GOOGLE_CONFIG['redirect_uris']:
-                logger.debug("%s no valid callback", callback_url)
+            if callback_url not in gaetkconfig.OAUTH_GOOGLE_CONFIG['redirect_uris']:
+                logger.debug('%s no valid callback', callback_url)
                 # this did not work. Try to use the default version.
                 callback_url = 'https://' + os.environ.get('DEFAULT_VERSION_HOSTNAME') + callbackpath
-                if callback_url not in config.OAUTH_GOOGLE_CONFIG['redirect_uris']:
-                    logger.debug("%s no valid fallback callback", callback_url)
+                if callback_url not in gaetkconfig.OAUTH_GOOGLE_CONFIG['redirect_uris']:
+                    logger.debug('%s no valid fallback callback', callback_url)
                     # this also did not work. Just use the first available callback URL.
-                    callback_url = config.OAUTH_GOOGLE_CONFIG['redirect_uris'][0]
+                    callback_url = gaetkconfig.OAUTH_GOOGLE_CONFIG['redirect_uris'][0]
             logger.info('using %s', callback_url)
 
         self.session['oauth_redirect_uri'] = callback_url
         # Construct OAuth Request.
         params = dict(
-            client_id=config.OAUTH_GOOGLE_CONFIG['client_id'],
-            response_type="code",
-            scope="openid email profile",
+            client_id=gaetkconfig.OAUTH_GOOGLE_CONFIG['client_id'],
+            response_type='code',
+            scope='openid email profile',
             redirect_uri=self.session['oauth_redirect_uri'],
             state=self.session['oauth_state'],
             # login_hint="jsmith@example.com",
@@ -91,14 +96,14 @@ class LoginGoogleHandler(BasicHandler, AuthenticationReaderMixin):
             # to release the user’s email address to your app.
         )
         # help choosing domain name
-        if len(config.OAUTH_GOOGLE_ALLOWED_DOMAINS) == 1:
+        if len(gaetkconfig.OAUTH_GOOGLE_ALLOWED_DOMAINS) == 1:
             # Use the hd parameter to optimize the OpenID Connect flow for
             # users of a particular G Suite domain.
-            params['hd'] = config.OAUTH_GOOGLE_ALLOWED_DOMAINS[0]
-        elif config.OAUTH_GOOGLE_ALLOWED_DOMAINS:
+            params['hd'] = gaetkconfig.OAUTH_GOOGLE_ALLOWED_DOMAINS[0]
+        elif gaetkconfig.OAUTH_GOOGLE_ALLOWED_DOMAINS:
             params['hd'] = '*'
 
-        oauth_url = config.OAUTH_GOOGLE_CONFIG['auth_uri'] + '?' + urllib.urlencode(params)
+        oauth_url = gaetkconfig.OAUTH_GOOGLE_CONFIG['auth_uri'] + '?' + urllib.urlencode(params)
 
         # If user is already authenticated, redirect logged in user to `continue_url`,
         # else redirect to Google Apps OAuth Login.
@@ -124,28 +129,28 @@ class GoogleOAuth2Callback(BasicHandler, AuthenticationReaderMixin):
         oauth_state = self.session.pop('oauth_state', None)
         if self.request.get('state') != oauth_state:
             logger.error(
-                "wrong state: %r != %r", self.request.get('state'), oauth_state)
-            logger.debug("session: %s", self.session)
-            logger.debug("request: %s", self.request.GET)
+                'wrong state: %r != %r', self.request.get('state'), oauth_state)
+            logger.debug('session: %s', self.session)
+            logger.debug('request: %s', self.request.GET)
             self.session.terminate()
             # Redirect to try new login
             raise HTTP302_Found(location=continue_url)
 
-        if config.OAUTH_GOOGLE_ALLOWED_DOMAINS:
-            if self.request.get('hd') not in config.OAUTH_GOOGLE_ALLOWED_DOMAINS:
+        if gaetkconfig.OAUTH_GOOGLE_ALLOWED_DOMAINS:
+            if self.request.get('hd') not in gaetkconfig.OAUTH_GOOGLE_ALLOWED_DOMAINS:
                 raise HTTP403_Forbidden(
-                    "Wrong domain: %r not in %r" % (
-                        self.request.get('hd'), config.OAUTH_GOOGLE_ALLOWED_DOMAINS))
+                    'Wrong domain: %r not in %r' % (
+                        self.request.get('hd'), gaetkconfig.OAUTH_GOOGLE_ALLOWED_DOMAINS))
 
         # 4. Exchange code for access token and ID token by requesting data from Google
-        url = config.OAUTH_GOOGLE_CONFIG['token_uri']
+        url = gaetkconfig.OAUTH_GOOGLE_CONFIG['token_uri']
         # get token
         params = dict(
             code=self.request.get('code'),
-            client_id=config.OAUTH_GOOGLE_CONFIG['client_id'],
-            client_secret=config.OAUTH_GOOGLE_CONFIG['client_secret'],
+            client_id=gaetkconfig.OAUTH_GOOGLE_CONFIG['client_id'],
+            client_secret=gaetkconfig.OAUTH_GOOGLE_CONFIG['client_secret'],
             redirect_uri=self.session.pop('oauth_redirect_uri', ''),
-            grant_type="authorization_code")
+            grant_type='authorization_code')
         # data = huTools.http.fetch_json2xx(url, method='POST', content=params)
         data = http.fetch_json(url, params, method='POST')
 
@@ -156,7 +161,7 @@ class GoogleOAuth2Callback(BasicHandler, AuthenticationReaderMixin):
         input_jwt += '=' * (4 - (len(input_jwt) % 4))
         jwt = base64.urlsafe_b64decode(input_jwt)
         jwt = json.loads(jwt)
-        logger.info("jwt = %r", jwt)
+        logger.info('jwt = %r', jwt)
         # email_verified True if the user's e-mail address has been verified
         # TODO: use jose for decoding JWT
         # jwt = {
@@ -171,17 +176,17 @@ class GoogleOAuth2Callback(BasicHandler, AuthenticationReaderMixin):
         #   u'hd': u'hudora.de',
         #   u'sub': u'114400842898019538607'}
         assert jwt['iss'] == 'accounts.google.com'
-        assert jwt['aud'] == config.OAUTH_GOOGLE_CONFIG['client_id']
-        if config.OAUTH_GOOGLE_ALLOWED_DOMAINS:
-            assert jwt['hd'] in config.OAUTH_GOOGLE_ALLOWED_DOMAINS
+        assert jwt['aud'] == gaetkconfig.OAUTH_GOOGLE_CONFIG['client_id']
+        if gaetkconfig.OAUTH_GOOGLE_ALLOWED_DOMAINS:
+            assert jwt['hd'] in gaetkconfig.OAUTH_GOOGLE_ALLOWED_DOMAINS
         # note that the user is logged in
 
         # hd FEDERATED_IDENTITY FEDERATED_PROVIDER
         for name in 'USER_EMAIL USER_ID USER_IS_ADMIN USER_NICKNAME USER_ORGANIZATION'.split():
-            logger.info("%s: %r", name, os.environ.get(name))
+            logger.info('%s: %r', name, os.environ.get(name))
 
         self._login_user('OAuth2', jwt)
-        logger.info("logging in with final destination %s", continue_url)
+        logger.info('logging in with final destination %s', continue_url)
         raise HTTP302_Found(location=continue_url)
 
 

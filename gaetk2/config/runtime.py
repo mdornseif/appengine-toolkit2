@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
-gaetk/configuration.py
+gaetk2.config.runtime
 
 This module provides a generic configuration object.
 The two functions get_config and set_config are used
@@ -19,6 +19,8 @@ u'5711'
 Created by Christian Klein on 2011-11-24.
 Copyright (c) 2011, 2012, 2016, 2017, 2017 HUDORA. All rights reserved.
 """
+from __future__ import unicode_literals
+
 import json
 
 from google.appengine.ext import ndb
@@ -26,7 +28,7 @@ from google.appengine.ext import ndb
 
 class gaetk_Configuration(ndb.Model):
     """Generic configuration object"""
-    value = ndb.TextProperty(default=u'', indexed=False)
+    value = ndb.TextProperty(default='', indexed=False)
     updated_at = ndb.DateTimeProperty(auto_now_add=True, auto_now=True)
     created_at = ndb.DateTimeProperty(auto_now_add=True)
 

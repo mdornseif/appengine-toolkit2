@@ -38,7 +38,7 @@ handlers:
 # /browserconfig.xml
 
 # Simple minded handlers for simple tasks
-- url: /(robots.txt|version.txt|revision.txt|release.txt|_ah/warmup|gaetk2/backup/)
+- url: /(robots.txt|version.txt|revision.txt|release.txt|_ah/warmup|gaetk2/backup/|gaetk2/heatup/)
   script: gaetk2.views.default.application
 # separate handler to defer bigquery library loading
 - url: /gaetk2/load_into_bigquery

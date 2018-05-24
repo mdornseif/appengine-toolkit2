@@ -11,6 +11,8 @@ from __future__ import unicode_literals
 import logging
 import os
 
+import yaml
+
 import google.appengine.api.app_identity
 import google.appengine.api.memcache
 import google.appengine.ext.deferred.deferred
@@ -20,6 +22,9 @@ from gaetk2.config import get_release, get_revision, get_version, is_development
 from gaetk2.handlers import DefaultHandler
 
 from . import backup
+
+
+logger = logging.getLogger(__name__)
 
 
 class RobotTxtHandler(DefaultHandler):
@@ -82,14 +87,32 @@ class WarmupHandler(DefaultHandler):
         import gaetk2.tools.http
         # http://groups.google.com/group/google-appengine-python/browse_thread/thread/efbcffa181c32f33
         datetime.datetime.strptime('2000-01-01', '%Y-%m-%d').date()
-        logging.debug('is_production=%s is_development=%s', is_production(), is_development())
-        logging.debug('SERVER_SOFTWARE %r', os.environ.get('SERVER_SOFTWARE', ''))
-        logging.debug('SERVER_NAME %r', os.environ.get('SERVER_NAME', ''))
+        logger.debug('is_production=%s is_development=%s', is_production(), is_development())
+        logger.debug('SERVER_SOFTWARE %r', os.environ.get('SERVER_SOFTWARE', ''))
+        logger.debug('SERVER_NAME %r', os.environ.get('SERVER_NAME', ''))
         return repr([gaetk2.tools.http, jinja2, gaetk2.admin, gaetk2.modelexporter])
 
     def get(self):
         """Handle warm up requests."""
         self.return_text(self.warmup())
+
+
+class HeatUpHandler(DefaultHandler):
+    """Try to import everything ever referenced by an url."""
+
+    def get(self):
+        """Import all Modules."""
+        for fname in ['app-uploaded.yaml', 'lib/appengine-toolkit2/include.yaml']:
+            appyaml = yaml.load(open(fname))
+            for handler in appyaml['handlers']:
+                if 'script' not in handler:
+                    continue
+                mod = handler['script'].split('.')
+                mod = '.'.join(mod[:-1])
+                url = handler.get('url')
+                logger.info('importing %s from %s', mod, url)
+                __import__(mod)
+        self.return_text('done')
 
 
 application = WSGIApplication([
@@ -98,6 +121,7 @@ application = WSGIApplication([
     Route('/revision.txt', RevisionHandler),
     Route('/release.txt', ReleaseHandler),
     Route('/_ah/warmup', WarmupHandler),
+    Route('/gaetk2/heatup/', HeatUpHandler),
     Route('/gaetk2/backup/', backup.BackupHandler),
     (r'^/_ah/queue/deferred.*', google.appengine.ext.deferred.deferred.TaskHandler),
 ])
