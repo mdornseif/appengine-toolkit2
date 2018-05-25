@@ -97,7 +97,7 @@ if gaetkconfig.SENTRY_DSN:
         )
         sentry_client.is_active = True
 
-    def note(category, message=None, data=None):
+    def note(category, message=None, data=None, typ=None):
         """bei Bedarf strukturiert loggen, Sentry breadcrumbs """
         assert category in [
             'http', 'navigation', 'user', 'rpc', 'input', 'external', 'storage', 'auth']
@@ -110,6 +110,9 @@ if gaetkconfig.SENTRY_DSN:
         if category == 'auth':
             category == 'user'
             warnings.warn('use `user` instead of `auth`', DeprecationWarning, stacklevel=2)
+        if category == 'http':
+            category = 'rpc'
+            typ = 'http'
 
         # 'flatten' data
         jsondata = hujson2.dumps(data)
@@ -129,6 +132,7 @@ if gaetkconfig.SENTRY_DSN:
         raven.breadcrumbs.record(
             data=data,
             category=category,
+            type=typ,
             message=message
         )
 else:
