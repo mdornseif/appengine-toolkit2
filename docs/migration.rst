@@ -94,7 +94,7 @@ Add configuration to ``gaetk2_config.py``::
 
 	GAETK2_BACKUP_BUCKET = 'my-backups-eu-nearline'
 	GAETK2_BACKUP_QUEUE = 'backup'
-	GAETKK2_BIGQUERY_PROJECT = 'myproject'
+	GAETK2_BIGQUERY_PROJECT = 'myproject'
 	GAETK2_BIGQUERY_DATASET = 'mydataset'
 
 Then check if you can remove `gaetk_replication`. See :ref:`backupreplication` for further Information on how it all is supposed to play together.

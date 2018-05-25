@@ -20,7 +20,8 @@ from google.appengine.api import users
 
 import requests
 
-from gaetk2 import exc, models
+from gaetk2 import exc
+from gaetk2 import models
 from gaetk2.config import gaetkconfig
 from gaetk2.helpers import check404
 from gaetk2.tools.caching import lru_cache_memcache
@@ -80,7 +81,7 @@ class AuthenticationReaderMixin(object):
             id_token = None
             if ' ' in access_token:
                 access_token, id_token = access_token.split(None, 1)
-            logging.debug("token: %s", access_token)
+            logging.debug('token: %s', access_token)
             unverified_header = jwt.get_unverified_header(access_token)
             if gaetkconfig.JWT_SECRET_KEY and unverified_header['alg'] == 'HS256':
                 # gaetk2 JWT for internal use
@@ -119,7 +120,7 @@ class AuthenticationReaderMixin(object):
                         #     self.credential.put()
                 self.credential = check404(
                     self.credential,
-                    "%s not found" % userdata['sub'])
+                    '%s not found' % userdata['sub'])
                 # We do not check the password because get_current_user() is trusted
                 return self._login_user('Auth0 JWT')
 
@@ -154,14 +155,18 @@ class AuthenticationReaderMixin(object):
                 id=uid, uid=uid, text='created automatically via gaetk2')
             return self._login_user('AppEngine')
         # X-Appengine-Inbound-Appid
-        # https://cloud.google.com/appengine/docs/standard/python/taskqueue/push/creating-handlers
+        # https://cloud.google.com/appengine/docs/standard/python/appidentity/#asserting_identity_to_other_app_engine_apps
         ibaid = self.request.headers.get('X-Appengine-Inbound-Appid')
         if ibaid:
-            if ibaid in gaetkconfig.INBOUD_APP_IDS:
+            if ibaid in gaetkconfig.INBOUND_APP_IDS:
                 uid = 'X-Appengine-Inbound-Appid-{}'.format(ibaid)
                 self.credential = models.gaetk_Credential.create(
                     id=uid, uid=uid, text='created automatically via gaetk2')
                 return self._login_user('AppEngine')
+            else:
+                logging.debug(
+                    'configure INBOUND_APP_IDS to allow %s access',
+                    self.request.headers.get('X-Appengine-Inbound-Appid'))
         # TODO:
         # x-appengine-user-is-admin
         # x-appengine-auth-domain
@@ -199,7 +204,7 @@ class AuthenticationReaderMixin(object):
                 algorithms=algorithms,
                 # audience=gaetkconfig.JWT_AUDIENCE[0],
                 issuer=[
-                    "https://{}/".format(gaetkconfig.AUTH0_DOMAIN),
+                    'https://{}/'.format(gaetkconfig.AUTH0_DOMAIN),
                     'http://auth.gaetk2.23.nu/'],
                 access_token=access_token,
                 options={'verify_aud': False}
@@ -237,7 +242,8 @@ class AuthenticationReaderMixin(object):
         if self.credential and not self.credential.secret:
             raise exc.HTTP403_Forbidden(explanation='Account %s disabled' % self.credential.uid)
 
-        assert self.credential, 'unknown user via %r' % via
+        if not self.credential:
+            raise RuntimeError('unknown user via %r' % via)
 
         if 'uid' not in self.session or self.session['uid'] != self.credential.uid:
             self.session['uid'] = self.credential.uid

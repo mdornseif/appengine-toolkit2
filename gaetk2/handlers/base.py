@@ -554,7 +554,7 @@ class BasicHandler(webapp2.RequestHandler):
 
         # bind session on dispatch (not in __init__)
         self.session = gaesessions.get_current_session()
-        if self.session.get('session') != 'uninitialized session':
+        if str(self.session) != 'uninitialized session':
             sentry_client.note('storage', 'Session loaded', data=dict(session=self.session))
 
         try:
