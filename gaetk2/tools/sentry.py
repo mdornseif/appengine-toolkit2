@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.sentry - Client Instance and Helpers for sentry logging.
 
@@ -8,12 +8,18 @@ Builds on https://github.com/getsentry/raven-python
 Created by Maximillian Dornseif on 2018-01-11.
 Copyright (c) 2018 Maximillian Dornseif. MIT Licensed.
 """
+from __future__ import unicode_literals
+
 import logging
 import os
 import warnings
 
-from gaetk2.config import gaetkconfig, get_environment, get_release, is_development
+from gaetk2.config import gaetkconfig
+from gaetk2.config import get_environment
+from gaetk2.config import get_release
+from gaetk2.config import is_development
 from gaetk2.tools import hujson2
+
 
 logger = logging.getLogger(__name__)
 sentry_client = None
@@ -115,11 +121,11 @@ if gaetkconfig.SENTRY_DSN:
                     for key, value in data.items():
                         data[key] = value[:200]
                 else:
-                    data = data[:1024]
+                    data = str(data)[:1024]
             except Exception, e:
                 data = {'error': 'data too big', 'exception': str(e)}
 
-        logger.debug("note: %s: %s %r", category, message, data)
+        logger.debug('note: %s: %s %r', category, message, data)
         raven.breadcrumbs.record(
             data=data,
             category=category,
@@ -128,7 +134,7 @@ if gaetkconfig.SENTRY_DSN:
 else:
     def note(category, message=None, data=None):
         assert category in ['rpc', 'input', 'external', 'storage', 'auth', 'flow', 'navigation', 'http']
-        logger.debug("note: %s: %s %r", category, message, data)
+        logger.debug('note: %s: %s %r', category, message, data)
 
 
 if not sentry_client:

@@ -15,15 +15,21 @@ import os.path
 import time
 import urlparse
 
-from google.appengine.api import memcache, users
+from google.appengine.api import memcache
+from google.appengine.api import users
 from google.appengine.api.app_identity import get_application_id
 
 import jinja2
 import webapp2
 
-from gaetk2 import exc, jinja_filters
-from gaetk2.config import gaetkconfig, get_release, is_development, is_production
-from gaetk2.tools import hujson2, introspection
+from gaetk2 import exc
+from gaetk2 import jinja_filters
+from gaetk2.config import gaetkconfig
+from gaetk2.config import get_release
+from gaetk2.config import is_development
+from gaetk2.config import is_production
+from gaetk2.tools import hujson2
+from gaetk2.tools import introspection
 from gaetk2.tools.sentry import sentry_client
 
 
@@ -548,7 +554,8 @@ class BasicHandler(webapp2.RequestHandler):
 
         # bind session on dispatch (not in __init__)
         self.session = gaesessions.get_current_session()
-        sentry_client.note('storage', 'Session loaded', data=dict(session=self.session))
+        if self.session.get('session') != 'uninitialized session':
+            sentry_client.note('storage', 'Session loaded', data=dict(session=self.session))
 
         try:
             self._call_all_inherited('pre_authentication_hook', method_name, *args, **kwargs)

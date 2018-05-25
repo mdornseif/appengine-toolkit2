@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.config - Configuration helpers for gaetk2/appengine.
 
@@ -48,7 +48,7 @@ def get_release():
 
 def get_version():
     """Do not use this."""
-    warnings.warn("`get_version` is deprecated, use `get_release`", DeprecationWarning, stacklevel=2)
+    warnings.warn('`get_version` is deprecated, use `get_release`', DeprecationWarning, stacklevel=2)
     return get_release()
 
 
@@ -119,4 +119,4 @@ def is_development():
     See :term:`development version` what this means."""
     name = os.environ.get('SERVER_NAME', '')
     return (os.environ.get('SERVER_SOFTWARE', '').startswith('Development') or
-            name.startswith('dev-') or name.startswith('test'))
+            name.startswith('dev-') or name.startswith('test') or name.startswith('master'))
