@@ -6,11 +6,11 @@ GoogleAppEngineMapReduce==1.9.22.0
 jinja2==2.10
 markdown2
 python-jose
-requests
+requests==2.18.4
 requests_toolbelt
 urllib3
 webapp2==2.5.2
 webob==1.1.1
-wtforms-appengine
 wtforms==2.0.2
+wtforms-appengine
 xlwt==1

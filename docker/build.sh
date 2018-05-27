@@ -1,4 +1,6 @@
 #!/bin/sh
+cp ../requirements-dev.txt .
+cat ../requirements-dev.txt ../requirements-lib.txt | sort -u > requirements-cache.txt
 docker build --tag gae .
 docker tag gae mdornseif/gae:stable
 docker push mdornseif/gae:stable

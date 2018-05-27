@@ -53,4 +53,4 @@ gaetkconfig.TEMPLATE_DIRS.append(
         'templates'))
 
 if not gaetkconfig.SECRET:
-    logger.warning('No gaetk2_config.SECRET provided')
+    logger.info('No gaetk2_config.SECRET provided')
