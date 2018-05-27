@@ -1,3 +1,5 @@
+.. _gaetk2-deployment:
+
 Deployment, CI & CD
 ===================
 
@@ -177,5 +179,3 @@ Automated Deployments
 ---------------------
 
 Create a Service Account at https://console.cloud.google.com/iam-admin/serviceaccounts/project?project=huwawi2 Permissions needed are `App Engine -> App Engine Deployer` and `Storage -> Storag Object Admin`. (See http://filez.foxel.org/2d1Q2W0y2E33). Download the Key as JSON, Pass it throu base64 and add it as Circle CI environment variable `GCLOUD_SERVICE_KEY` at https://circleci.com/gh/hudora/huWaWi/edit#env-vars
-
-

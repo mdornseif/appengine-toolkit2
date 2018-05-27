@@ -1,15 +1,19 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 Check if the stuff needed to develop with appengine toolkit is available.
 
 Created by Maximillian Dornseif on 2018-01-11.
 Copyright (c) 2018 Cyberlogi. MIT licensed.
 """
+from __future__ import unicode_literals
+
 import collections
 import os
 import subprocess
 import sys
+
+import pkg_resources
 
 
 config = dict(
@@ -37,18 +41,16 @@ for command, doc in tools.items():
     try:
         output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True, close_fds=True)
     except subprocess.CalledProcessError:
-        print "-> please install", repr(command.split()[0])
+        print '-> please install', repr(command.split()[0])
         print output
         print 'try %r' % doc
         sys.exit(1)
 
-    print "+ exists", repr(command.split()[0]), output.split('\n')[0]
-
+    print '+ exists', repr(command.split()[0]), output.split('\n')[0]
 
 # file and how to build it if it does not exist
 targets = {
-'lib/google_appengine/appcfg.py':
-"""
+    'lib/google_appengine/appcfg.py': """
     curl -s -O https://storage.googleapis.com/appengine-sdks/featured/google_appengine_{GAE_VERSION}.zip
     unzip -q google_appengine_{GAE_VERSION}.zip
     rm -Rf lib/google_appengine
@@ -59,9 +61,9 @@ targets = {
 
 for target, commands in targets.items():
     if os.path.exists(target):
-        print "+ exists", repr(target)
+        print '+ exists', repr(target)
     else:
-        print "-> building", repr(target)
+        print '-> building', repr(target)
         for line in commands.split('\n'):
             line = line.strip()
             if line:
@@ -72,7 +74,14 @@ for target, commands in targets.items():
 
 
 # install required libraries
-requirements = os.path.abspath(os.path.join(__file__, '../../requirements-dev.txt'))
-cmd = 'pip --quiet install -r {}'.format(requirements)
-print "->", cmd
-subprocess.check_call(cmd, shell=True)
+dpath, _ = os.path.split(__file__)
+rpath = os.path.join(dpath, '../requirements-dev.txt')
+dependencies = open(rpath).read().splitlines()
+try:
+    pkg_resources.require(dependencies)
+except (pkg_resources.DistributionNotFound, pkg_resources.VersionConflict), e:
+    print '-> please install python modules',
+    print e
+    print 'try `sudo pip2 install -r lib/appengine-toolkit2/requirements-dev.txt`'
+    sys.exit(1)
+print '+ exists', 'Python Modules in', rpath

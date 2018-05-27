@@ -41,36 +41,23 @@ RUN curl -s https://storage.googleapis.com/appengine-sdks/featured/google_appeng
 	&& rm /tmp/google_appengine.zip
 ENV PATH $PATH:/usr/local/google_appengine
 
-# Python QA Modules & Modules from https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27
-RUN sudo /usr/local/bin/pip install pillow==3.0 --global-option="build_ext" --global-option="--enable-freetype" \
-	&& sudo /usr/local/bin/pip install --cache-dir /pypi-offline-cache \
-	'bumpversion==0.5.3' \
-	'doit<0.30' \
-	'flake8==2.6.2' \
-	'glob2==0.6' \
-	'isort==4.3.4' \
-	'lxml==3.7.3' \
-	'nose==1.3.7' \
-	'NoseGAE==0.5.10' \
-	'numpy==1.6.1' \
-	'prospector==0.12.7' \
-	'pycrypto==2.6.1' \
-	'pytz==2017.3' \
-	'PyYAML==3.10' \
-	'requests==2.18.4' \
-	&& sudo rm -Rf /root/.cache \
-	&& sudo mv /pypi-offline-cache /home/circleci/ \
-	&& sudo chown -R circleci.circleci /home/circleci/ \
-	&& mkdir /home/circleci/.pip \
-	&& mkdir /home/circleci/pypi-downloads \
-	&& echo '[global]' > /home/circleci/.pip/pip.conf \
-	&& echo "cache-dir=/home/circleci/pypi-offline-cache/" >> /home/circleci/.pip/pip.conf \
-	&& echo "find-links=file:///home/circleci/pypi-offline-cache/ file:///home/circleci/pypi-downloads"
-
 # Cache of pypi modules
 WORKDIR /home/circleci/pypi-downloads
-COPY ./requirements.txt requirements.txt
-RUN pip download -r requirements.txt
+COPY ./requirements-cache.txt requirements-cache.txt.txt
+COPY ./requirements-dev.txt requirements-dev.txt
+RUN mkdir -p /home/circleci/.pip \
+	&& echo '[global]' > /home/circleci/.pip/pip.conf \
+	&& echo "cache-dir=/home/circleci/pypi-offline-cache/" >> /home/circleci/.pip/pip.conf \
+	&& echo "find-links=file:///home/circleci/pypi-offline-cache/ file:///home/circleci/pypi-downloads" \
+	&& sudo pip download -r requirements-dev.txt -r requirements-cache.txt.txt \
+	&& sudo chown -R circleci /home/circleci/pypi-downloads
+
+# Python QA Modules & Modules from https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27
+RUN sudo /usr/local/bin/pip install Pillow==3.0 --global-option="build_ext" --global-option="--enable-freetype" \
+	&& sudo /usr/local/bin/pip install --cache-dir /pypi-offline-cache -r requirements-dev.txt \
+	&& sudo rm -Rf /root/.cache \
+	&& sudo mv /pypi-offline-cache /home/circleci/ \
+	&& sudo chown -R circleci.circleci /home/circleci/
 
 # Cache of npm modules
 WORKDIR /home/circleci/
