@@ -10,7 +10,7 @@ requests==2.18.4
 requests_toolbelt
 urllib3
 webapp2==2.5.2
-webob==1.1.1
+webob==1.2.3
 wtforms==2.0.2
 wtforms-appengine
 xlwt==1

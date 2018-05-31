@@ -1,6 +1,6 @@
+# flake8==3.4.1
 bumpversion==0.5.3
 doit<0.30
-# flake8==3.4.1
 flake8==2.6.2
 futures
 glob2==0.6
@@ -11,7 +11,9 @@ NoseGAE==0.5.10
 numpy==1.6.1
 Pillow==3.0
 prospector==0.12.7
-pylint==1.8.4
+pylint==1.9.1
+pytest==3.6.0
+pytest-cov==2.5.1
 pytz==2017.3
 PyYAML==3.10
 Sphinx==1.7.4
