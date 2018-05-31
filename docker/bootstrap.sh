@@ -1,6 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 set -e
-set -x
+# Uncomment to show what is executed
+# set -x
 
 # Workaround old docker images with incorrect $HOME
 # check https://github.com/docker/docker/issues/2968 for details
@@ -65,4 +66,4 @@ then
   echo "set up now"
 fi
 
-$@
+$*
