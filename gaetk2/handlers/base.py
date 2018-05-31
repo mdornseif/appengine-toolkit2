@@ -463,9 +463,9 @@ class BasicHandler(webapp2.RequestHandler):
 
         if ct is not None:
             if ct > 0:
-                self.response.headers['Cache-Control'] = 'max-age=%d public' % ct
+                self.response.headers[b'Cache-Control'] = b'max-age=%d public' % ct
             elif ct <= 0:
-                self.response.headers['Cache-Control'] = 'no-cache public'
+                self.response.headers[b'Cache-Control'] = b'no-cache public'
 
     def _call_all_inherited(self, funcname, *args, **kwargs):
         """In all SuperClasses call `funcname` - if it exists."""
@@ -553,7 +553,12 @@ class BasicHandler(webapp2.RequestHandler):
             args = ()
 
         # bind session on dispatch (not in __init__)
-        self.session = gaesessions.get_current_session()
+        try:
+            self.session = gaesessions.get_current_session()
+        except AttributeError:
+            # probably session middleware not loaded
+            self.session = {}
+
         if str(self.session) != 'uninitialized session':
             sentry_client.note('storage', 'Session loaded', data=dict(session=self.session))
 

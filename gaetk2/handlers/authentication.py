@@ -72,7 +72,7 @@ class AuthenticationReaderMixin(object):
                 logger.info('Falsches Credential oder kein secret')
                 raise exc.HTTP401_Unauthorized(
                     'Invalid HTTP-Auth Infomation',
-                    headers={'WWW-Authenticate': 'Basic realm="API Login"'})
+                    headers={b'WWW-Authenticate': b'Basic realm="API Login"'})
 
         # 2. Check for valid Authentication via JWT via GAETK2 or Auth0 Tokens
         if self.request.headers.get('Authorization', '').lower().startswith('bearer '):
@@ -148,12 +148,20 @@ class AuthenticationReaderMixin(object):
         # 5. Login for Google Special Calls from Cron & TaskQueue
         # X-AppEngine-QueueName
         # https://cloud.google.com/appengine/docs/standard/python/config/cron#securing_urls_for_cron
+        # TODO:
+        # x-appengine-user-is-admin
+        # x-appengine-auth-domain
+        # x-google-real-ip
+        # https://cloud.google.com/appengine/docs/standard/python/appidentity/
+        # X-Appengine-Cron: true
         if self.request.headers.get('X-AppEngine-QueueName'):
             uid = 'X-AppEngine-Taskqueue-{}'.format(
                 self.request.headers.get('X-AppEngine-QueueName'))
             self.credential = models.gaetk_Credential.create(
                 id=uid, uid=uid, text='created automatically via gaetk2')
             return self._login_user('AppEngine')
+
+        # 6. Other App Engine Apps
         # X-Appengine-Inbound-Appid
         # https://cloud.google.com/appengine/docs/standard/python/appidentity/#asserting_identity_to_other_app_engine_apps
         ibaid = self.request.headers.get('X-Appengine-Inbound-Appid')
@@ -167,14 +175,8 @@ class AuthenticationReaderMixin(object):
                 logging.debug(
                     'configure INBOUND_APP_IDS to allow %s access',
                     self.request.headers.get('X-Appengine-Inbound-Appid'))
-        # TODO:
-        # x-appengine-user-is-admin
-        # x-appengine-auth-domain
-        # x-google-real-ip
-        # https://cloud.google.com/appengine/docs/standard/python/appidentity/
-        # X-Appengine-Cron: true
 
-        # 6. log in by Sentry bot
+        # 7. log in by Sentry bot
         # see https://blog.sentry.io/2017/06/15/notice-of-address-change
         if self.request.headers.get('X-Sentry-Token'):
             if gaetkconfig.SENTRY_SECURITY_TOKEN:
@@ -183,6 +185,14 @@ class AuthenticationReaderMixin(object):
                     self.credential = models.gaetk_Credential.create(
                         id=uid, uid=uid, text='created automatically via gaetk2')
                     return self._login_user('Sentry')
+
+        # 8. Test Framework
+        # see https://blog.sentry.io/2017/06/15/notice-of-address-change
+        if os.environ.get('AUTH_DOMAIN') == 'test.gaetk2.23.nu' and os.environ.get('GAETK2_WEBTEST'):
+            uid = 'gaetktest@auth.gaetk2.23.nu'
+            self.credential = models.gaetk_Credential.create(
+                id=uid, uid=uid, text='created automatically via gaetk2')
+            return self._login_user('GAETK2_WEBTEST')
 
         logger.info(
             'user unauthenticated: Authorization:%r User:%r Session:%r QueueName:%r Appid:%r Sentry:%r',
@@ -397,4 +407,4 @@ class AuthenticationRequiredMixin(AuthenticationReaderMixin):
                 logger.info(
                     'requesting HTTP-Auth %s %s', self.request.remote_addr,
                     self.request.headers.get('Authorization'))
-                raise exc.HTTP401_Unauthorized(headers={'WWW-Authenticate': 'Basic realm="API Login"'})
+                raise exc.HTTP401_Unauthorized(headers={b'WWW-Authenticate': b'Basic realm="API Login"'})
