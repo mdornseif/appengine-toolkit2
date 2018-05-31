@@ -11,14 +11,19 @@ from __future__ import unicode_literals
 import logging
 import os
 
-import yaml
-
 import google.appengine.api.app_identity
 import google.appengine.api.memcache
 import google.appengine.ext.deferred.deferred
 
-from gaetk2.application import Route, WSGIApplication
-from gaetk2.config import get_release, get_revision, get_version, is_development, is_production
+import yaml
+
+from gaetk2.application import Route
+from gaetk2.application import WSGIApplication
+from gaetk2.config import get_release
+from gaetk2.config import get_revision
+from gaetk2.config import get_version
+from gaetk2.config import is_development
+from gaetk2.config import is_production
 from gaetk2.handlers import DefaultHandler
 
 from . import backup
@@ -103,7 +108,7 @@ class HeatUpHandler(DefaultHandler):
     def get(self):
         """Import all Modules."""
         for fname in ['app-uploaded.yaml', 'lib/appengine-toolkit2/include.yaml']:
-            appyaml = yaml.load(open(fname))
+            appyaml = yaml.safe_load(open(fname))
             for handler in appyaml['handlers']:
                 if 'script' not in handler:
                     continue

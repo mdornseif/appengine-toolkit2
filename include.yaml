@@ -90,13 +90,13 @@ skip_files:
 - ^(.*/)?requirements\.txt
 - ^(.*/)?setup.py
 - ^.*/(bin)?/.*
-- ^.*/(doc|example|test|bin)s?/.*
+- ^.*/(_build|docs|example|test|bin)s?/.*
 - ^.+/README.*
 - ^js_src/.*
 - ^tmp/.*
 - ^tmpcheckout/.*
 - ^venv/.*
-- ^(.*/)?lib/.*/(tests|testsuite|testing|examples|raven/contrib|bin)/.*
+- ^(.*/)?lib/.*/(tests|testsuite|testing|examples|raven/contrib|bin|doc)/.*
 - ^(.*/)?lib/.*google_appengine/.*
 - ^(.*/)?lib/CentralServices/keys/.*
 - ^(.*/)?lib/fmtp/printclient/.*

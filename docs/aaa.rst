@@ -1,3 +1,4 @@
+.. _`gaetk2-aaa`:
 Authentication, Authorization & Access Control
 ==============================================
 
