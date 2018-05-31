@@ -1,15 +1,19 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.tools.caching - based on huTools.decorators and gaetk1/tools.py
 
 Created by Maximillian Dornseif on 2007-05-10.
 Copyright (c) 2007, 2015, 2018 HUDORA GmbH. All rights reserved.
 """
+from __future__ import unicode_literals
+
 import threading
 import time
+
 from collections import namedtuple
 from functools import update_wrapper
+
 
 # from http://code.activestate.com/recipes/578078-py26-and-py30-backport-of-python-33s-lru-cache/
 # with added TTL
@@ -17,7 +21,7 @@ from functools import update_wrapper
 HITS, MISSES = 0, 1                     # names for the stats fields
 PREV, NEXT, KEY, RESULT = 0, 1, 2, 3    # names for the link fields
 
-_CacheInfo = namedtuple("CacheInfo", ["hits", "misses", "maxsize", "currsize"])
+_CacheInfo = namedtuple('CacheInfo', ['hits', 'misses', 'maxsize', 'currsize'])
 
 
 def lru_cache(maxsize=64, typed=False, ttl=60 * 60 * 12):
@@ -161,8 +165,11 @@ def lru_cache(maxsize=64, typed=False, ttl=60 * 60 * 12):
         wrapper.__wrapped__ = user_function
         wrapper.cache_info = cache_info
         wrapper.cache_clear = cache_clear
+        wrapper = update_wrapper(wrapper, user_function)
+        if wrapper.__doc__:
+            wrapper.__doc__ += '\n\nResults are cached locally (maxsize={} ttl={})'.format(
+                maxsize, ttl)
         return wrapper
-        return update_wrapper(wrapper, user_function)
 
     return decorating_function
 
@@ -237,5 +244,8 @@ class lru_cache_memcache(object):
         import memorised.decorators
         # first warp in memcache. `maxsize` is ignored there.
         wraped = memorised.decorators.memorise(ttl=self.ttl)(user_function)
+        wraped = update_wrapper(wraped, user_function)
+        if wraped.__doc__:
+            wraped.__doc__ += '\n\nResults are cached in memcache for max. {} seconds'.format(self.ttl)
         # and warp that in lru_cache.
         return lru_cache(maxsize=self.maxsize, typed=self.typed, ttl=self.ttl)(wraped)
