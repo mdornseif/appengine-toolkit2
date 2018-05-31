@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2/exec - Exception including HTTP Status Codes.
 
@@ -9,10 +9,14 @@ Created by Maximillian Dornseif on 2017-06-26.
 Copyright (c) 2017 HUDORA. MIT licnsed.
 """
 
+from __future__ import unicode_literals
+
 from webob.exc import HTTPBadRequest as HTTP400_BadRequest
 from webob.exc import HTTPConflict as HTTP409_Conflict
+from webob.exc import HTTPException
 from webob.exc import HTTPForbidden as HTTP403_Forbidden
 from webob.exc import HTTPFound as HTTP302_Found
+from webob.exc import HTTPGatewayTimeout as HTTP504_GatewayTimeout
 from webob.exc import HTTPGone as HTTP410_Gone
 from webob.exc import HTTPMethodNotAllowed as HTTP405_HTTPMethodNotAllowed
 from webob.exc import HTTPMovedPermanently as HTTP301_Moved
@@ -26,7 +30,7 @@ from webob.exc import HTTPServiceUnavailable as HTTP503_ServiceUnavailable
 from webob.exc import HTTPTemporaryRedirect as HTTP307_TemporaryRedirect
 from webob.exc import HTTPUnauthorized as HTTP401_Unauthorized
 from webob.exc import HTTPUnsupportedMediaType as HTTP415_UnsupportedMediaType
-from webob.exc import HTTPException
+
 
 __all__ = [
     'HTTPException',
@@ -47,7 +51,8 @@ __all__ = [
     'HTTP415_UnsupportedMediaType',
     'HTTP500_ServerError',
     'HTTP501_NotImplemented',
-    'HTTP503_ServiceUnavailable'
+    'HTTP503_ServiceUnavailable',
+    'HTTP504_GatewayTimeout',
 ]
 
 # acoid unwanted Information being pushed to Sentry
