@@ -41,10 +41,11 @@ class AuthenticationReaderMixin(object):
         # This funcion is somewhat involved. We accept
         # 1) Authentication via HTTP-Auth
         # 2) Authentication via JWT
-        # 3) Authentication via Session
-        # 4) Login via OAuth with speciffic domains registered at Google Apps
-        # 5) Login for Google Special Calls from Cron & TaskQueue
-
+        # 3) Check for App Engine / Google Apps based Login
+        # 4) Authentication via Session
+        # 6) Other App Engine Apps
+        # 7) log in by Sentry bot
+        # 8) Our Test Framework
         self.credential = None
         uid, secret = None, None
         # 1. Check for valid HTTP-Basic Auth Login
@@ -265,7 +266,8 @@ class AuthenticationReaderMixin(object):
         # this is helpful for things like `ndb.UserProperty(auto_current_user=True)`
         if not os.environ.get('USER_ID', None):
             os.environ['USER_ID'] = self.credential.uid
-            os.environ['AUTH_DOMAIN'] = 'auth.gaetk2.23.nu'
+            if not os.environ.get('AUTH_DOMAIN'):
+                os.environ['AUTH_DOMAIN'] = 'auth.gaetk2.23.nu'
             # os.environ['USER_IS_ADMIN'] = credential.admin
             if self.credential.email:
                 os.environ['USER_EMAIL'] = self.credential.email
@@ -407,4 +409,4 @@ class AuthenticationRequiredMixin(AuthenticationReaderMixin):
                 logger.info(
                     'requesting HTTP-Auth %s %s', self.request.remote_addr,
                     self.request.headers.get('Authorization'))
-                raise exc.HTTP401_Unauthorized(headers={b'WWW-Authenticate': b'Basic realm="API Login"'})
+                raise exc.HTTP401_Unauthorized(headers={b'WWW-Authenticate': b'Basic realm="Main Login"'})
