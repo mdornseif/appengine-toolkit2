@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 boot.py - Inital setup. Best to be imported first in `appengine_config.py`
 
@@ -21,11 +21,16 @@ uses `appengine_config.py`.
 Created by Maximillian Dornseif on 2017-06-24.
 Copyright (c) 2017 Maximillian Dornseif. MIT Licensed.
 """
+from __future__ import unicode_literals
+
 # pylint: skip-file
 # flake8: noqa
 import logging
 import os.path
 import warnings
+
+from google.appengine.ext import vendor
+
 
 # something redirects warning to logging.error() on App Engine (stderr?).
 # Fix it.
@@ -44,7 +49,6 @@ warnings.filterwarnings('ignore', message='The TextField alias for StringField h
 # Include libraries
 # `google.appengine.ext.vendor.add` is just `site.addsitedir()` with path shuffling
 
-from google.appengine.ext import vendor
 vendor.add('./lib')  # processes `.pth` files
 vendor.add('./lib/site-packages') # processes `.pth` files
 
@@ -66,8 +70,8 @@ requests_toolbelt.adapters.appengine.monkeypatch(validate_certificate=False)
 # suppress SSL warnings we can not do anything about
 urllib3.disable_warnings()
 
-# incerase global HTTP-Timeout from 5 to 50 seconds
-google.appengine.api.urlfetch.set_default_fetch_deadline(50)
+# incerase global HTTP-Timeout from 5 to 30 seconds
+google.appengine.api.urlfetch.set_default_fetch_deadline(30)
 
 
 # ensure we can see the funcname for convinience and the logger name for selective supression
@@ -109,5 +113,3 @@ try:
     logging.debug('disabled `pkg_resources.get_distribution() for GAE compability`')
 except ImportError:
     pass
-
-

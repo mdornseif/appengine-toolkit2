@@ -4,3 +4,5 @@ appengine-generated/
 site-packages/
 docs/_build/
 lib/
+docker/requirements-cache.txt
+docker/requirements-dev.txt

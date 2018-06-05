@@ -97,7 +97,6 @@ skip_files:
 - ^tmpcheckout/.*
 - ^venv/.*
 - ^(.*/)?lib/.*/(tests|testsuite|testing|examples|raven/contrib|bin|doc)/.*
-- ^(.*/)?lib/.*google_appengine/.*
 - ^(.*/)?lib/CentralServices/keys/.*
 - ^(.*/)?lib/fmtp/printclient/.*
 - ^(.*/)?lib/gae-sessions/(demo|demo-with-google-logins|docs|tests)/.*
@@ -105,8 +104,6 @@ skip_files:
 - ^(.*/)?lib/site-packages/(lxml|pytz|PIL|Crypto/SelfTest|raven/contrib|tkinter)/.*
 - ^(.*/)?lib/py2js/.*
 - lib/.*/site-packages
-- lib/site-packages/.*\.dist-info
-- lib/site-packages/.*\.dist-info/.*
 - lib/python*.*
 # development-tools
 - lib/site-packages/cssutils.*
@@ -124,3 +121,4 @@ skip_files:
 - lib/site-packages/pylint.*
 - lib/site-packages/pylint_.*
 - lib/site-packages/raven/contrib.*
+- lib/site-packages/google/appengine/.*

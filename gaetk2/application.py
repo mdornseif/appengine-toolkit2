@@ -26,7 +26,8 @@ import urllib3.exceptions
 import webapp2
 
 from gaetk2 import exc
-from gaetk2.config import gaetkconfig, is_development
+from gaetk2.config import gaetkconfig
+from gaetk2.config import is_development
 from gaetk2.tools.sentry import sentry_client
 from webapp2 import Route
 
@@ -153,7 +154,6 @@ class WSGIApplication(webapp2.WSGIApplication):
             logger.exception('Exception caught for path %s: %s', request.path, exception)
         else:
             logger.info('Exception caught for path %s: %s', request.path, exception, exc_info=True)
-        response.set_status(status)
 
         if not is_development():
             event_id = ''
@@ -189,6 +189,7 @@ class WSGIApplication(webapp2.WSGIApplication):
             response.headers['Content-Type'] = b'text/html'
             handler = cgitb.Hook(file=response.out).handle
             handler()
+        response.set_status(status)
 
     def get_sentry_addon(self, request):
         """This tries to extract additional data from the request for Sentry after an Exception tootk place.

@@ -20,18 +20,14 @@ FROM circleci/python:2.7.14-stretch-node
 
 # carefull! python packages get installed into system python and not user python
 RUN sudo apt-get install -y libfreetype6-dev libjpeg-dev zlib1g-dev libtiff-dev python-pil
-# update to a git which can run paralell (-j8)
-RUN sudo /bin/sh -c 'echo "deb http://ftp.us.debian.org/debian testing main contrib non-free" >> /etc/apt/sources.list' \
-	&& sudo apt-get update \
-	&& sudo apt-get install -y git less python3 python3-distutils python3-setuptools \
-	&& sudo apt-get clean all
 
 RUN curl -s https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz \
 	&& sudo mkdir -p /usr/local/gcloud \
 	&& sudo tar -C /usr/local/gcloud -xf /tmp/google-cloud-sdk.tar.gz \
 	&& rm /tmp/google-cloud-sdk.tar.gz \
 	&& sudo /usr/local/gcloud/google-cloud-sdk/install.sh \
-	&& /usr/local/gcloud/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true
+	&& /usr/local/gcloud/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true \
+	&& sudo /usr/local/gcloud/google-cloud-sdk/bin/gcloud components install app-engine-python-extras
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
 
 ENV GAE_VERSION '1.9.69'
@@ -58,6 +54,18 @@ RUN sudo /usr/local/bin/pip install Pillow==3.0 --global-option="build_ext" --gl
 	&& sudo mv /pypi-offline-cache /home/circleci/ \
 	&& sudo chown -R circleci.circleci /home/circleci/
 
+# update to a git which can run paralell (-j8)
+RUN sudo /bin/sh -c 'echo "deb http://ftp.us.debian.org/debian testing main contrib non-free" >> /etc/apt/sources.list' \
+	&& sudo apt-get update \
+	&& sudo apt-get install -y git less python3 python3-distutils python3-setuptools \
+	&& sudo apt-get clean all
+
+# pseudo-python
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
+	&& sudo python3 get-pip.py && rm get-pip.py \
+    && sudo pip3 install PyYAML --global-option="--without-libyaml" \
+    && sudo pip3 install pseudo==0.2.16 pseudo-python==0.2.34
+
 # Cache of npm modules
 WORKDIR /home/circleci/
 COPY ./package.json package.json
@@ -65,12 +73,6 @@ RUN yarn config set modules-folder /home/circleci/node_modules \
 	&& yarn config set yarn-offline-mirror /home/circleci/npm-packages-offline-cache \
 	&& yarn install \
 	&& rm -Rf node_modules/
-
-# pseudo-python
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
-	&& sudo python3 get-pip.py && rm get-pip.py \
-    && sudo pip3 install PyYAML --global-option="--without-libyaml" \
-    && sudo pip3 install pseudo==0.2.16 pseudo-python==0.2.34
 
 # why not https://docs.docker.com/engine/reference/builder/#add
 COPY ./bootstrap.sh /bootstrap.sh
