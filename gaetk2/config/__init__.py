@@ -25,6 +25,7 @@ __all__ = [
     'get_release',
     'get_revision',
     'get_version',
+    'get_userversion',
     'get_productiondomain',
     'is_production',
 ]
@@ -65,6 +66,13 @@ def get_revision():
     except IOError:
         version = 'HEAD'
     return version
+
+
+@lru_cache(1)
+def get_userversion():
+    u"""Return the User-Visible Version (eg `2018.11.3`)."""
+    configyaml = yaml.safe_load(open('gaetk-conf.yaml'))
+    return configyaml['userversion']
 
 
 @lru_cache(1)
