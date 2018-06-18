@@ -3,7 +3,6 @@ beautifulsoup4==4.5.3
 bumpversion==0.5.3
 doit<0.30
 flake8==2.6.2
-futures
 glob2==0.6
 isort==4.3.4
 lxml==3.7.3
