@@ -1,10 +1,12 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 DSL zur Beschreibung von REST-interfaces, angelehnt an https://gist.github.com/805540
 
 File created by Philipp Benjamin Koeppchen on 2011-02-23
 Copyright (c) 2011, 2013, 2016, 2017, 2018 HUDORA. MIT Licensed.
 """
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import codecs
 import concurrent.futures
@@ -17,17 +19,20 @@ import sys
 import time
 import urlparse
 import xml.dom.minidom
+
 from collections import Counter
 from functools import partial
 
 import requests
+
 from requests.auth import HTTPBasicAuth
+
 
 logger = logging.getLogger(__name__)
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 FOREGROUND = 30
-RESET_SEQ = "\033[0m"
-COLOR_SEQ = "\033[1;%dm"
+RESET_SEQ = '\033[0m'
+COLOR_SEQ = '\033[1;%dm'
 
 MAX_WORKERS = 6
 
@@ -43,7 +48,7 @@ if False:
     import httplib
     httplib.HTTPConnection.debuglevel = 1
     logger.getLogger().setLevel(logger.DEBUG)
-    requests_log = logger.getLogger("requests.packages.urllib3")
+    requests_log = logger.getLogger('requests.packages.urllib3')
     requests_log.setLevel(logger.DEBUG)
     requests_log.propagate = True
 
@@ -119,11 +124,11 @@ class TestClient(object):
         """Führt einen HTTP-GET auf den gegebenen [path] aus.
         Nutzt dabei ggf. die credentials zu [auth] und [accept]."""
         if isinstance(auth, list):
-            raise ValueError("unsuitable auth %r" % auth)
+            raise ValueError('unsuitable auth %r' % auth)
         if auth and auth not in self.authdict:
             raise ValueError("Unknown auth '%s'" % auth)
 
-        self.cloudtrace = "%032x" % (random.getrandbits(128))
+        self.cloudtrace = '%032x' % (random.getrandbits(128))
         myheaders = {
             'User-Agent': 'resttest/%s' % requests.utils.default_user_agent(),
             'X-Cloud-Trace-Context': '%s/0;o=1' % self.cloudtrace}
@@ -159,7 +164,7 @@ class TestClient(object):
 
     def check(self, *args, **kwargs):
         # see http://stackoverflow.com/questions/9872824/
-        typ = kwargs.pop('typ', u'').lower()
+        typ = kwargs.pop('typ', '').lower()
         for url in args:
             path = urlparse.urlparse(url).path
             if typ == 'json' or path.endswith('json'):
@@ -237,18 +242,18 @@ class TestClient(object):
                 future.result()
                 sys.stdout.flush()
             except:
-                print futures[future]
+                print(futures[future])
                 sys.stdout.flush()
                 raise
         finished, not_done = concurrent.futures.wait(futures)
         if not_done:
-            print "unfinished:", not_done
+            print('unfinished:', not_done)
 
     def _check_helper(self, checkers, url, **kwargs):
         response = self.GET(url, **kwargs)
         for checker in checkers:
             checker(response)
-        return "%s:%s" % (kwargs.get('auth'), url)
+        return '%s:%s' % (kwargs.get('auth'), url)
 
     @property
     def errors(self):
@@ -290,21 +295,22 @@ class Response(object):
         self.errors += 1
         url = self.url
         if self.response.url != url:
-            url = u'%r (->%r)' % (url, self.response.url)
-        print u'%s %s -> %s: %s' % (self.method, url, _colored("FAIL", RED), message)
+            url = '%r (->%r)' % (url, self.response.url)
+        out = '%s %s -> %s: %s' % (self.method, url, _colored('FAIL', RED), message)
+        print(out, file=sys.stderr)
         if self.response.history:
             for hres in self.response.history:
-                print u'->', hres.url
-        print _to_curl(self.response.request)
+                print('->', hres.url)
+        print(_to_curl(self.response.request))
         # if 'X-Cloud-Trace-Context' in self.headers:
         #     print ('http://console.developer.google.com/traces/details/%s'
         #            % self.headers['X-Cloud-Trace-Context'].split(';')[0])
-        print
+        print()
 
     def _succeed(self, message):
         """Positives Ergebnis einer Zusicherung."""
         if self.client.debug:
-            print '%s %s -> %s: %s' % (self.method, self.url, _colored("SUCCESS", GREEN), message)
+            print('%s %s -> %s: %s' % (self.method, self.url, _colored('SUCCESS', GREEN), message))
 
     def _expect_condition(self, condition, message):
         """sichert eine boolsche Bedingung zu. sollte nicht direkt aufgerufen werden"""
@@ -451,11 +457,11 @@ def _responds_redirect(response, to=None):
 
 def _to_curl(request):
     """From https://github.com/oeegor/curlify/blob/master/curlify.py."""
-    headers = ["'{0}: {1}'".format(k, v) for k, v in request.headers.items()]
-    headers = " -H ".join(sorted(headers))
+    headers = ["'{}: {}'".format(k, v) for k, v in request.headers.items()]
+    headers = ' -H '.join(sorted(headers))
 
     command = "curl -i -X {method} -H {headers} -d '{data}' '{uri}'".format(
-        data=request.body or "",
+        data=request.body or '',
         headers=headers,
         method=request.method,
         uri=request.url,
