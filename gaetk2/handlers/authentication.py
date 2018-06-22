@@ -189,7 +189,7 @@ class AuthenticationReaderMixin(object):
 
         # 8. Test Framework
         # see https://blog.sentry.io/2017/06/15/notice-of-address-change
-        if os.environ.get('AUTH_DOMAIN') == 'test.gaetk2.23.nu' and os.environ.get('GAETK2_WEBTEST'):
+        if os.environ.get('GAETK2_WEBTEST'):
             uid = 'gaetktest@auth.gaetk2.23.nu'
             self.credential = models.gaetk_Credential.create(
                 id=uid, uid=uid, text='created automatically via gaetk2')
@@ -202,7 +202,7 @@ class AuthenticationReaderMixin(object):
             self.session,
             self.request.headers.get('X-AppEngine-QueueName'),
             self.request.headers.get('X-Appengine-Inbound-Appid'),
-            self.request.headers.get('X-Sentry-Token')
+            self.request.headers.get('X-Sentry-Token'),
         )
 
     def decode_jwt(self, token, key, algorithms=['RS256'], access_token=None):
