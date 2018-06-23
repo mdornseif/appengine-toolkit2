@@ -6,12 +6,10 @@ doit<0.30
 flake8==3.5.0
 glob2==0.6
 isort==4.3.4
-lxml==3.7.3
 nose==1.3.7
 NoseGAE==0.5.10
-numpy==1.6.1
 Pillow==3.0
-prospector==0.12.7
+prospector==0.12.11
 pylint==1.9.1
 pytest==3.6.0
 pytest-cov==2.5.1
