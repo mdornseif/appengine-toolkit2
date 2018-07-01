@@ -24,7 +24,6 @@ import jinja2
 import requests.exceptions
 import urllib3.exceptions
 import webapp2
-import webob.exc
 
 from gaetk2 import exc
 from gaetk2.config import gaetkconfig
@@ -62,9 +61,9 @@ class WSGIApplication(webapp2.WSGIApplication):
                 # webapp2 only catches `Exception` not `BaseException`
                 except BaseException as e:
                     logger.debug(
-                        'Exception %r via %s %s %s', e, request.route,
-                        request.route_args, request.route_kwargs)
-                    # logger.debug('called from %s %s', self.__class__.__name__, self.__class__.__module__)
+                        'Exception %r via %s %s %s %s', e, request.route,
+                        request.route_args, request.route_kwargs,
+                        self.router)
                     try:
                         # Try to handle it with a custom error handler.
                         rv = self.handle_exception(request, response, e)
