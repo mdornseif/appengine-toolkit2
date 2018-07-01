@@ -108,13 +108,13 @@ def is_production():
     :func:`get_environment()` - read the code for details."""
     if is_development():
         return False
-    elif os.environ.get('SERVER_NAME', '').startswith(('production', 'blue', 'green', 'staging')):
+    elif os.environ.get('SERVER_NAME', '').startswith(('production', 'blue', 'green', 'staging', 'hotfix')):
         return True
     elif (os.environ.get('SERVER_NAME', '').startswith('v') and
           os.environ.get('SERVER_NAME', '').endswith('appspot.com')):
         return False
     else:
-        return True
+        return False
 
 
 def is_development():
