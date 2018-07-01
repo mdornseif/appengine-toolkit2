@@ -67,9 +67,9 @@ class AuthenticationReaderMixin(object):
                 return self._login_user('HTTP')
             else:
                 logger.error(
-                    'failed HTTP-Login from %s/%s %s %s %r %r', uid, self.request.remote_addr,
+                    'failed HTTP-Login from %s/%s %s %s %r', uid, self.request.remote_addr,
                     self.request.headers.get('Authorization'),
-                    self.credential, self.credential.secret, secret.strip())
+                    self.credential, secret.strip())
                 logger.info('Falsches Credential oder kein secret')
                 raise exc.HTTP401_Unauthorized(
                     'Invalid HTTP-Auth Infomation',
@@ -204,6 +204,7 @@ class AuthenticationReaderMixin(object):
             self.request.headers.get('X-Appengine-Inbound-Appid'),
             self.request.headers.get('X-Sentry-Token'),
         )
+        logger.debug('headers: %s', self.request.headers.items())
 
     def decode_jwt(self, token, key, algorithms=['RS256'], access_token=None):
         """Decode data from JWT and handle common failures."""
