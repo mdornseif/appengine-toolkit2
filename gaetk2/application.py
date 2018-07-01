@@ -24,6 +24,7 @@ import jinja2
 import requests.exceptions
 import urllib3.exceptions
 import webapp2
+import webob.exc
 
 from gaetk2 import exc
 from gaetk2.config import gaetkconfig
@@ -58,7 +59,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                     rv = self.router.dispatch(request, response)
                     if rv is not None:
                         response = rv
-                # webapp2 conly catches `Exception` not `BaseException`
+                # webapp2 only catches `Exception` not `BaseException`
                 except BaseException as e:
                     logger.debug(
                         'Exception %r via %s %s %s', e, request.route,
@@ -72,10 +73,16 @@ class WSGIApplication(webapp2.WSGIApplication):
                     except exc.HTTPException as e:
                         # Use the HTTP exception as response.
                         response = e
+                        if os.environ.get('GAETK2_WEBTEST') and e.code >= 500:
+                            # make sure we get nice errors during testing
+                            raise
                     except BaseException as e:
                         # Error wasn't handled so we have nothing else to do.
                         logger.debug('internal_error(%s)', e)
                         response = self._internal_error(e)
+                        if os.environ.get('GAETK2_WEBTEST'):
+                            # make sure we get nice errors during testing
+                            raise
 
                 try:
                     self.fix_unicode_headers(response)
@@ -123,7 +130,7 @@ class WSGIApplication(webapp2.WSGIApplication):
             sentry_client.note('navigation', message='HTTPException', data=notedata)
 
         handler = self.error_handlers.get(code)
-        if handler:
+        if handler and not os.environ.get('GAETK2_WEBTEST'):
             logger.debug('using %s', handler)
             return handler(request, response, e)
         else:
@@ -152,6 +159,8 @@ class WSGIApplication(webapp2.WSGIApplication):
         # Make sure we have at least some decent infotation in the logfile
         if level == 'error':
             logger.exception('Exception caught for path %s: %s', request.path, exception)
+            if os.environ.get('GAETK2_WEBTEST'):
+                raise
         else:
             logger.info('Exception caught for path %s: %s', request.path, exception, exc_info=True)
 
@@ -229,7 +238,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         status = 500
         level = 'error'
         fingerprint = None
-        tags = {'uri': request.uri}
+        tags = {'url': request.uri}
 
         if isinstance(exception, Warning):
             level = 'warning'
