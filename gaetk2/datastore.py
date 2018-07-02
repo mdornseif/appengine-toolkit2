@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.datastore - Helper for ndb datastore usage.
 
 Created by Maximillian Dornseif on 2011-01-07.
 Copyright (c) 2011, 2012, 2016, 2017, 2018 Cyberlogi/HUDORA. All rights reserved.
 """
+from __future__ import unicode_literals
+
 import logging
 import warnings
 
@@ -32,8 +34,8 @@ class Model(ndb.Model):
         return self.key.id() == other.key.id()
 
     def as_dict(self):
-        u"""Gibt eine Repräsentation des Objektes zurück."""
-        warnings.warn("`as_dict` is deprecated, use `to_dict()`", DeprecationWarning, stacklevel=2)
+        """Gibt eine Repräsentation des Objektes zurück."""
+        warnings.warn('`as_dict` is deprecated, use `to_dict()`', DeprecationWarning, stacklevel=2)
         return self.to_dict()
 
 
@@ -45,6 +47,14 @@ class DeletableModel(Model):
 class AuditedModel(Model):
     """Fields to add an Audit-Trail to the Datastore."""
 
+    # these fields work only if the user was logged in via google infrastructure
+    created_by = ndb.UserProperty(required=False, auto_current_user_add=True, indexed=True)
+    updated_by = ndb.UserProperty(required=False, auto_current_user=True, indexed=True)
+
+
+class DeletableAuditedModel(Model):
+
+    deleted = ndb.BooleanProperty(default=False, indexed=True)
     # these fields work only if the user was logged in via google infrastructure
     created_by = ndb.UserProperty(required=False, auto_current_user_add=True, indexed=True)
     updated_by = ndb.UserProperty(required=False, auto_current_user=True, indexed=True)
@@ -74,10 +84,10 @@ def copy_entity(e, **extra_args):
     """
     # see https://stackoverflow.com/a/2712401
     klass = e.__class__
-    props = dict((
-        v._code_name, v.__get__(e, klass))
+    props = {
+        v._code_name: v.__get__(e, klass)
         for v in klass._properties.itervalues()
-        if type(v) is not ndb.ComputedProperty)
+        if type(v) is not ndb.ComputedProperty}
     props.update(extra_args)
     return klass(**props)
 
