@@ -239,6 +239,26 @@ class WSGIApplication(webapp2.WSGIApplication):
         fingerprint = None
         tags = {'url': request.uri}
 
+        k = repr(exception.__class__)
+        if ('ApiTooSlowError' in k or
+                'TimeoutError' in k or
+                'Deadline exceeded' in k or
+                'CsApiException' in k or
+                'Deadlock waiting for' in k or
+                unicode(exception).endswith('timed out')):
+            status = 504  # Gateway Time-out
+            level = 'warning'
+            tags = {'class': 'timeout'}
+        if 'Connection closed' in k:
+            status = 504  # Gateway Time-out
+            level = 'warning'
+            tags = {'class': 'abort'}
+        if ('TransientError' in k or
+                'InternalTransientError' in k):
+            status = 503  # Service Unavailable
+            level = 'warning'
+            tags = {'class': 'transienterror'}
+
         if isinstance(exception, Warning):
             level = 'warning'
         # see https://cloud.google.com/appengine/articles/deadlineexceedederrors
@@ -291,7 +311,8 @@ class WSGIApplication(webapp2.WSGIApplication):
             status = 507  # Insufficient Storage  - passt jetzt nicht wie die Faust auf's Auge ...
             level = 'warning'
             tags = {'subsystem': 'urlfetch'}
-        if isinstance(exception, google.appengine.api.urlfetch_errors.InternalTransientError):
+        if ('DownloadError' in k or
+                isinstance(exception, google.appengine.api.urlfetch_errors.InternalTransientError)):
             status = 503  # Service Unavailable
             level = 'warning'
             tags = {'class': 'transienterror', 'subsystem': 'urlfetch'}
@@ -304,12 +325,6 @@ class WSGIApplication(webapp2.WSGIApplication):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'class': 'timeout', 'subsystem': 'urlfetch'}
-
-        k = repr(exception.__class__)
-        if 'ApiTooSlowError' in k or 'TimeoutError' in k or unicode(exception).endswith('timed out'):
-            status = 504  # Gateway Time-out
-            level = 'warning'
-            tags = {'class': 'timeout'}
 
         if 'dropboxapi' in repr(exception):
             tags['api'] = 'Dropbox'
@@ -345,7 +360,10 @@ class WSGIApplication(webapp2.WSGIApplication):
             if os.environ.get(fullname):
                 extra['GAE_' + name] = os.environ.get(fullname)
         for attr in 'uri app route route_args route_kwargs'.split():
-            extra[attr] = request.get(attr)
+            try:
+                extra[attr] = request.get(attr)
+            except Exception:
+                logger.exception('problem parsing %s', attr)
         sentry_client.extra_context(extra)
         # server_name: the hostname of the server
         # os.environ.get('SERVER_NAME', '')
