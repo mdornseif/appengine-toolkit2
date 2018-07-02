@@ -17,7 +17,9 @@ from google.appengine.api import app_identity
 import gaetk2.admin
 
 from gaetk2.admin import autodiscover
-from gaetk2.application import Route, WSGIApplication
+from gaetk2.application import Route
+from gaetk2.application import WSGIApplication
+from gaetk2.config import get_userversion
 from gaetk2.ext import snippets
 from gaetk2.helpers import check404
 
@@ -71,6 +73,8 @@ class AdminIndexHandler(_AbstractAdminHandler):
             'default_version_hostname': app_identity.get_default_version_hostname(),
             'default_gcs_bucket_name': app_identity.get_default_gcs_bucket_name(),
             'application_id': app_identity.get_application_id(),
+            'title': 'Administration (Version {})'.format(get_userversion()),
+
         }, 'admin2/index.html')
 
 
