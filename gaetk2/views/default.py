@@ -73,11 +73,22 @@ class RevisionHandler(DefaultHandler):
 
 
 class ReleaseHandler(DefaultHandler):
-    """Version Handler - allows clients to see the git release currently running."""
+    """Release Handler - allows clients to see the git release currently running."""
 
     def get(self):
         """Returns the current release."""
         self.return_text(get_release())
+
+
+class BluegreenHandler(DefaultHandler):
+    """Allows clients to see the if blue or green is currently running."""
+
+    def get(self):
+        """Returns the current release."""
+        try:
+            self.return_text(open('gaetk2-bluegreen.txt').readline().strip())
+        except IOError:
+            self.return_text('gray')
 
 
 class WarmupHandler(DefaultHandler):
@@ -87,6 +98,7 @@ class WarmupHandler(DefaultHandler):
         """Common warmup functionality. Loads big/slow Modules."""
         import datetime
         import jinja2
+
         import gaetk2.admin  # this will pull in a lot of code, good for warming up
         import gaetk2.modelexporter
         import gaetk2.tools.http
@@ -125,6 +137,7 @@ application = WSGIApplication([
     Route('/version.txt', VersionHandler),
     Route('/revision.txt', RevisionHandler),
     Route('/release.txt', ReleaseHandler),
+    Route('/bluegreen.txt', BluegreenHandler),
     Route('/_ah/warmup', WarmupHandler),
     Route('/gaetk2/heatup/', HeatUpHandler),
     Route('/gaetk2/backup/', backup.BackupHandler),
