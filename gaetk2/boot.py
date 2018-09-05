@@ -19,7 +19,7 @@ in `appengine_config.py` nothing you import should use `lib_config` which
 uses `appengine_config.py`.
 
 Created by Maximillian Dornseif on 2017-06-24.
-Copyright (c) 2017 Maximillian Dornseif. MIT Licensed.
+Copyright (c) 2017, 2018 Maximillian Dornseif. MIT Licensed.
 """
 from __future__ import unicode_literals
 
@@ -27,6 +27,7 @@ from __future__ import unicode_literals
 # flake8: noqa
 import logging
 import os.path
+import sys
 import warnings
 
 from google.appengine.ext import vendor
@@ -96,20 +97,47 @@ logging.getLogger('raven').setLevel(logging.WARNING)
 
 # TODO: add sentry: https://docs.sentry.io/clients/python/integrations/logging/
 
-
-# pkg_resources.get_distribution() seems only to work for eggs, if you use 'vendoring'.
+# pkg_resources.get_distribution() seems only to work for eggs, not if you use 'vendoring'.
 # But several Google packages use it to get the current package version.
 # Monkey-Patching let's us use these Packages.
 # See https://github.com/lepture/flask-wtf/issues/261
 # and https://github.com/GoogleCloudPlatform/google-cloud-python/issues/1893
 try:
     import pkg_resources
+
     def get_distribution_dummy(name):
+        """Simulating :func:`pkg_resources.get_distribution`."""
         class DummyObj(object):
+            """Simulating :class:`pkg_resources.distribution`."""
             version = 'unknown'
+            parsed_version = 'unknown'
         return DummyObj()
 
     pkg_resources.get_distribution = get_distribution_dummy
-    logging.debug('disabled `pkg_resources.get_distribution() for GAE compability`')
 except ImportError:
     pass
+
+
+# often we get at this point a "Mamespace Package" in `lib/site-packages/google`
+# which shadows the App Engine SDK stored at `lib/google_appengine/google`
+# Seemingly only monkey patching `sys.modules['google'].__path__`
+# can solve this.
+
+# ensure conflictiong modules are loaded to pull in the Namespace Package
+for modname in ['google.cloud.bigquery', 'google.cloud.exceptions']:
+    try:
+        __import__(modname)
+    except pkg_resources.DistributionNotFound:
+        pass
+
+if 'google' in sys.modules:
+    # merge ./lib/google_appengine/google ir so into ./lib/site-packages/google
+    google_paths = getattr(sys.modules['google'], '__path__', [])
+    for gaepath in ['../lib/google_appengine', './lib/google_appengine', '/usr/local/google_appengine/']:
+        if os.path.exists(gaepath):
+            vendored_google_path = os.path.abspath(os.path.join(gaepath, 'google'))
+            if vendored_google_path not in google_paths:
+                google_paths.append(vendored_google_path)
+
+
+NOW_THIS_WORKS = __import__('google.appengine.ext')
