@@ -69,7 +69,10 @@ else:
 
 
 # NOW_THIS_WORKS = __import__('google.appengine.ext')
-autodoc_mock_imports = ['google.appengine.api', 'google.appengine.ext']
+autodoc_mock_imports = [
+    'google.cloud.bigquery',
+    'google.appengine.api',
+    'google.appengine.ext']
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
