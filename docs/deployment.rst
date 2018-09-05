@@ -119,16 +119,16 @@ If you have a docker based CI system this works very well with the gaetk2 deploy
 	    steps:
 	      - checkout:
 	          path: ~/repo
-	      - run: doit -f dodo-new.py submodules
-	      - run: doit -f dodo-new.py BUILD
-	      - run: doit -f dodo-new.py CICHECK CITEST
+	      - run: doit submodules
+	      - run: doit BUILD
+	      - run: doit CICHECK CITEST
 	  deploy:
 	    <<: *defaults
 	    steps:
 	      - checkout:
 	          path: ~/repo
-	      - run: doit -f dodo-new.py submodules
-	      - run: doit -f dodo-new.py BUILD
+	      - run: doit submodules
+	      - run: doit BUILD
 	      # see https://circleci.com/docs/2.0/google-auth/
 	      # https://circleci.com/docs/1.0/deploy-google-app-engine/
 	      # add key at https://circleci.com/gh/hudora/huWaWi/edit#env-vars
@@ -140,9 +140,9 @@ If you have a docker based CI system this works very well with the gaetk2 deploy
 	    steps:
 	      - checkout:
 	          path: ~/repo
-	      - run: doit -f dodo-new.py submodules
-	      - run: doit -f dodo-new.py BUILD
-	      - run: doit -f dodo-new.py CITEST_ACCEPTANCE
+	      - run: doit submodules
+	      - run: doit BUILD
+	      - run: doit CITEST_ACCEPTANCE
 
 	workflows:
 	  version: 2
@@ -179,3 +179,5 @@ Automated Deployments
 ---------------------
 
 Create a Service Account at https://console.cloud.google.com/iam-admin/serviceaccounts/project?project=huwawi2 Permissions needed are `App Engine -> App Engine Deployer` and `Storage -> Storag Object Admin`. (See http://filez.foxel.org/2d1Q2W0y2E33). Download the Key as JSON, Pass it throu base64 and add it as Circle CI environment variable `GCLOUD_SERVICE_KEY` at https://circleci.com/gh/hudora/huWaWi/edit#env-vars
+
+Also set ``GAE_PROJECT``.

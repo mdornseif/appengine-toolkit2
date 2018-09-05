@@ -3,6 +3,8 @@
 Frontend Guidelines
 ===================
 
+See :class:`gaetk2.handers.base.BasicHandler` for generic Template Variables etc.
+
 Frontends are assumed to be generated using Jinja2 and Bootstrap 4.
 All displayed content is based in ``templates/gaetk_base_bs4.html``
 

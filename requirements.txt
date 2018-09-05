@@ -1,5 +1,5 @@
--r requirements-lib.txt
 -r requirements-dev.txt
+-r requirements-lib.txt
+appengine-sdk
 ez_setup
 mock==2.0.0
-# google-appengine

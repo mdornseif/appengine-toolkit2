@@ -11,6 +11,8 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
+# flake8: noqa
+from __future__ import unicode_literals
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -18,17 +20,56 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('.'))
+
+from mock import Mock as MagicMock
+
+
+# pkg_resources.get_distribution() seems only to work for eggs, not if you use 'vendoring'.
+# But several Google packages use it to get the current package version.
+# Monkey-Patching let's us use these Packages.
+# See https://github.com/lepture/flask-wtf/issues/261
+# and https://github.com/GoogleCloudPlatform/google-cloud-python/issues/1893
+try:
+    import pkg_resources
+
+    def get_distribution_dummy(name):
+        """Simulating :func:`pkg_resources.get_distribution`."""
+        class DummyObj(object):
+            """Simulating :class:`pkg_resources.distribution`."""
+            version = 'unknown'
+            parsed_version = 'unknown'
+        return DummyObj()
+
+    pkg_resources.get_distribution = get_distribution_dummy
+except ImportError:
+    pass
+
+
 sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('../site-packages'))
+sys.path.insert(0, os.path.abspath('../../lib/site-packages'))
+sys.path.insert(0, os.path.abspath('../../../lib/site-packages'))
+
+for modname in ['google.cloud.exceptions']:
+    try:
+        __import__(modname)
+    except (pkg_resources.DistributionNotFound, ImportError):
+        pass
+
+if 'google' in sys.modules:
+    # merge ./lib/google_appengine/google into ./lib/site-packages/google
+    google_paths = getattr(sys.modules['google'], '__path__', [])
+    for gaepath in ['/usr/local/google_appengine/', '../lib/google_appengine', './lib/google_appengine']:
+        if os.path.exists(gaepath):
+            vendored_google_path = os.path.abspath(os.path.join(gaepath, 'google'))
+            if vendored_google_path not in google_paths:
+                google_paths.append(vendored_google_path)
+else:
+    sys.path.insert(0, os.path.abspath('../../lib/google_appengine'))
+    sys.path.insert(0, os.path.abspath('../../../lib/google_appengine'))
 
 
-
-# -- General configuration ------------------------------------------------
-
-# If your documentation needs a minimal Sphinx version, state it here.
-#
-# needs_sphinx = '1.0'
+# NOW_THIS_WORKS = __import__('google.appengine.ext')
+autodoc_mock_imports = ['google.appengine.api', 'google.appengine.ext']
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -54,16 +95,16 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Google App Engine Toolkit 2'
-copyright = u'2017, Maximillian Dornseif'
-author = u'Maximillian Dornseif'
+project = 'Google App Engine Toolkit 2'
+copyright = '2017, Maximillian Dornseif'
+author = 'Maximillian Dornseif'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = u'2.2.6.dev0'
+release = '2.2.6.dev0'
 # The short X.Y version.
 version = '.'.join(release.split('.')[:2])
 
@@ -119,18 +160,17 @@ autodoc_member_order = 'bysource'
 
 # Hide Module Docstrings - they contain cruft in all out legacy code
 def remove_module_docstring(app, what, name, obj, options, lines):
-    if what == "module":
+    if what == 'module':
         del lines[:]
 
 def setup(app):
-    app.connect("autodoc-process-docstring", remove_module_docstring)
+    app.connect('autodoc-process-docstring', remove_module_docstring)
 
 
 autodoc_warningiserror = False
 autodoc_mock_imports = ['google.appengine.ext.ndb', 'google.appengine.api.app_identity']
 
 
-from mock import Mock as MagicMock
 
 class Mock(MagicMock):
     @classmethod
