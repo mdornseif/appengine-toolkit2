@@ -72,6 +72,7 @@ class BasicHandler(webapp2.RequestHandler):
         #common-request-attributes>`_
 
     Attributes:
+        request: See webapp2 documentation
         credential: authenticated user, see :class:`~gaetk2.handlers.authentication.AuthenticationReaderMixin`
         session: current session which is based on https://github.com/dound/gae-sessions.
         default_cachingtime (None or int): Class Variable. Which cache headers to generate,
@@ -88,13 +89,17 @@ class BasicHandler(webapp2.RequestHandler):
 
         * :index:`request <Template Context; request>`
         * :index:`credential <Template Context; credential>`
-        * :index:`is_staff <Template Context; is_staff>`
-        * :index:`is_sysadmin <Template Context; is_sysadmin>`
-        * :index:`gaetk_production <Template Context; gaetk_production>`
-        * :index:`gaetk_development <Template Context; gaetk_development>`
-        * :index:`gaetk_app_name <Template Context; gaetk_app_name>`
-        * :index:`gaeth_version <Template Context; gaeth_version>`
+        * :index:`is_staff <Template Context; is_staff>` (self.is_staff())
+        * :index:`is_sysadmin <Template Context; is_sysadmin>` (self.is_sysadmin())
+        * :index:`gaetk_production <Template Context; gaetk_production>` (is_production())
+        * :index:`gaetk_development <Template Context; gaetk_development>` (is_development())
+        * :index:`gaetk_release <Template Context; gaetk_development>` (get_release())
+        * :index:`gaetk_app_name <Template Context; gaetk_app_name>` (gaetkconfig.APP_NAME)
+        * :index:`gaetk_gae_version <Template Context; gaetk_gae_version>` (CURRENT_VERSION_ID)
+        * :index:`gaetk_sentry_dsn <Template Context; gaetk_app_name>` (gaetkconfig.APP_NAME)
         * :index:`gaetk_logout_url <Template Context; gaetk_logout_url>`
+        * :index:`gaetk_path <Template Context; gaetk_path>` (self.request.path)
+
 
     .. _handler-hook-mechanism:
 
@@ -283,6 +288,7 @@ class BasicHandler(webapp2.RequestHandler):
             gaetk_release=get_release(),
             gaetk_app_name=gaetkconfig.APP_NAME,
             gaetk_sentry_dsn=gaetkconfig.SENTRY_PUBLIC_DSN,
+            gaetk_gae_version=os.environ.get('CURRENT_VERSION_ID', 'dev'),
         ))
         return env
 
