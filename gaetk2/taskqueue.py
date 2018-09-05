@@ -94,7 +94,7 @@ def defer(obj, *args, **kwargs):
     """
 
     suffix = '{}({!s},{!r})'.format(
-        obj.__name__,
+        getattr(obj, __name__, '...'),
         ','.join(_to_str(arg) for arg in args),
         ','.join('%s=%s' % (
             key, _to_str(value)) for (key, value) in kwargs.items() if not key.startswith('_'))

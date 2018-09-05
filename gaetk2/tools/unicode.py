@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """
+gaetk2/tools/unicode.py
+
 Copyright (c) 2007, 2015, 2016 HUDORA GmbH. BSD Licensed.
 """
 

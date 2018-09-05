@@ -23,8 +23,9 @@ class Model(ndb.Model):
     """Generic fields to keep datastore organized."""
 
     created_at = ndb.DateTimeProperty(auto_now_add=True, indexed=True)
-    # `updated_at` is needed for replication
+    """Wann wurde der Datensatz augefügt oder neu überschrieben?"""
     updated_at = ndb.DateTimeProperty(auto_now=True, indexed=True)
+    """Wann wurde der Datensatz zuletzt gespeichert?"""
 
     # see https://docs.python.org/2/glossary.html#term-hashable
     def __hash__(self):
