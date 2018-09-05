@@ -13,6 +13,8 @@ from __future__ import unicode_literals
 import datetime
 import decimal
 import json
+import logging
+import time
 
 
 # see raven/utils/json.py for an other nice aproach
@@ -21,22 +23,30 @@ import json
 def _unknown_handler(value):
     """Helper for json.dmps())."""
     # originally from `huTools.hujson` (c) 2010
-    if isinstance(value, datetime.date):
-        return str(value)
+    if isinstance(value, (datetime.date)):
+        return unicode(value)
     elif isinstance(value, datetime.datetime):
         return value.isoformat() + 'Z'
-    elif isinstance(value, decimal.Decimal):
-        return unicode(value)
     elif hasattr(value, 'dict_mit_positionen') and callable(value.dict_mit_positionen):
         # helpful for our internal data-modelling
         return value.dict_mit_positionen()
     elif hasattr(value, 'as_dict') and callable(value.as_dict):
         # helpful for structured.Struct() Objects
         return value.as_dict()
+    # for Google AppEngine
     elif hasattr(value, 'to_dict') and callable(value.to_dict):
         # helpful for ndb.Model Objects
         return value.to_dict()
-    # for Google AppEngine
+    # for Google AppEngine `ndb`
+    elif (hasattr(value, '_properties') and hasattr(value._properties, 'items') and
+          callable(value._properties.items)):
+        return {k: v._get_value(value) for k, v in value._properties.items()}
+    elif hasattr(value, 'urlsafe') and callable(value.urlsafe):
+        return str(value.urlsafe())
+    elif hasattr(value, '_to_entity') and callable(value._to_entity):
+        retdict = {}
+        value._to_entity(retdict)
+        return retdict
     elif hasattr(value, 'properties') and callable(value.properties):
         properties = value.properties()
         if isinstance(properties, dict):
@@ -47,34 +57,18 @@ def _unknown_handler(value):
         else:
             return {}
         return {key: getattr(value, key) for key in keys}
-    elif hasattr(value, 'to_dict') and callable(value.to_dict):
-        # ndb
-        tmp = value.to_dict()
-        if 'id' not in tmp and hasattr(value, 'key') and hasattr(value.key, 'id') and callable(value.key.id):
-            tmp['id'] = value.key.id()
-        return tmp
-    elif hasattr(value, '_to_entity') and callable(value._to_entity):
-        retdict = {}
-        value._to_entity(retdict)
-        return retdict
-    elif 'google.appengine.api.users.User' in str(type(value)):
+
+    tv = str(type(value))
+    if 'google.appengine.api.users.User' in tv:
         return '%s/%s' % (value.user_id(), value.email())
-    elif 'google.appengine.api.datastore_types.Key' in str(type(value)):
+    elif 'google.appengine.api.datastore_types.Key' in tv:
         return str(value)
-    elif 'google.appengine.api.datastore_types.BlobKey' in str(type(value)):
+    elif 'google.appengine.api.datastore_types.BlobKey' in tv:
         return str(value)
-    # for Google AppEngine `ndb`
-    elif (hasattr(value, '_properties') and hasattr(value._properties, 'items') and
-          callable(value._properties.items)):
-        return {k: v._get_value(value) for k, v in value._properties.items()}
-    elif hasattr(value, 'urlsafe') and callable(value.urlsafe):
-        return str(value.urlsafe())
-    # elif hasattr(value, '_get_value') and callable(value._get_value):
-    #    retdict = dict()
-    #    value._get_value(retdict)
-    #    return retdict
+    elif isinstance(value, decimal.Decimal):
+        return unicode(value)
     else:
-        return str(value)
+        return unicode(value)
     raise TypeError('%s(%s)' % (type(value), value))
 
 
@@ -86,8 +80,14 @@ def dump(val, fd, indent=' ', sort_keys=True):
 
 def dumps(val, indent=' ', sort_keys=True):
     """Return a JSON string containing encoded `val`."""
-    return json.dumps(val, sort_keys=sort_keys, indent=bool(indent), ensure_ascii=True,
-                      default=_unknown_handler)
+    start = time.time()
+    ret = json.dumps(
+        val, sort_keys=sort_keys, indent=bool(indent), ensure_ascii=True,
+        default=_unknown_handler)
+    delta = time.time() - start
+    if delta > 1:
+        logging.warn('dumps took %f seconds', delta)
+    return ret
 
 
 def loads(data):
