@@ -27,7 +27,7 @@ if [ -n "$GCLOUD_SERVICE_KEY" ]
 then
   (umask 077; touch ~/gcloud-service-key.json)
   chmod 0600 ~/gcloud-service-key.json
-  echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ${HOME}/gcloud-service-key.json > ~/gcloud-service-key.json
+  echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ${HOME}/gcloud-service-key.json
   sudo /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
   # sudo /opt/google-cloud-sdk/bin/gcloud config set project $GCLOUD_PROJECT
 fi

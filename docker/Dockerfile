@@ -13,8 +13,6 @@ FROM circleci/python:2.7.14-stretch-node
 #     make install
 
 
-#LABEL description="This text illustrates"
-
 # See https://github.com/CircleCI-Public/circleci-dockerfiles/blob/master/python/images/2.7.14/node-browsers/Dockerfile
 # for inspiration on how to build Browsers for headless testing
 
@@ -48,7 +46,11 @@ RUN mkdir -p /home/circleci/.pip \
 # Python QA Modules & Modules from https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27
 RUN sudo /usr/local/bin/pip install Pillow==3.0 --global-option="build_ext" --global-option="--enable-freetype" \
 	&& sudo /usr/local/bin/pip install -r requirements-dev.txt \
-	&& sudo rm -Rf /root/.cache
+	&& sudo rm -Rf /root/.cache \
+	&& sudo npm install -g codeclimate-test-reporter \
+	&& curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter \
+	&& sudo mv ./cc-test-reporter /usr/local/bin/cc-test-reporter \
+	&& sudo chmod +x /usr/local/bin/cc-test-reporter
 
 # update to a git which can run paralell (-j8) and install py3
 # and pseudo-python which needs py3
