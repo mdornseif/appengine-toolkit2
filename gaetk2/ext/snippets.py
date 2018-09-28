@@ -146,7 +146,7 @@ class SnippetEditHandler(AuthenticatedHandler):
         markdown = self.request.get('sniptext', '')
         continue_url = self.request.get('continue_url', '')
         try:
-            env = self._create_jinja2env()
+            env = self.get_jinja2env()
             render(name, env, markdown)
         except Exception as exception:
             logging.exception('Fehler beim Rendern des Snippet: %s', exception)
