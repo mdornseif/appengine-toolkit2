@@ -550,7 +550,7 @@ class BasicHandler(webapp2.RequestHandler):
 
         if method is None:
             # 405 Method Not Allowed.
-            valid = ', '.join(webapp2._get_handler_methods(self))
+            valid = b', '.join(webapp2._get_handler_methods(self))
             self.abort(405, headers=[(b'Allow', valid)])
 
         # The handler only receives *args if no named variables are set.
