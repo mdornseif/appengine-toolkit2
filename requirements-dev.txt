@@ -17,6 +17,7 @@ python-coveralls
 pytz==2017.3
 PyYAML==3.10
 recommonmark==0.4.0  # needed by Sphinx
+rope==0.11.0
 Sphinx==1.7.4
 sphinx_rtd_theme==0.3.1  # needed by Sphinx
 WebTest==2.0.29

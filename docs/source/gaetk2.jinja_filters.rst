@@ -1,3 +1,5 @@
+.. _`templatetags`:
+
 gaetk2.jinja_filters module - template filters
 ==============================================
 
@@ -19,7 +21,7 @@ If not youncan include them via :func:`register_custom_filters`.
 Spacing Issues
 --------------
 
-We surrently use u'\u202F' NARROW NO-BREAK SPACE U+202F to separate numbers.
+We currently use u'\u202F' NARROW NO-BREAK SPACE U+202F to separate numbers.
 Unfortunately this `is missing in most fonts and not well supported in browsers <https://stackoverflow.com/a/1570664/49407>`_.
 
 
@@ -30,6 +32,7 @@ Services provided
 -----------------
 
 
+.. _`templatetags-accesscontrol`:
 Access Control
 ~~~~~~~~~~~~~~
 
@@ -108,8 +111,8 @@ Displaying Booleans with the ability to distinguish between ``(True, False, None
 Datastore Protocol
 ~~~~~~~~~~~~~~~~~~
 
-gaetk2 has certain conventions how to structure your datastore models When followed
-vertain things work automagically.
+gaetk2 has certain conventions how to structure your datastore models when followed
+certain things work automagically.
 
 * :func:`otag` - Link to an Object by `designator`.
 * :func:`datastore` - Link to Admin-Console.

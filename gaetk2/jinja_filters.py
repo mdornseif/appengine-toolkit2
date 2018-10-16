@@ -1,10 +1,12 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 jinja_filters - custom jinja2 filters for gaetk2.
 
 Copyright (c) 2010, 2012, 2014, 2017, 2018 Maximillian Dornseif. MIT Licensed.
 """
+from __future__ import unicode_literals
+
 import decimal
 import json
 import logging
@@ -13,45 +15,68 @@ import urllib
 import warnings
 
 import jinja2
-from jinja2.utils import Markup
-from gaetk2.tools.datetools import convert_to_date, convert_to_datetime
-
 import markdown2
+
+from gaetk2.tools.datetools import convert_to_date
+from gaetk2.tools.datetools import convert_to_datetime
+from jinja2.utils import Markup
+
 
 logger = logging.getLogger(__name__)
 
 
 # Access Control
 
-@jinja2.contextfilter
-def authorize(context, value, permission_types):
-    """Display content only if the current logged in user has a specific permission."""
-    if not isinstance(permission_types, list):
-        permission_types = [permission_types]
-
-    # Permissions disabled -> granted
-    granted = context.get('request').get('_gaetk_disable_permissions', False)
-    for permission in permission_types:
-        if context.get('credential') and permission in context.get('credential').permissions:
-            granted = True
-            break
-
-    if granted:
-        value = '<span class="restricted">%s</span>' % (value)
-    else:
-        value = u'…<!-- Berechtigung %s -->' % (', '.join(permission_types))
-        if not context.get('credential'):
-            logger.info('context has no credential!')
-
-    if context.eval_ctx.autoescape:
-        return Markup(value)
-    return value
-
-
 BLOCKTAGS = """address article aside blockquote canvas div dl
 fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 header hgroup
 hr li main nav noscript ol output p pre section table tfoot ul video""".split()
 NOTAGS = """dd dt thead tfoot tbody tr td""".split()
+
+
+@jinja2.contextfilter
+def authorize(ctx, value, permission_types, tag=None):
+    """Display content only if the current logged in user has a specific permission.
+
+    This means if all strings in `permission_types` occur in `credential.permissions`.
+    """
+
+    if not isinstance(permission_types, list):
+        permission_types = [permission_types]
+
+    if tag is None:
+        tag = 'span'
+        m = re.search(r'$\s*<(%s)' % '|'.join(NOTAGS), value)
+        if m:
+            tag = ''
+        else:
+            m = re.search(r'<(%s)' % '|'.join(BLOCKTAGS), value)
+            if m:
+                tag = 'div'
+
+    # Permissions disabled -> granted
+    granted = ctx.get('request').get('_gaetk_disable_permissions', False)
+    for permission in permission_types:
+        if ctx.get('credential') and permission in ctx.get('credential').permissions:
+            granted = True
+            break
+
+    if granted:
+        if not tag:
+            return value
+        value = '<{tag} class="gaetk_restricted">{value}</{tag}>'.format(
+            tag=tag, value=jinja2.escape(value))
+    else:
+        if not ctx.get('credential'):
+            logger.info('context has no credential!')
+        if not tag:
+            value = '…<!-- Berechtigung %s -->' % (', '.join(permission_types))
+        else:
+            value = '<{tag} class="gaetk_restricted_denied"><!-- !Berechtigung {perm} --></{tag}>'.format(
+                tag=tag, perm=', '.join(permission_types))
+
+    if ctx.eval_ctx.autoescape:
+        return Markup(value)
+    return value
 
 
 @jinja2.contextfilter
@@ -117,14 +142,14 @@ def onlystaff(ctx, value, tag=None):
     """
 
     if tag is None:
-        tag = u'span'
+        tag = 'span'
         m = re.search(r'$\s*<(%s)' % '|'.join(NOTAGS), value)
         if m:
-            tag = u''
+            tag = ''
         else:
             m = re.search(r'<(%s)' % '|'.join(BLOCKTAGS), value)
             if m:
-                tag = u'div'
+                tag = 'div'
 
     granted = False
     if ctx.get('credential') and ctx.get('credential').staff:
@@ -133,14 +158,14 @@ def onlystaff(ctx, value, tag=None):
     if granted:
         if not tag:
             return value
-        value = u'<{tag} class="gaetk_onlystaff">{value}</{tag}>'.format(
+        value = '<{tag} class="gaetk_onlystaff">{value}</{tag}>'.format(
             tag=tag, value=jinja2.escape(value))
     else:
         if not ctx.get('credential'):
             logger.info('context has no credential!')
         if not tag:
-            return u''
-        value = u'<{tag} class="gaetk_onlystaff-denied"><!-- !is_staff() --></{tag}>'.format(
+            return ''
+        value = '<{tag} class="gaetk_onlystaff_denied"><!-- !is_staff() --></{tag}>'.format(
             tag=tag)
     return Markup(value)
 
@@ -158,10 +183,10 @@ def _attrencode(value):
     `xmlattr <http://jinja.pocoo.org/docs/2.10/templates/#xmlattr>`_
     in jinja2 is a more sophisticated version of this.
     """
-    warnings.warn("`attrencode` is deprecated, use `xmlattr`", DeprecationWarning, stacklevel=2)
+    warnings.warn('`attrencode` is deprecated, use `xmlattr`', DeprecationWarning, stacklevel=2)
     import xml.sax.saxutils
     if value is None:
-        return u''
+        return ''
     if hasattr(value, 'unescape'):  # jinja2 Markup
         value = value.unescape()
     return xml.sax.saxutils.quoteattr(value)[1:-1]
@@ -178,7 +203,7 @@ def cssencode(value):
         >>> '<div class="CSS5711 root-beer">'
     """
     if value is None:
-        return u''
+        return ''
     ret = re.sub('[^A-Za-z0-9-_]+', '-', unicode(value))
     if ret.startswith(tuple('-0123456789')):
         ret = 'CSS' + ret
@@ -192,13 +217,13 @@ def _to_json(value):
     `tojson <http://jinja.pocoo.org/docs/2.10/templates/#tojson>`_, but
     we try to be smarter about encoding of datastore properties.
     """
-    warnings.warn("`to_json` is deprecated, use `tojson`", DeprecationWarning, stacklevel=2)
+    warnings.warn('`to_json` is deprecated, use `tojson`', DeprecationWarning, stacklevel=2)
     return json.dumps(value)
 
 
 # Date-Formatting
 
-def dateformat(value, formatstring='%Y-%m-%d', nonchar=u''):
+def dateformat(value, formatstring='%Y-%m-%d', nonchar=''):
     """Formates a date.
 
     Tries to convert the given ``value`` to a ``date`` object and then formats
@@ -212,7 +237,7 @@ def dateformat(value, formatstring='%Y-%m-%d', nonchar=u''):
     return Markup(convert_to_date(value).strftime(formatstring).replace('-', '&#8209;'))
 
 
-def datetimeformat(value, formatstring='%Y-%m-%d %H:%M', nonchar=u''):
+def datetimeformat(value, formatstring='%Y-%m-%d %H:%M', nonchar=''):
     """Formates a datetime.
 
     Tries to convert the given ``value`` to a ``datetime`` object and then formats
@@ -228,11 +253,11 @@ def datetimeformat(value, formatstring='%Y-%m-%d %H:%M', nonchar=u''):
 
 def _datetime(value, formatstring='%Y-%m-%d %H:%M'):
     """Legacy function, to be removed."""
-    warnings.warn("`datetime` is deprecated, use `datetimeformat`", DeprecationWarning, stacklevel=2)
+    warnings.warn('`datetime` is deprecated, use `datetimeformat`', DeprecationWarning, stacklevel=2)
     return datetimeformat(value, formatstring='%Y-%m-%d %H:%M')
 
 
-def tertial(value, nonchar=u'␀'):
+def tertial(value, nonchar='␀'):
     """Change a Date oder Datetime-Objekt into a Tertial-String.
 
     Tertials are third-years as opposed to quater years::
@@ -248,7 +273,7 @@ def tertial(value, nonchar=u'␀'):
 
 # Number-Formating
 
-def nicenum(value, spacer=u'\u202F', nonchar=u'␀'):
+def nicenum(value, spacer='\u202F', nonchar='␀'):
     """Format the given number with spacer as delimiter, e.g. `1 234 456`.
 
     Default spacer is NARROW NO-BREAK SPACE U+202F.
@@ -256,11 +281,11 @@ def nicenum(value, spacer=u'\u202F', nonchar=u'␀'):
     """
     if value is None:
         return nonchar
-    rev_value = (u"%d" % int(value))[::-1]
+    rev_value = ('%d' % int(value))[::-1]
     return spacer.join(reversed([rev_value[i:i + 3][::-1] for i in range(0, len(rev_value), 3)]))
 
 
-def intword(value, nonchar=u'␀'):
+def intword(value, nonchar='␀'):
     """Converts a large integer to a friendly text representation.
 
     Works best for numbers over 1 million. For example,
@@ -270,7 +295,7 @@ def intword(value, nonchar=u'␀'):
     return _formatint(value, nonchar)
 
 
-def _formatint(value, nonchar=u'␀'):
+def _formatint(value, nonchar='␀'):
     """Format an Integer nicely with spacing."""
     # Inspired by Django
     # https://github.com/django/django/blob/master/django/contrib/humanize/templatetags/humanize.py
@@ -278,15 +303,15 @@ def _formatint(value, nonchar=u'␀'):
         return nonchar
     value = int(value)
     if abs(value) < 1000000:
-        rev_value = (u"%d" % int(value))[::-1]
-        return u' '.join(reversed([rev_value[i:i + 3][::-1] for i in range(0, len(rev_value), 3)]))
+        rev_value = ('%d' % int(value))[::-1]
+        return ' '.join(reversed([rev_value[i:i + 3][::-1] for i in range(0, len(rev_value), 3)]))
     else:
         new_value = value / 1000000.0
         return '%(value).1f Mio' % {'value': new_value}
     return value
 
 
-def eurocent(value, spacer=u'\u202F', decimalplaces=2, nonchar=u'␀'):
+def eurocent(value, spacer='\u202F', decimalplaces=2, nonchar='␀'):
     """Format the given cents as Euro with spacer as delimiter, e.g. '1 234 456.23'.
 
     Obviously works also with US$ and other 100-based. currencies.
@@ -306,40 +331,40 @@ def eurocent(value, spacer=u'\u202F', decimalplaces=2, nonchar=u'␀'):
     cent_value = cent_value.ljust(decimalplaces, '0')[:decimalplaces]
     rev_value = euro_value[::-1]
     euro_value = spacer.join(reversed([rev_value[i:i + 3][::-1] for i in range(0, len(rev_value), 3)]))
-    return u'%s.%s' % (euro_value, cent_value)
+    return '%s.%s' % (euro_value, cent_value)
 
 
-def euroword(value, plain=False, nonchar=u'␀'):
+def euroword(value, plain=False, nonchar='␀'):
     """Fomat Cents as pretty Euros."""
     if value is None:
         return nonchar
     return _formatint(value / 100)
 
 
-def g2kg(value, spacer=u'\u202F', nonchar=u'␀'):
+def g2kg(value, spacer='\u202F', nonchar='␀'):
     """Wandelt meist g in kg um, aber auch in andere Einheiten."""
     if value is None:
         return nonchar
     if not value:
         return value
     elif value < 100:
-        return u"{:d}{}g".format(value, spacer)
+        return '{:d}{}g'.format(value, spacer)
     elif value < 1000 * 50:
-        return u"{:.2f}{}kg".format(value / 1000.0, spacer)
+        return '{:.2f}{}kg'.format(value / 1000.0, spacer)
     elif value < 1000 * 1000:
-        return u"{:.1f}{}kg".format(value / 1000.0, spacer)
+        return '{:.1f}{}kg'.format(value / 1000.0, spacer)
     else:
-        return u"{:.1f}{}t".format(value / 1000.0 ** 2, spacer)
+        return '{:.1f}{}t'.format(value / 1000.0 ** 2, spacer)
 
 
-def percent(value, nonchar=u'␀'):
+def percent(value, nonchar='␀'):
     """Fomat Percent and handle None."""
     if value is None:
         return nonchar
     return '%.0f' % float(value)
 
 
-def iban(value, spacer=u'\u202F', nonchar=u'␀'):
+def iban(value, spacer='\u202F', nonchar='␀'):
     """Format the given string like an IBAN Account Number.
 
     Default spacer is NARROW NO-BREAK SPACE U+202F.
@@ -371,8 +396,9 @@ def markdown(value):
 def nl2br(eval_ctx, value):
     """Newlines in <br/>-Tags konvertieren."""
     paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
-    result = u'\n\n'.join(u'<p>%s</p>' % paragraph.replace('\n', '<br>\n')
-                          for paragraph in paragraph_re.split(value))
+    result = '\n\n'.join(
+        '<p>%s</p>' % paragraph.replace('\n', '<br>\n')
+        for paragraph in paragraph_re.split(value))
     if eval_ctx.autoescape:
         return Markup(result)
     return result
@@ -391,12 +417,12 @@ def right_justify(value, width):
 
 # Boolean-Formatting (and None)
 
-def yesno(value, answers=u'yes,no,maybe'):
+def yesno(value, answers='yes,no,maybe'):
     """Output a text based on Falsyness, Trueyness and ``is None``.
 
         Example: ``{{ value|yesno:"yeah,nope,maybe" }}``.
     """
-    bits = answers.split(u',')
+    bits = answers.split(',')
     if len(bits) == 3:
         vyes, vno, vmaybe = bits
     elif len(bits) == 2:
@@ -423,7 +449,7 @@ def onoff(value):
         return Markup('<i class="fa fa-toggle-off" aria-hidden="true" style="color:gray"></i>')
 
 
-def none(value, nonchar=u''):
+def none(value, nonchar=''):
     """Converts ``None`` to ``''``.
 
     Similar to ``|default('', true)`` in jinja2 but more explicit.

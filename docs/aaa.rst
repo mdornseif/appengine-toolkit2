@@ -9,6 +9,7 @@ All of it together is sometimes called AAA.
 
  You can configure basic AAA in `app.yaml <https://cloud.google.com/appengine/docs/standard/python/config/appref#syntax>`_.
 
+See the `templatetags-accesscontrol`_ Section in `templatetags`_ Document for of to make your templates dependant on who is logged in.
 
 Authentication
 --------------
