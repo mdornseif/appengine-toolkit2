@@ -19,7 +19,6 @@ import google.appengine.ext.deferred.deferred
 from google.appengine.api import taskqueue
 from google.appengine.ext import deferred
 
-from .config import is_production
 from .tools.datetools import date_trunc
 from .tools.unicode import slugify
 
@@ -94,7 +93,7 @@ def defer(obj, *args, **kwargs):
     """
 
     suffix = '{}({!s},{!r})'.format(
-        getattr(obj, __name__, '...'),
+        getattr(obj, __name__, '.?.'),
         ','.join(_to_str(arg) for arg in args),
         ','.join('%s=%s' % (
             key, _to_str(value)) for (key, value) in kwargs.items() if not key.startswith('_'))
@@ -104,10 +103,6 @@ def defer(obj, *args, **kwargs):
     url = google.appengine.ext.deferred.deferred._DEFAULT_URL + '/' + suffix[:200]
     kwargs['_url'] = kwargs.pop('_url', url)
     # kwargs["_queue"] = kwargs.pop("_queue", 'workersq')
-    if is_production():
-        # we only route to the workers backend/module on production machines
-        pass
-        # kwargs["_target"] = kwargs.pop("_target", 'workers')
     try:
         task = deferred.defer(obj, *args, **kwargs)
         logging.debug('started task %r', task.name)
@@ -127,27 +122,37 @@ def _to_str(value):
             value = repr(value)
         value = slugify(value)
     value = str(value)
-    if len(value) > 20:
-        value = '{}...'.format(value[:20])
+    if len(value) > 30:
+        value = '{}...'.format(value[:30])
     return value
 
 
 def defer_once_per_hour(obj, *args, **kwargs):
     """Like :func:`defer()` but only once per hour.
 
-    Eexecutes the same function with the same parameters not more
+    Executes the same function with the same parameters not more
     often than once per hour. The heuristic for doing so are not
     exact so do not rely on this mechanism for anything importatant.
 
     This is more for updating cloud services with statistics etc.
     """
+    return _defer_once_per_x('hour', obj, *args, **kwargs)
+
+
+def defer_once_per_day(obj, *args, **kwargs):
+    """Like :func:`defer_once_per_hour()` but only once per day."""
+    return _defer_once_per_x('day', obj, *args, **kwargs)
+
+
+def _defer_once_per_x(trunc, obj, *args, **kwargs):
+    """Internal helper."""
     key = ','.join(unicode(arg) for arg in args)
     key += ','.join('{}={}'.format(
         key, unicode(value)) for (key, value) in kwargs.items())
     key = key.encode('utf-8', errors='replace')
     name = '{}.{}-{}-{}'.format(
         obj.__module__, obj.__name__,
-        date_trunc('hour', datetime.datetime.now()).strftime('%Y%m%dT%H'),
+        date_trunc(trunc, datetime.datetime.now()).strftime('%Y%m%dT%H'),
         hashlib.md5(key).hexdigest()
     )
     return defer(obj, _name=slugify(name), *args, **kwargs)
