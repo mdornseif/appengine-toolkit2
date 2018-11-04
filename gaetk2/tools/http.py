@@ -45,16 +45,17 @@ def fetch_json(url, content='', method='GET'):
 # quoting based on
 # http://svn.python.org/view/python/branches/release27-maint/Lib/urllib.py?view=markup&pathrev=82940
 # by Matt Giuca
-always_safe = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-               'abcdefghijklmnopqrstuvwxyz'
-               '0123456789' '_.-')
+always_safe = (b'ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
+               b'abcdefghijklmnopqrstuvwxyz' +
+               b'0123456789_.-')
+assert isinstance(always_safe, str)
 _safe_map = {}
 for i, c in zip(xrange(256), [chr(x) for x in xrange(256)]):
-    _safe_map[c] = c if (i < 128 and c in always_safe) else ('%%%02X' % i)
+    _safe_map[c] = c if (i < 128 and c in always_safe) else (b'%%%02X' % i)
 _safe_quoters = {}
 
 
-def quote(s, safe='/', encoding=None, errors=None):
+def quote(s, safe=b'/', encoding=None, errors=None):
     """quote('abc def') -> 'abc%20def'
 
     Each part of a URL, e.g. the path info, the query, etc., has a
@@ -105,16 +106,17 @@ def quote(s, safe='/', encoding=None, errors=None):
         quoter = safe_map.__getitem__
         safe = always_safe + safe
         _safe_quoters[cachekey] = (quoter, safe)
+    info = repr((safe, _safe_quoters, s))
     if not s.rstrip(safe):
         return s
     return ''.join(map(quoter, s))
 
 
-def quote_plus(s, safe='', encoding=None, errors=None):
+def quote_plus(s, safe=b'', encoding=None, errors=None):
     """Quote the query fragment of a URL; replacing ' ' with '+'"""
-    if ' ' in s:
-        s = quote(s, safe + ' ', encoding, errors)
-        return s.replace(' ', '+')
+    if b' ' in s:
+        s = quote(s, safe + b' ', encoding, errors)
+        return s.replace(b' ', b'+')
     return quote(s, safe, encoding, errors)
 
 
@@ -134,8 +136,8 @@ def urlencode(query):
         k = quote_plus(k)
         if isinstance(v, basestring):
             v = quote_plus(v)
-            l.append(k + '=' + v)
+            l.append(k + b'=' + v)
         else:
             v = quote_plus(unicode(v))
-            l.append(k + '=' + v)
-    return '&'.join(l)
+            l.append(k + b'=' + v)
+    return b'&'.join(l)
