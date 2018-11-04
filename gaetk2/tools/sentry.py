@@ -22,6 +22,7 @@ from gaetk2.tools import hujson2
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
 sentry_client = None
 
 

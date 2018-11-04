@@ -23,9 +23,9 @@ class Model(ndb.Model):
     """Generic fields to keep datastore organized."""
 
     created_at = ndb.DateTimeProperty(auto_now_add=True, indexed=True)
-    """Wann wurde der Datensatz augefügt oder neu überschrieben?"""
+    created_at.__doc__ = 'Zeitpunkt, zu dem der Datensatz erstellt wurde (UTC).'
     updated_at = ndb.DateTimeProperty(auto_now=True, indexed=True)
-    """Wann wurde der Datensatz zuletzt gespeichert?"""
+    updated_at.__doc__ = 'Zeitpunkt, zu dem der Datensatz zuletzt gespeichert wurde (UTC).'
 
     # see https://docs.python.org/2/glossary.html#term-hashable
     def __hash__(self):
@@ -162,13 +162,30 @@ def apply_to_all_entities(func, model, batch_size=0, num_updated=0, num_processe
 
     Example:
         def _fixup_MyModel_updatefunc(obj):
-            if obj.wert_waehrung is not None:
-                obj.wert_waehrung = int(obj.wert_waehrung)
+            if obj.wert_eur is not None:
+                obj.wert_eur = int(obj.wert_eur)
                 return True
             return False
 
         def fixup_MyModel():
             apply_to_all_entities(_fixup_app_angebotspos_updatefunc, MyModel)
+
+
+        # or
+
+        def execute(_now):
+            datastore.apply_to_all_entities(
+                _fixup_bestandsbuch_updatefunc,
+                ic_bestandsbuch.ic_BestandsbuchEintrag)
+
+        def _fixup_bestandsbuch_updatefunc(obj):
+            changed = False
+            # Attribute, die es als string und text in der datebnbank gibt normalisieren
+            for attrname in '''ausloeser vorhergehender_bestandsbucheintrag info'''.split():
+                if getattr(obj, attrname, None) is not None:
+                    setattr(obj, attrname, unicode(getattr(obj, attrname)))
+                    changed = True
+            return changed
     """
     # from https://cloud.google.com/appengine/articles/update_schema
 

@@ -7,17 +7,17 @@ This module provides a generic configuration object.
 The two functions get_config and set_config are used
 to get or set the configuration object.
 
->>> from gaetk import configuration
->>> configuration.get_config('MY-KEY-NAME')
+>>> from gaetk2 import config.runtime
+>>> config.runtime.get_config('MY-KEY-NAME')
 None
->>> configuration.get_config('MY-KEY-NAME', default=55555)
+>>> config.runtime.get_config('MY-KEY-NAME', default=55555)
 55555
->>> configuration.set_config('MY-KEY-NAME', u'5711')
->>> configuration.get_config('MY-KEY-NAME')
+>>> config.runtime.set_config('MY-KEY-NAME', u'5711')
+>>> config.runtime.get_config('MY-KEY-NAME')
 u'5711'
 
 Created by Christian Klein on 2011-11-24.
-Copyright (c) 2011, 2012, 2016, 2017, 2017 HUDORA. All rights reserved.
+Copyright (c) 2011, 2012, 2016, 2017, 2018 HUDORA. All rights reserved.
 """
 from __future__ import unicode_literals
 

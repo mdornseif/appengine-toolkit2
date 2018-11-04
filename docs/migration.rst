@@ -132,7 +132,7 @@ With this::
     from gaetk2.tools.caching import lru_cache, lru_cache_memcache
     from gaetk2.tools.datetools import date_trunc
     from gaetk2.tools.datetools import convert_to_date, convert_to_datetime
-    from gaetk2.config import runtime as configuration
+    from gaetk2 import config as configuration
 
 s/import gaetk.handler/from gaetk2 import exc/
 /raise gaetk.handler.HTTP/raise exc.HTTP/
