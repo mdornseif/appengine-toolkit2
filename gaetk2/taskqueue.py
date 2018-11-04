@@ -95,7 +95,7 @@ def defer(obj, *args, **kwargs):
     suffix = '{}({!s},{!r})'.format(
         getattr(obj, __name__, '.?.'),
         ','.join(_to_str(arg) for arg in args),
-        ','.join('%s=%s' % (
+        ','.join('{}={}'.format(
             key, _to_str(value)) for (key, value) in kwargs.items() if not key.startswith('_'))
     )
     suffix = re.sub(r'-+', '-', suffix.replace(' ', '-'))
@@ -155,4 +155,14 @@ def _defer_once_per_x(trunc, obj, *args, **kwargs):
         date_trunc(trunc, datetime.datetime.now()).strftime('%Y%m%dT%H'),
         hashlib.md5(key).hexdigest()
     )
+    suffix = '{}({!s},{!r})'.format(
+        getattr(obj, __name__, '.?.'),
+        ','.join(_to_str(arg) for arg in args),
+        ','.join('{}={}'.format(
+            key, _to_str(value)) for (key, value) in kwargs.items() if not key.startswith('_'))
+    )
+    suffix = re.sub(r'-+', '-', suffix.replace(' ', '-'))
+    suffix = re.sub(r'[^/A-Za-z0-9_,.:@&+$\(\)\-]+', '', suffix)
+    url = google.appengine.ext.deferred.deferred._DEFAULT_URL + '/' + suffix[:200]
+    kwargs['_url'] = kwargs.pop('_url', url)
     return defer(obj, _name=slugify(name), *args, **kwargs)

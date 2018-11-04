@@ -1,52 +1,62 @@
 exclude: >
         (?x)(
-            /js_src/vendor/|
-            /lib/(py2js|gae_mini_profiler|appengine-toolkit)/|
-            /static/js/kalkulation.js$
+            lib/kalkulator2018.py|
+            .bumpversion.cfg|
+            js_src/vendor/|
+            lib/(py2js|gae_mini_profiler|appengine-toolkit)/|
+            static/js/kalkulation.js$
         )
 
 repos:
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  sha: v1.2.3
+  sha: v1.4.0-1
   hooks:
+  - id: fix-encoding-pragma
   - id: flake8
     # is in tox.ini args: ['--max-line-length=110', '--ignore=E712,E722']
+  - id: check-ast
   - id: check-builtin-literals
+    args: ['--no-allow-dict-kwargs']
+  - id: double-quote-string-fixer
+  - id: requirements-txt-fixer
+  - id: check-docstring-first
   - id: trailing-whitespace
   - id: check-yaml
   - id: check-json
-  - id: check-case-conflict
-  - id: check-merge-conflict
-  - id: check-symlinks
+  - id: pretty-format-json
+    args: ['--autofix']
   - id: check-xml
-  - id: double-quote-string-fixer
+  - id: check-merge-conflict
+  - id: check-case-conflict
+  - id: name-tests-test
+  - id: check-symlinks
+  - id: detect-private-key
   - id: end-of-file-fixer
   - id: mixed-line-ending
-  - id: fix-encoding-pragma
-  - id: requirements-txt-fixer
+  - id: check-executables-have-shebangs
 - repo: git://github.com/FalconSocial/pre-commit-python-sorter
   sha: b57843b0b874df1d16eb0bef00b868792cb245c2
   hooks:
   - id: python-import-sorter
   # args: ['-a', 'from __future__ import unicode_literals']
 - repo: https://github.com/asottile/pyupgrade
-  sha: v1.2.0
+  sha: v1.8.0
   hooks:
   - id: pyupgrade
-# - repo: https://github.com/mdornseif/standardjs-mirror.git
-#   sha: 7fda18f6d6608c1424d8253eb9a0f1b668c4a3ef
-#   hooks:
-#   - id: standard
-#     args:
-#     - --parser babel-eslint
-#     - --fix
-#     exclude: >
-#             (?x)(
-#                 /js_src/vendor/|
-#                 /lib/(py2js|gae_mini_profiler|appengine-toolkit)/|
-#                 /static/js/kalkulation.js$
-#             )
-#     always_run: false
-#     # log_file: standard.log
+- repo: https://github.com/mdornseif/standardjs-mirror.git
+  sha: 7fda18f6d6608c1424d8253eb9a0f1b668c4a3ef
+  hooks:
+  - id: standard
+    args:
+    - --parser babel-eslint
+    - --fix
+    exclude: >
+            (?x)(
+                /js_src/vendor/|
+                /lib/(py2js|gae_mini_profiler|appengine-toolkit)/|
+                /static/js/kalkulation.js$
+            )
+    always_run: false
+    # log_file: standard.log
