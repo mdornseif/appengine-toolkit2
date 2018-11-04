@@ -80,6 +80,9 @@ google.appengine.api.urlfetch.set_default_fetch_deadline(30)
 fr = logging.Formatter('%(funcName)s(): %(message)s [%(name)s]')
 logging.getLogger().handlers[0].setFormatter(fr)
 
+# get info from the `warnings` module into Sentry
+logging.captureWarnings(True)
+
 # make certain libraries log less
 logging.getLogger('raven').setLevel(logging.WARNING)
 
