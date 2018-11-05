@@ -402,8 +402,8 @@ class BasicHandler(webapp2.RequestHandler):
         global _jinja_env_cache
         # see http://flask.pocoo.org/snippets/74/
         # here we still get the correct traceback information, it will be discarded later on
-        logger.info('Template globals = %s', getattr(_jinja_env_cache, 'globals', None))
-        logger.exception('Template Exception %s', traceback.render_as_text())
+        logger.info('Template globals = %r', getattr(_jinja_env_cache, 'globals', None))
+        logger.exception('Template Exception %r', traceback.render_as_text())
         sentry_client.captureException(exc_info=traceback.exc_info)
 
     def _render_to_fd(self, values, template_name, fd):
@@ -428,14 +428,18 @@ class BasicHandler(webapp2.RequestHandler):
         # this keeps parents from having all to implement the function and
         # use `super()`
         values = self._reduce_all_inherited('build_context', values)
-        # for debugging provide access to all variables in gaetk_localcontext
-        if is_development():
-            logger.info('gaetk_*context')
-            try:
-                values['gaetk_globalcontext_json'] = hujson2.htmlsafe_json_dumps(env.globals)
-                values['gaetk_localcontext_json'] = hujson2.htmlsafe_json_dumps(values)
-            except:
-                logging.exception('gaetk_*context issue')
+
+        # for debugging provide access to all variables if `_gaetk_dump` is
+        # given in the URL
+        if self.is_sysadmin() and self.request.get('_gaetk_dump'):
+            self.body = ''
+            self.response.headers['Content-Type'] = 'application/json'
+            fd.write(hujson2.htmlsafe_json_dumps({
+                'gaetk_globalcontext_json': env.globals,
+                'gaetk_localcontext_json': values,
+            }))
+            return None
+
         try:
             template.stream(values).dump(fd, encoding='utf-8')
             # we do not want to rely on webob.Response magically transforming unicode
@@ -529,7 +533,7 @@ class BasicHandler(webapp2.RequestHandler):
                 else:
                     logger.warn('not callable: %r', x)
                 if ret is None:
-                    raise RuntimeError('%s.%s did not provide a return value' % (cls, funcname))
+                    raise RuntimeError('{}.{} did not provide a return value'.format(cls, funcname))
         return ret
 
     def dispatch(self):
@@ -551,7 +555,9 @@ class BasicHandler(webapp2.RequestHandler):
         if method is None:
             # 405 Method Not Allowed.
             valid = b', '.join(webapp2._get_handler_methods(self))
-            self.abort(405, headers=[(b'Allow', valid)])
+            raise exc.HTTP405_HTTPMethodNotAllowed(
+                'Method not allowed in {}'.format(self.__class__.__name__),
+                headers=[(b'Allow', valid)])
 
         # The handler only receives *args if no named variables are set.
         args, kwargs = request.route_args, request.route_kwargs
@@ -652,7 +658,7 @@ class JsonBasicHandler(BasicHandler):
         # If we have gotten a `callback` parameter, we expect that this is a
         # [JSONP](http://en.wikipedia.org/wiki/JSONP#JSONP) can and therefore add the padding
         if self.request.get('callback', None):
-            response = '%s (%s)' % (self.request.get('callback', None), response)
+            response = '{} ({})'.format(self.request.get('callback', None), response)
             self.response.headers['Content-Type'] = 'text/javascript'
         else:
             self.response.headers['Content-Type'] = 'application/json'
