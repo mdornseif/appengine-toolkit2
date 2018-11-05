@@ -2,13 +2,13 @@ auth0-python
 cryptography
 GoogleAppEngineCloudStorageClient==1.9.22.1
 GoogleAppEngineMapReduce==1.9.22.0
-idna==2.6  # used by requests==2.18.4
+idna==2.6  # used by requests
 jinja2==2.10
 markdown2==2.3.5
 python-jose==3.0.0
-requests==2.18.4
+requests==2.20.0
 requests_toolbelt==0.8.0
-urllib3==1.22  # used by requests==2.18.4
+urllib3==1.22  # used by requests
 webapp2==2.5.2
 webob==1.2.3
 wtforms==2.0.2
