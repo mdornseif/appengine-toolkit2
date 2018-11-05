@@ -106,7 +106,6 @@ def quote(s, safe=b'/', encoding=None, errors=None):
         quoter = safe_map.__getitem__
         safe = always_safe + safe
         _safe_quoters[cachekey] = (quoter, safe)
-    info = repr((safe, _safe_quoters, s))
     if not s.rstrip(safe):
         return s
     return ''.join(map(quoter, s))
