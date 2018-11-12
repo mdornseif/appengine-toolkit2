@@ -17,24 +17,30 @@ FROM circleci/python:2.7.14-stretch-node
 # for inspiration on how to build Browsers for headless testing
 
 # carefull! python packages get installed into system python and not user python
-RUN sudo apt-get install -y less graphviz libfreetype6-dev libjpeg-dev zlib1g-dev libtiff-dev python-pil
+RUN sudo apt-get install -y less graphviz libfreetype6-dev libjpeg-dev zlib1g-dev libtiff-dev python-pil \
+    && sudo /bin/sh -c 'echo "deb http://ftp.us.debian.org/debian testing main contrib non-free" >> /etc/apt/sources.list' \
+	&& sudo apt-get update \
+	&& sudo apt-get clean autoclean \
+	&& sudo apt-get autoremove --yes \
+	&& sudo rm -rf /var/lib/{apt,dpkg,cache,log}/
 
-ENV GAE_VERSION '1.9.70'
 RUN curl -s https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz \
 	&& sudo mkdir -p /usr/local/gcloud \
 	&& sudo tar -C /usr/local/gcloud -xf /tmp/google-cloud-sdk.tar.gz \
 	&& rm /tmp/google-cloud-sdk.tar.gz \
 	&& sudo /usr/local/gcloud/google-cloud-sdk/install.sh \
 	&& /usr/local/gcloud/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true \
-	&& sudo /usr/local/gcloud/google-cloud-sdk/bin/gcloud components install app-engine-python-extras \
-    && curl -s https://storage.googleapis.com/appengine-sdks/featured/google_appengine_${GAE_VERSION}.zip > /tmp/google_appengine.zip \
+	&& sudo /usr/local/gcloud/google-cloud-sdk/bin/gcloud components install app-engine-python-extras
+
+ENV GAE_VERSION '1.9.78'
+
+RUN curl -s https://storage.googleapis.com/appengine-sdks/featured/google_appengine_${GAE_VERSION}.zip > /tmp/google_appengine.zip \
 	&& sudo unzip -q /tmp/google_appengine.zip -d /usr/local/ \
 	&& rm /tmp/google_appengine.zip
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin:/usr/local/google_appengine
 
 # Cache of pypi modules
 WORKDIR /home/circleci/pypi-downloads
-COPY ./requirements-dev.txt requirements-dev.txt
 RUN mkdir -p /home/circleci/.pip \
 	&& echo '[global]' > /home/circleci/.pip/pip.conf \
 	&& echo "cache-dir=/home/circleci/pypi-offline-cache/" >> /home/circleci/.pip/pip.conf \
@@ -43,9 +49,13 @@ RUN mkdir -p /home/circleci/.pip \
 	&& mkdir -p /home/circleci/pypi-downloads \
 	&& sudo chown -R circleci /home/circleci/pypi-offline-cache/ /home/circleci/pypi-downloads
 
-# Python QA Modules & Modules from https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27
-RUN sudo /usr/local/bin/pip install Pillow==3.0 --global-option="build_ext" --global-option="--enable-freetype" \
-	&& sudo /usr/local/bin/pip install -r requirements-dev.txt \
+RUN sudo pip install --upgrade pip \
+ 	&& sudo /usr/local/bin/pip install Pillow==3.0 --global-option="build_ext" --global-option="--enable-freetype"
+
+COPY ./requirements-dev.txt requirements-dev.txt
+RUN \
+	# Python QA Modules & Modules from https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27
+	sudo /usr/local/bin/pip install -r requirements-dev.txt \
 	&& sudo rm -Rf /root/.cache \
 	&& sudo npm install -g codeclimate-test-reporter \
 	&& curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter \
@@ -54,9 +64,7 @@ RUN sudo /usr/local/bin/pip install Pillow==3.0 --global-option="build_ext" --gl
 
 # update to a git which can run paralell (-j8) and install py3
 # and pseudo-python which needs py3
-RUN sudo /bin/sh -c 'echo "deb http://ftp.us.debian.org/debian testing main contrib non-free" >> /etc/apt/sources.list' \
-	&& sudo apt-get update \
-	&& sudo apt-get install -y git python3 python3-distutils python3-setuptools \
+RUN sudo apt-get install -y git python3 python3-distutils python3-setuptools \
 	&& sudo apt-get clean all \
     && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
 	&& sudo python3 get-pip.py && rm get-pip.py \
