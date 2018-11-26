@@ -10,8 +10,6 @@ import os
 import time
 import warnings
 
-import yaml
-
 from gaetk2.tools.caching import lru_cache
 
 from .runtime import get_config, set_config
@@ -71,12 +69,14 @@ def get_revision():
 @lru_cache(1)
 def get_userversion():
     u"""Return the User-Visible Version (eg `2018.11.3`)."""
+    import yaml
     configyaml = yaml.safe_load(open('gaetk-conf.yaml'))
     return configyaml['userversion']
 
 
 @lru_cache(1)
 def get_productiondomain():
+    import yaml
     configyaml = yaml.safe_load(open('gaetk-conf.yaml'))
     return configyaml['productiondomain']
 
