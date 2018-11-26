@@ -106,7 +106,7 @@ def defer(obj, *args, **kwargs):
     # kwargs["_queue"] = kwargs.pop("_queue", 'workersq')
     if os.environ.get('GAETK2_UNITTEST'):
         LOGGER.debug('UNITTEST-mode - starting now')
-        obj(*args, **{k: v for k, v in kwargs if not k.startswith('_')})
+        obj(*args, **{k: v for k, v in kwargs.items() if not k.startswith('_')})
     else:
         try:
             task = deferred.defer(obj, *args, **kwargs)
