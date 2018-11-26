@@ -8,6 +8,7 @@ Copyright (c) 2011, 2015, 2017, 2018 HUDORA. MIT licensed.
 """
 from __future__ import unicode_literals
 
+import json
 import logging
 import os
 
@@ -129,7 +130,17 @@ class HeatUpHandler(DefaultHandler):
                 url = handler.get('url')
                 logger.info('importing %s from %s', mod, url)
                 __import__(mod)
-        self.return_text('done')
+        self.return_text(
+            json.dumps(
+                {
+                    'get_release': get_release(),
+                    'get_revision': get_revision(),
+                    'get_version': get_version(),
+                    'is_development': is_development(),
+                    'is_production': is_production(),
+                }
+            )
+        )
 
 
 application = WSGIApplication([
