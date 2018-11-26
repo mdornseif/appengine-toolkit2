@@ -36,7 +36,10 @@ def _unknown_handler(value):
     # for Google AppEngine
     elif hasattr(value, 'to_dict') and callable(value.to_dict):
         # helpful for ndb.Model Objects
-        return value.to_dict()
+        if hasattr(value, 'key') and hasattr(value.key, 'id') and callable(value.key.id):
+            return dict(value.to_dict(), **dict(_id=value.key.id()))
+        else:
+            return value.to_dict()
     # for Google AppEngine `ndb`
     elif (hasattr(value, '_properties') and hasattr(value._properties, 'items') and
           callable(value._properties.items)):
@@ -60,7 +63,7 @@ def _unknown_handler(value):
 
     tv = str(type(value))
     if 'google.appengine.api.users.User' in tv:
-        return '%s/%s' % (value.user_id(), value.email())
+        return '{}/{}'.format(value.user_id(), value.email())
     elif 'google.appengine.api.datastore_types.Key' in tv:
         return str(value)
     elif 'google.appengine.api.datastore_types.BlobKey' in tv:
@@ -69,7 +72,7 @@ def _unknown_handler(value):
         return unicode(value)
     else:
         return unicode(value)
-    raise TypeError('%s(%s)' % (type(value), value))
+    raise TypeError('{}({})'.format(type(value), value))
 
 
 def dump(val, fd, indent=' ', sort_keys=True):
