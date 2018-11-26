@@ -15,7 +15,6 @@ import urllib
 import warnings
 
 import jinja2
-import markdown2
 
 from gaetk2.tools.datetools import convert_to_date
 from gaetk2.tools.datetools import convert_to_datetime
@@ -307,7 +306,7 @@ def _formatint(value, nonchar='␀'):
         return ' '.join(reversed([rev_value[i:i + 3][::-1] for i in range(0, len(rev_value), 3)]))
     else:
         new_value = value / 1000000.0
-        return '%(value).1f Mio' % {'value': new_value}
+        return '{value:.1f} Mio'.format(value=new_value)
     return value
 
 
@@ -331,7 +330,7 @@ def eurocent(value, spacer='\u202F', decimalplaces=2, nonchar='␀'):
     cent_value = cent_value.ljust(decimalplaces, '0')[:decimalplaces]
     rev_value = euro_value[::-1]
     euro_value = spacer.join(reversed([rev_value[i:i + 3][::-1] for i in range(0, len(rev_value), 3)]))
-    return '%s.%s' % (euro_value, cent_value)
+    return '{}.{}'.format(euro_value, cent_value)
 
 
 def euroword(value, plain=False, nonchar='␀'):
@@ -389,6 +388,7 @@ def markdown(value):
 
     We are using `markdown2 <https://pypi.python.org/pypi/markdown2>`_ to do the rendering.
     """
+    import markdown2
     return Markup(markdown2.markdown(value))
 
 
