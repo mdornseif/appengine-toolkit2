@@ -6,6 +6,7 @@ gaetk2.config - Configuration helpers for gaetk2/appengine.
 Created by Maximillian Dornseif on 2018-02-17.
 Copyright (c) HUDORA. MIT licensed.
 """
+from __future__ import absolute_import
 import os
 import time
 import warnings
@@ -36,7 +37,6 @@ def get_release():
     Which usually means the first line :file:`gaetk2-release.txt`.
     E.g. ``v180228-cg89bd1-production-dot-application.appspot.com``.
     """
-
     try:
         version = open('gaetk2-release.txt').readline().strip()
     except IOError:
@@ -58,7 +58,6 @@ def get_revision():
     Get the first line of :file:`gaetk2-revision.txt`.
     E.g. ``14006259d78fa918054f774d20480b52e38c4707``.
     """
-
     try:
         version = open('gaetk2-revision.txt').readline().strip()
     except IOError:
@@ -85,7 +84,8 @@ def get_environment():
     """Returns ``production``, ``staging``, ``testing`` or ``development`` depending on the Server Name.
 
     See :term:`production version`, :term:`staging version`, :term:`testing version`,
-    and :term:`production version` for meaning."""
+    and :term:`production version` for meaning.
+    """
     if os.environ.get('SERVER_NAME', '').startswith('production'):
         return 'production'
     elif os.environ.get('SERVER_NAME', '').startswith('staging'):
@@ -105,7 +105,8 @@ def is_production():
     See :term:`production version` what this means.
 
     There are suble differences to
-    :func:`get_environment()` - read the code for details."""
+    :func:`get_environment()` - read the code for details.
+    """
     if is_development():
         return False
     elif os.environ.get('SERVER_NAME', '').startswith(('production', 'blue', 'green', 'staging', 'hotfix')):
@@ -120,7 +121,8 @@ def is_production():
 def is_development():
     """Checks if we are running on a development system.
 
-    See :term:`development version` what this means."""
+    See :term:`development version` what this means.
+    """
     name = os.environ.get('SERVER_NAME', '')
     return (os.environ.get('SERVER_SOFTWARE', '').startswith('Development') or
             name.startswith('dev-') or name.startswith('test') or name.startswith('master'))

@@ -5,6 +5,7 @@
 Created by Maximillian Dornseif on 2011-01-07.
 Copyright (c) 2011, 2012, 2016-2018 Cyberlogi/HUDORA. All rights reserved.
 """
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import datetime
@@ -105,7 +106,7 @@ def defer(obj, *args, **kwargs):
     # kwargs["_queue"] = kwargs.pop("_queue", 'workersq')
     if os.environ.get('GAETK2_UNITTEST'):
         LOGGER.debug('UNITTEST-mode - starting now')
-        obj(*args, **kwargs)
+        obj(*args, **{k: v for k, v in kwargs if not k.startswith('_')})
     else:
         try:
             task = deferred.defer(obj, *args, **kwargs)

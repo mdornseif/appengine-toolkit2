@@ -5,6 +5,7 @@
 Created by Maximillian Dornseif on 2018-01-11.
 Copyright (c) 2018 Maximillian Dornseif. MIT Licensed.
 """
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import cgitb

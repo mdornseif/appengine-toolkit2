@@ -5,6 +5,7 @@ jinja_filters - custom jinja2 filters for gaetk2.
 
 Copyright (c) 2010, 2012, 2014, 2017, 2018 Maximillian Dornseif. MIT Licensed.
 """
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import decimal
@@ -38,7 +39,6 @@ def authorize(ctx, value, permission_types, tag=None):
 
     This means if all strings in `permission_types` occur in `credential.permissions`.
     """
-
     if not isinstance(permission_types, list):
         permission_types = [permission_types]
 
@@ -139,7 +139,6 @@ def onlystaff(ctx, value, tag=None):
         {% endfilter %}
         <!-- is rendered to: (nothing) -->
     """
-
     if tag is None:
         tag = 'span'
         m = re.search(r'$\s*<(%s)' % '|'.join(NOTAGS), value)
@@ -172,7 +171,7 @@ def onlystaff(ctx, value, tag=None):
 # Encoding
 
 def _attrencode(value):
-    """Makes a string valid as an XML attribute value.
+    r"""Makes a string valid as an XML attribute value.
 
     Includes the quotation marks. Eg::
 
@@ -420,7 +419,8 @@ def right_justify(value, width):
 def yesno(value, answers='yes,no,maybe'):
     """Output a text based on Falsyness, Trueyness and ``is None``.
 
-        Example: ``{{ value|yesno:"yeah,nope,maybe" }}``.
+    Example::
+        {{ value|yesno:"yeah,nope,maybe" }}.
     """
     bits = answers.split(',')
     if len(bits) == 3:
@@ -481,12 +481,12 @@ def otag(obj):
 def datastore(entity, attr=None, value=None, text=None):
     """Generate HTML a-Tag to Google Datastore Query.
 
+    Example::
         {{ credential|datastore }} -> queries for key
         {{ credential|datastore('email') }} -> queries for email
         {{ credential|datastore('name', '') }} -> queries for credential.name == ''
         {{ credential|datastore(text='Search in Datastore') }} -> changes Link-Text
     """
-
     if not attr:
         attr = '__key__'
         value = entity.key.urlsafe()
@@ -516,7 +516,7 @@ def plural(value, singular_str, plural_str):
 
     ``{{ l|length|plural('Items', 'Items') }}``
     """
-    if not isinstance(value, (int, long)):
+    if not isinstance(value, (int, int)):
         return singular_str
 
     if value == 1:

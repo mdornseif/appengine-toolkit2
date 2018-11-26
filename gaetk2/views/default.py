@@ -6,6 +6,7 @@ gaetk2/views/default.py - handlers implementing common views for gaetk2.
 Created by Maximillian Dornseif on 2011-01-09.
 Copyright (c) 2011, 2015, 2017, 2018 HUDORA. MIT licensed.
 """
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import json
