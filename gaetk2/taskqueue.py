@@ -36,7 +36,6 @@ def taskqueue_add_multi(qname, url, paramlist, **kwargs):
             tasks.append(dict(kundennr=kdnnr))
         taskqueue_add_multi('softmq', '/some/path', tasks)
     """
-
     tasks = []
     for params in paramlist:
         tasks.append(taskqueue.Task(url=url, params=params, **kwargs))
@@ -52,8 +51,8 @@ def taskqueue_add_multi_payload(name, url, payloadlist, **kwargs):
     """like taskqueue_add_multi() but transmit a json encoded payload instead a query parameter.
 
     In the Task handler you can get the data via ``zdata = json.loads(self.request.body)``.
-    See http://code.google.com/appengine/docs/python/taskqueue/tasks.html"""
-
+    See http://code.google.com/appengine/docs/python/taskqueue/tasks.html
+    """
     import huTools.hujson
     tasks = []
     for payload in payloadlist:
@@ -89,15 +88,16 @@ def defer(obj, *args, **kwargs):
     Parameters starting with ``_`` are handed down to
     `taskqueue.add() <https://cloud.google.com/appengine/docs/standard/python/refdocs/
     google.appengine.api.taskqueue.taskqueue#google.appengine.api.taskqueue.taskqueue.add>`_
-
     """
-
-    suffix = '{}({!s},{!r})'.format(
-        getattr(obj, __name__, '.?.'),
-        ','.join(_to_str(arg) for arg in args),
-        ','.join('{}={}'.format(
-            key, _to_str(value)) for (key, value) in kwargs.items() if not key.startswith('_'))
-    )
+    try:
+        suffix = '{}({!s},{!r})'.format(
+            obj.__name__,
+            ','.join(_to_str(arg) for arg in args),
+            ','.join('{}={}'.format(
+                key, _to_str(value)) for (key, value) in kwargs.items() if not key.startswith('_'))
+        )
+    except:
+        suffix = ''
     suffix = re.sub(r'-+', '-', suffix.replace(' ', '-'))
     suffix = re.sub(r'[^/A-Za-z0-9_,.:@&+$\(\)\-]+', '', suffix)
     url = google.appengine.ext.deferred.deferred._DEFAULT_URL + '/' + suffix[:200]
