@@ -8,6 +8,7 @@ AuthenticationReaderMixin - Authentication MixIns for gaetk2.
 Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2010-2018 HUDORA. MIT licensed.
 """
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import datetime
@@ -26,7 +27,6 @@ from gaetk2.config import gaetkconfig
 from gaetk2.helpers import check404
 from gaetk2.tools.caching import lru_cache_memcache
 from gaetk2.tools.sentry import sentry_client
-from jose import jwt
 
 
 logger = logging.getLogger(__name__)
@@ -83,7 +83,7 @@ class AuthenticationReaderMixin(object):
             if ' ' in access_token:
                 access_token, id_token = access_token.split(None, 1)
             logging.debug('token: %s', access_token)
-            unverified_header = jwt.get_unverified_header(access_token)
+            unverified_header = self.jose_jwt_get_unverified_header(access_token)
             if gaetkconfig.JWT_SECRET_KEY and unverified_header['alg'] == 'HS256':
                 # gaetk2 JWT for internal use
                 userdata = self.decode_jwt(access_token, gaetkconfig.JWT_SECRET_KEY, algorithms=['HS256'])
@@ -206,9 +206,16 @@ class AuthenticationReaderMixin(object):
         )
         logger.debug('headers: %s', self.request.headers.items())
 
+    def jose_jwt_get_unverified_header(self, access_token):
+        """Lazy import of Slow JOSE/OpenSSL libs."""
+        from jose import jwt
+        return jwt.get_unverified_header(access_token)
+
     def decode_jwt(self, token, key, algorithms=['RS256'], access_token=None):
         """Decode data from JWT and handle common failures."""
         # See http://python-jose.readthedocs.io/en/latest/jwt/api.html#jose.jwt.decode
+        from jose import jwt
+
         try:
             userdata = jwt.decode(
                 token,
@@ -224,12 +231,12 @@ class AuthenticationReaderMixin(object):
         except jwt.ExpiredSignatureError:
             logger.debug('token: %s audience: %s', token, gaetkconfig.JWT_AUDIENCE)
             raise exc.HTTP400_BadRequest('ExpiredSignatureError')
-        except jwt.JWTClaimsError, e:
+        except jwt.JWTClaimsError as e:
             logger.debug('audience: %s', gaetkconfig.JWT_AUDIENCE)
             logger.debug('audience: %s', token)
             logger.debug('claims: %s', jwt.get_unverified_claims(token))
             raise exc.HTTP400_BadRequest('Wrong Claim: %s' % e)
-        except jwt.JWTError, e:
+        except jwt.JWTError as e:
             logger.debug('claims: %s', jwt.get_unverified_claims(token))
             raise exc.HTTP400_BadRequest('JWT Error: %s' % e)
         return userdata
@@ -277,7 +284,7 @@ class AuthenticationReaderMixin(object):
                 os.environ['USER_EMAIL'] = '%s@auth.gaetk2.23.nu' % self.credential.uid
 
         sentry_client.note(
-            'user', '%s logged in via %s since %s sid:%s' % (
+            'user', '{} logged in via {} since {} sid:{}'.format(
                 self.credential.uid,
                 self.session.get('login_via'),
                 self.session.get('login_time'),
@@ -342,18 +349,18 @@ class AuthenticationReaderMixin(object):
         return cred
 
 
-def allow_credential_from_jwt(jwt):
+def allow_credential_from_jwt(thejwt):
     # Tested with:
     # * GitHub
     # * Google-Apps
     # * Salesforce
-    logger.debug('JWT: %s', jwt)
-    if jwt.get('email_verified') and jwt['email'].endswith('@hudora.de'):
+    logger.debug('JWT: %s', thejwt)
+    if thejwt.get('email_verified') and thejwt['email'].endswith('@hudora.de'):
         return models.gaetk_Credential.create(
-            id=jwt['email'],
-            uid=jwt['email'],
+            id=thejwt['email'],
+            uid=thejwt['email'],
             text='created via OAuth2/JWT',
-            email=jwt['email'])
+            email=thejwt['email'])
     else:
         return None
 
@@ -385,7 +392,6 @@ class AuthenticationRequiredMixin(AuthenticationReaderMixin):
 
     def authentication_hook(self, method, *args, **kwargs):
         """Function to enforce that users `are authenticated."""
-
         if self.credential and not self.credential.secret:
             logger.debug('%r %r %r', method, args, kwargs)
             raise exc.HTTP403_Forbidden('Account disabled')
