@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-gaetk2.application - WSGI Application for webapp2.
+"""gaetk2.application - WSGI Application for webapp2.
 
 Created by Maximillian Dornseif on 2018-01-11.
 Copyright (c) 2018 Maximillian Dornseif. MIT Licensed.
@@ -34,8 +33,9 @@ from webapp2 import Route
 
 __all__ = ['WSGIApplication', 'Route']
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+LOGGER = logging.getLogger(__name__)
+LOGGER.addHandler(logging.NullHandler())
+LOGGER.setLevel(logging.INFO)
 
 
 # Das fängt leider kein runtime.DeadlineExceededError
@@ -48,7 +48,11 @@ class WSGIApplication(webapp2.WSGIApplication):
 
     @ndb.toplevel
     def __call__(self, environ, start_response):
+        LOGGER.debug('WSGI __call__ starting', extra={'environ': environ})
+
         with self.request_context_class(self, environ) as (request, response):
+            # context = ndb.get_context()
+            # context.set_memcache_timeout_policy(60 * 60 * 12)
             self.setup_logging(request, response)
             try:
                 try:
@@ -60,7 +64,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                         response = rv
                 # webapp2 only catches `Exception` not `BaseException`
                 except BaseException as e:
-                    logger.debug(
+                    LOGGER.debug(
                         'Exception %r via %s %s %s %s', e, request.route,
                         request.route_args, request.route_kwargs,
                         self.router)
@@ -72,12 +76,12 @@ class WSGIApplication(webapp2.WSGIApplication):
                     except exc.HTTPException as e:
                         # Use the HTTP exception as response.
                         response = e
-                        if os.environ.get('GAETK2_WEBTEST') and e.code >= 500:
+                        if os.environ.get('GAETK2_WEBTEST') and getattr(e, 'code', 500) >= 500:
                             # make sure we get nice errors during testing
                             raise
                     except BaseException as e:
                         # Error wasn't handled so we have nothing else to do.
-                        logger.debug('internal_error(%s)', e)
+                        LOGGER.debug('internal_error(%s)', e)
                         response = self._internal_error(e)
                         if os.environ.get('GAETK2_WEBTEST'):
                             # make sure we get nice errors during testing
@@ -87,11 +91,12 @@ class WSGIApplication(webapp2.WSGIApplication):
                     self.fix_unicode_headers(response)
                     return response(environ, start_response)
                 except BaseException as e:
-                    logger.info('_internal_error')
+                    LOGGER.info('_internal_error')
                     return self._internal_error(e)(environ, start_response)
-            except:
-                logger.critical('uncaught error')
+            except Exception:
+                LOGGER.critical('uncaught error')
                 raise
+        LOGGER.debug('WSGI __call__ done', extra={'environ': environ})
 
     def handle_exception(self, request, response, e):
         """Handles a uncaught exception occurred in :meth:`__call__`.
@@ -114,6 +119,7 @@ class WSGIApplication(webapp2.WSGIApplication):
 
         Returns:
             The returned value from the error handler.
+
         """
         if isinstance(e, exc.HTTPException):
             code = e.code
@@ -130,7 +136,7 @@ class WSGIApplication(webapp2.WSGIApplication):
 
         handler = self.error_handlers.get(code)
         if handler and not os.environ.get('GAETK2_WEBTEST'):
-            logger.debug('using %s', handler)
+            LOGGER.debug('using %s', handler)
             return handler(request, response, e)
         else:
             if code >= 500:
@@ -150,18 +156,19 @@ class WSGIApplication(webapp2.WSGIApplication):
                         tags={'httpcode': code, 'type': 'Exception'},
                         extra=notedata)
                 logging.debug('HTTP exception:', exc_info=True)
-                raise
+                raise  # pylint: disable=E0704
 
     def default_exception_handler(self, request, response, exception):
+        """Exception aufbereiten und loggen."""
         status, level, fingerprint, tags = self.classify_exception(request, exception)
 
         # Make sure we have at least some decent infotation in the logfile
         if level == 'error':
-            logger.exception('Exception caught for path %s: %s', request.path, exception)
+            LOGGER.exception('Exception caught for path %s: %s', request.path, exception)
             if os.environ.get('GAETK2_WEBTEST'):
-                raise
+                raise  # pylint: disable=E0704
         else:
-            logger.info('Exception caught for path %s: %s', request.path, exception, exc_info=True)
+            LOGGER.info('Exception caught for path %s: %s', request.path, exception, exc_info=True)
 
         if not is_development():
             event_id = ''
@@ -173,9 +180,9 @@ class WSGIApplication(webapp2.WSGIApplication):
                     fingerprint=fingerprint,
                     tags=tags,
                 )
-                logger.info('pushing to sentry: %s', event_id)
+                LOGGER.info('pushing to sentry: %s', event_id)
             else:
-                logger.info('sentry not configured')
+                LOGGER.info('sentry not configured')
 
             # render error page for the client
             # we do not use jinja2 here to avoid an additional error source.
@@ -192,7 +199,7 @@ class WSGIApplication(webapp2.WSGIApplication):
                 response.out.body = template.encode('utf-8')
         else:
             # On development servers display a nice traceback via `cgitb`.
-            logger.info('not pushing to sentry, cgitb()')
+            LOGGER.info('not pushing to sentry, cgitb()')
             response.clear()
             response.headers['Content-Type'] = b'text/html'
             handler = cgitb.Hook(file=response.out).handle
@@ -207,8 +214,8 @@ class WSGIApplication(webapp2.WSGIApplication):
 
         Returns:
             a dict to be sent to sentry as `addon`.
-        """
 
+        """
         addon = {}
 
         # try to recover session information
@@ -223,7 +230,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         #     if 'cart' in current_session:
         #         addon['cart'] = vars(current_session['cart'])
         # except Exception:
-        #     logger.warn("error decoding cart from session")
+        #     LOGGER.warn("error decoding cart from session")
 
         return addon
 
@@ -233,7 +240,6 @@ class WSGIApplication(webapp2.WSGIApplication):
         We not only return an HTTP Status code and `level`, but also
         a `fingerprint` and `dict` of `tags` to help snetry group the errors.
         """
-
         status = 500
         level = 'error'
         fingerprint = None
@@ -335,8 +341,8 @@ class WSGIApplication(webapp2.WSGIApplication):
         """Provide sentry early on with information from the context.
 
         Called at the beginning of each request. Some information is already set
-        in `sentry.py` during initialisation."""
-
+        in `sentry.py` during initialisation.
+        """
         # Its not well documented how to structure the data for sentry
         # https://gist.github.com/cgallemore/4507616
 
@@ -363,7 +369,7 @@ class WSGIApplication(webapp2.WSGIApplication):
             try:
                 extra[attr] = request.get(attr)
             except Exception:
-                logger.exception('problem parsing %s', attr)
+                LOGGER.exception('problem parsing %s', attr)
         sentry_client.extra_context(extra)
         # server_name: the hostname of the server
         # os.environ.get('SERVER_NAME', '')
