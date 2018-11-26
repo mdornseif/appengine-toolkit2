@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-gaetk2.taskqueue
+"""gaetk2.taskqueue.
 
 Created by Maximillian Dornseif on 2011-01-07.
 Copyright (c) 2011, 2012, 2016-2018 Cyberlogi/HUDORA. All rights reserved.
@@ -11,6 +10,7 @@ from __future__ import unicode_literals
 import datetime
 import hashlib
 import logging
+import os
 import re
 import zlib
 
@@ -19,11 +19,12 @@ import google.appengine.ext.deferred.deferred
 from google.appengine.api import taskqueue
 from google.appengine.ext import deferred
 
-from .tools.datetools import date_trunc
-from .tools.unicode import slugify
+from gaetk2.tools import hujson2
+from gaetk2.tools.datetools import date_trunc
+from gaetk2.tools.unicode import slugify
 
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def taskqueue_add_multi(qname, url, paramlist, **kwargs):
@@ -53,10 +54,9 @@ def taskqueue_add_multi_payload(name, url, payloadlist, **kwargs):
     In the Task handler you can get the data via ``zdata = json.loads(self.request.body)``.
     See http://code.google.com/appengine/docs/python/taskqueue/tasks.html
     """
-    import huTools.hujson
     tasks = []
     for payload in payloadlist:
-        payload = huTools.hujson.dumps(payload)
+        payload = hujson2.dumps(payload)
         payload = zlib.compress(payload)
         tasks.append(taskqueue.Task(url=url, payload=payload, **kwargs))
         # Patch Addition to Taskqueue
@@ -65,7 +65,7 @@ def taskqueue_add_multi_payload(name, url, payloadlist, **kwargs):
             tasks = []
     if tasks:
         taskqueue.Queue(name=name).add(tasks)
-    logger.debug('%d tasks queued to %s', len(payloadlist), url)
+    LOGGER.debug('%d tasks queued to %s', len(payloadlist), url)
 
 
 # See also https://github.com/freshplanet/AppEngine-Deferred
@@ -103,18 +103,22 @@ def defer(obj, *args, **kwargs):
     url = google.appengine.ext.deferred.deferred._DEFAULT_URL + '/' + suffix[:200]
     kwargs['_url'] = kwargs.pop('_url', url)
     # kwargs["_queue"] = kwargs.pop("_queue", 'workersq')
-    try:
-        task = deferred.defer(obj, *args, **kwargs)
-        logging.debug('started task %r', task.name)
-        return task.name
-    except taskqueue.TaskAlreadyExistsError:
-        logger.info('Task already exists')
-    except taskqueue.TombstonedTaskError:
-        logger.info('Task did already run')
+    if os.environ.get('GAETK2_UNITTEST'):
+        LOGGER.debug('UNITTEST-mode - starting now')
+        obj(*args, **kwargs)
+    else:
+        try:
+            task = deferred.defer(obj, *args, **kwargs)
+            LOGGER.debug('started task %r', task.name)
+            return task.name
+        except taskqueue.TaskAlreadyExistsError:
+            LOGGER.info('Task already exists')
+        except taskqueue.TombstonedTaskError:
+            LOGGER.info('Task did already run')
 
 
 def _to_str(value):
-    """Convert all datatypes to str"""
+    """Convert all datatypes to str."""
     if isinstance(value, basestring):
         try:
             value = value.encode('ascii', errors='replace')[:50]
