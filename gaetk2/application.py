@@ -47,6 +47,10 @@ class WSGIApplication(webapp2.WSGIApplication):
     http://webapp2.readthedocs.io/en/latest/api/webapp2.html#webapp2.WSGIApplication
     """
 
+    # see https://github.com/GoogleCloudPlatform/webapp2/issues/69
+    allowed_methods = frozenset(('GET', 'POST', 'HEAD', 'OPTIONS', 'PUT',
+                                 'DELETE', 'TRACE', 'PATCH'))
+
     @ndb.toplevel
     def __call__(self, environ, start_response):
         LOGGER.debug('WSGI __call__ starting', extra={'environ': environ})
@@ -390,7 +394,7 @@ class WSGIApplication(webapp2.WSGIApplication):
             'headers': request.headers,  # seems to be ignored
             'env': request.environ,
         }
-        if request.method in ['POST', 'PUT']:
+        if request.method in ['POST', 'PUT', 'PATCH']:
             http['data'] = {'raw': request.body}
 
         # see also https://docs.sentry.io/clientdev/interfaces/http/
