@@ -10,18 +10,24 @@ exclude: >
 repos:
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  sha: v1.4.0-1
+- repo: https://github.com/ambv/black
+  rev: stable
   hooks:
-  - id: fix-encoding-pragma
-  - id: trailing-whitespace
+  - id: black
+    language_version: python3.6
+    args: ['--skip-string-normalization']
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  sha: v2.0.0
+  hooks:
   - id: check-ast
-  - id: double-quote-string-fixer
-  - id: check-docstring-first
   - id: flake8
     additional_dependencies:
     - flake8-docstrings
-    # uses tox.ini
+    # flake8 uses tox.ini
+  - id: fix-encoding-pragma
+  - id: trailing-whitespace
+  - id: double-quote-string-fixer
+  - id: check-docstring-first
   - id: check-builtin-literals
     args: ['--no-allow-dict-kwargs']
   - id: requirements-txt-fixer
@@ -38,12 +44,6 @@ repos:
   - id: end-of-file-fixer
   - id: mixed-line-ending
   - id: check-executables-have-shebangs
-- repo: git://github.com/FalconSocial/pre-commit-python-sorter
-  sha: b57843b0b874df1d16eb0bef00b868792cb245c2
-  # uses tox.ini
-  hooks:
-  - id: python-import-sorter
-  # args: ['-a', 'from __future__ import unicode_literals']
 - repo: https://github.com/asottile/pyupgrade
   sha: v1.8.0
   hooks:
@@ -63,3 +63,21 @@ repos:
             )
     always_run: false
     # log_file: standard.log
+- repo: https://github.com/python-modernize/python-modernize
+  rev: a234ce4e185cf77a55632888f1811d83b4ad9ef2
+  hooks:
+  - id: python-modernize
+    args:
+    - --fix=ws_comma
+    - --fix=set_literal
+    - --fix=print
+    - --fix=idioms
+    - --fix=default
+    - --no-six
+    - -w
+- repo: git://github.com/FalconSocial/pre-commit-python-sorter
+  sha: b57843b0b874df1d16eb0bef00b868792cb245c2
+  # uses tox.ini
+  hooks:
+  - id: python-import-sorter
+  # args: ['-a', 'from __future__ import unicode_literals']

@@ -6,6 +6,7 @@ gaetk2.tools.caching - based on huTools.decorators and gaetk1/tools.py
 Created by Maximillian Dornseif on 2007-05-10.
 Copyright (c) 2007, 2015, 2018 HUDORA GmbH. All rights reserved.
 """
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import threading
@@ -18,8 +19,8 @@ from functools import update_wrapper
 # from http://code.activestate.com/recipes/578078-py26-and-py30-backport-of-python-33s-lru-cache/
 # with added TTL
 
-HITS, MISSES = 0, 1                     # names for the stats fields
-PREV, NEXT, KEY, RESULT = 0, 1, 2, 3    # names for the link fields
+HITS, MISSES = 0, 1  # names for the stats fields
+PREV, NEXT, KEY, RESULT = 0, 1, 2, 3  # names for the link fields
 
 _CacheInfo = namedtuple('CacheInfo', ['hits', 'misses', 'maxsize', 'currsize'])
 
@@ -60,17 +61,17 @@ def lru_cache(maxsize=64, typed=False, ttl=60 * 60 * 12):
 
     def decorating_function(user_function):
 
-        cache = dict()
-        maxage = dict()                 # stores the timestamp after wich result should be regeneratd
-        stats = [0, 0]                  # make statistics updateable non-locally
+        cache = {}
+        maxage = {}  # stores the timestamp after wich result should be regeneratd
+        stats = [0, 0]  # make statistics updateable non-locally
         make_key = _make_key
-        cache_get = cache.get           # bound method to lookup key or return None
+        cache_get = cache.get  # bound method to lookup key or return None
         maxage_get = maxage.get
-        _len = len                      # localize the global len() function
-        lock = threading.RLock()                  # because linkedlist updates aren't threadsafe
-        root = []                       # root of the circular doubly linked list
-        root[:] = [root, root, None, None]      # initialize by pointing to self
-        nonlocal_root = [root]                  # make updateable non-locally
+        _len = len  # localize the global len() function
+        lock = threading.RLock()  # because linkedlist updates aren't threadsafe
+        root = []  # root of the circular doubly linked list
+        root[:] = [root, root, None, None]  # initialize by pointing to self
+        nonlocal_root = [root]  # make updateable non-locally
 
         if maxsize == 0:
 
@@ -85,7 +86,9 @@ def lru_cache(maxsize=64, typed=False, ttl=60 * 60 * 12):
             def wrapper(*args, **kwds):
                 # simple caching without ordering or size limit
                 key = make_key(args, kwds, typed)
-                result = cache_get(key, root)   # root used here as a unique not-found sentinel
+                result = cache_get(
+                    key, root
+                )  # root used here as a unique not-found sentinel
                 if result is not root:
                     if time.time() <= maxage_get(key, 0):
                         stats[HITS] += 1
@@ -168,7 +171,8 @@ def lru_cache(maxsize=64, typed=False, ttl=60 * 60 * 12):
         wrapper = update_wrapper(wrapper, user_function)
         if wrapper.__doc__:
             wrapper.__doc__ += '\n\nResults are cached locally (maxsize={} ttl={})'.format(
-                maxsize, ttl)
+                maxsize, ttl
+            )
         return wrapper
 
     return decorating_function
@@ -185,15 +189,21 @@ class _HashedSeq(list):
         return self.hashvalue
 
 
-def _make_key(args, kwds, typed,
-              kwd_mark=(object(),),
-              fasttypes={int, str, frozenset, type(None)},
-              sorted=sorted, tuple=tuple, type=type, len=len):
+def _make_key(
+    args,
+    kwds,
+    typed,
+    kwd_mark=(object(),),
+    fasttypes={int, str, frozenset, type(None)},
+    sorted=sorted,
+    tuple=tuple,
+    type=type,
+    len=len,
+):
     """Make a cache key from optionally typed positional and keyword arguments"""
-    if len(args) == 1:
-        if isinstance(args[0], list):
-            # this catches the common "list of strings"
-            key = [tuple(args[0])]
+    if len(args) == 1 and isinstance(args[0], list):
+        # this catches the common "list of strings"
+        key = [tuple(args[0])]
     else:
         key = args
 
@@ -227,25 +237,24 @@ class lru_cache_memcache(object):
     """
 
     def __init__(self, maxsize=8, typed=False, ttl=60 * 60 * 12):
-        """
-        If there are decorator arguments, the function
-        to be decorated is not passed to the constructor!
-        """
+        # If there are decorator arguments, the function
+        # to be decorated is not passed to the constructor!
         self.ttl = ttl
         self.maxsize = maxsize
         self.typed = typed
 
     def __call__(self, user_function):
-        """
-        If there are decorator arguments, __call__() is only called
-        once, as part of the decoration process! You can only give
-        it a single argument, which is the function object.
-        """
+        # If there are decorator arguments, __call__() is only called
+        # once, as part of the decoration process! You can only give
+        # it a single argument, which is the function object.
         import memorised.decorators
+
         # first warp in memcache. `maxsize` is ignored there.
         wraped = memorised.decorators.memorise(ttl=self.ttl)(user_function)
         wraped = update_wrapper(wraped, user_function)
         if wraped.__doc__:
-            wraped.__doc__ += '\n\nResults are cached in memcache for max. {} seconds'.format(self.ttl)
+            wraped.__doc__ += '\n\nResults are cached in memcache for max. {} seconds'.format(
+                self.ttl
+            )
         # and warp that in lru_cache.
         return lru_cache(maxsize=self.maxsize, typed=self.typed, ttl=self.ttl)(wraped)
