@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 gaetk2.tools.datetools - formating and parsing of timestamps.
 
@@ -8,6 +8,9 @@ by Maximillian Dornseif and Christian Klein on 2007-06-24.
 And on workdays.py created by Christian Klein on 2006-11-28.
 Copyright (c) 2007, 2010, 2012, 2013, 2018 HUDORA GmbH. MIT licensed.
 """
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import calendar
 import datetime
 import doctest
@@ -21,9 +24,23 @@ import warnings
 def tertial(date):
     """Wandelt ein Date oder Datetime-Objekt in einen Tertial-String"""
     ret = date.strftime('%Y-%m')
-    ret = ret[:-2] + {'01': 'A', '02': 'A', '03': 'A', '04': 'A',
-                      '05': 'B', '06': 'B', '07': 'B', '08': 'B',
-                      '09': 'C', '10': 'C', '11': 'C', '12': 'C'}[ret[-2:]]
+    ret = (
+        ret[:-2]
+        + {
+            '01': 'A',
+            '02': 'A',
+            '03': 'A',
+            '04': 'A',
+            '05': 'B',
+            '06': 'B',
+            '07': 'B',
+            '08': 'B',
+            '09': 'C',
+            '10': 'C',
+            '11': 'C',
+            '12': 'C',
+        }[ret[-2:]]
+    )
     return ret
 
 
@@ -43,7 +60,6 @@ def convert_to_date(date):
 
     Assumes argument to be a RfC 3339 coded date or a date(time) object.
     """
-
     if hasattr(date, 'date') and callable(date.date):
         # e.g. datetime objects
         return date.date()
@@ -61,7 +77,7 @@ def convert_to_date(date):
                 return datetime.datetime.strptime(date, '%Y%m%d').date()
             except ValueError:
                 pass  # Error will be raised later on
-    raise ValueError("Unknown date value %r (%s)" % (date, type(date)))
+    raise ValueError('Unknown date value {!r} ({})'.format(date, type(date)))
 
 
 def convert_to_datetime(date):
@@ -69,10 +85,11 @@ def convert_to_datetime(date):
 
     Assumes argument to be a RfC 3339 coded date or a date(time) object.
     """
-
     if isinstance(date, datetime.datetime):
         return date
-    elif isinstance(date, datetime.date):  # order mattes! datetime is a subclass of date
+    elif isinstance(
+        date, datetime.date
+    ):  # order mattes! datetime is a subclass of date
         return datetime.datetime(date.year, date.month, date.day)
     elif isinstance(date, basestring):
         if len(date) < 11:
@@ -97,12 +114,19 @@ def convert_to_datetime(date):
                 except ValueError:
                     ret = datetime.datetime.strptime(date, '%Y%m%dT%H%M%S')
             if ms:
-                return datetime.datetime(ret.year, ret.month, ret.day,
-                                         ret.hour, ret.minute, ret.second, int(ms))
+                return datetime.datetime(
+                    ret.year,
+                    ret.month,
+                    ret.day,
+                    ret.hour,
+                    ret.minute,
+                    ret.second,
+                    int(ms),
+                )
             return ret
     elif not date:
         return None
-    raise ValueError("Unknown value %r (%s)" % (date, type(date)))
+    raise ValueError('Unknown value {!r} ({})'.format(date, type(date)))
 
 
 def rfc2616_date(date=None):
@@ -117,7 +141,9 @@ def rfc2616_date(date=None):
 
 def rfc2616_date_parse(data):
     """Parses an RfC 2616/2822 timestapm into a datetime object."""
-    return datetime.datetime.fromtimestamp(email.utils.mktime_tz(email.utils.parsedate_tz(data)))
+    return datetime.datetime.fromtimestamp(
+        email.utils.mktime_tz(email.utils.parsedate_tz(data))
+    )
 
 
 def date_trunc(trtype, timestamp):
@@ -134,35 +160,41 @@ def date_trunc(trtype, timestamp):
     >>> date_trunc('week', datetime.date(1973, 8, 8))
     datetime.date(1973, 8, 6)
     """
-
     if isinstance(timestamp, basestring):
         # we are called with the old calling convention
-        warnings.warn("`date_trunc` should be called with a date/datetime object as the second parameter",
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            '`date_trunc` should be called with a date/datetime object as the second parameter',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         timestamp, trtype = trtype, timestamp
 
     tmp = timestamp.timetuple()
-    if trtype == "year":
+    if trtype == 'year':
         ret = datetime.datetime(tmp.tm_year, 1, 1)
-    elif trtype == "tertial":
+    elif trtype == 'tertial':
         ret = datetime.datetime(tmp.tm_year, 1 + (get_tertial(timestamp) - 1) * 4, 1)
-    elif trtype == "quarter":
+    elif trtype == 'quarter':
         ret = datetime.datetime(tmp.tm_year, 3 * (get_quarter(timestamp) - 1) + 1, 1)
-    elif trtype == "month":
+    elif trtype == 'month':
         ret = datetime.datetime(tmp.tm_year, tmp.tm_mon, 1)
-    elif trtype == "week":
+    elif trtype == 'week':
         firstday = timestamp - datetime.timedelta(days=tmp.tm_wday)
         ret = datetime.datetime.combine(firstday, datetime.time(0))
-    elif trtype == "day":
+    elif trtype == 'day':
         ret = datetime.datetime(tmp.tm_year, tmp.tm_mon, tmp.tm_mday)
-    elif trtype == "hour":
+    elif trtype == 'hour':
         ret = datetime.datetime(tmp.tm_year, tmp.tm_mon, tmp.tm_mday, tmp.tm_hour)
-    elif trtype == "minute":
-        ret = datetime.datetime(tmp.tm_year, tmp.tm_mon, tmp.tm_mday, tmp.tm_hour, tmp.tm_min)
-    elif trtype == "second":
-        ret = datetime.datetime(tmp.tm_year, tmp.tm_mon, tmp.tm_mday, tmp.tm_hour, tmp.tm_min, tmp.tm_sec)
+    elif trtype == 'minute':
+        ret = datetime.datetime(
+            tmp.tm_year, tmp.tm_mon, tmp.tm_mday, tmp.tm_hour, tmp.tm_min
+        )
+    elif trtype == 'second':
+        ret = datetime.datetime(
+            tmp.tm_year, tmp.tm_mon, tmp.tm_mday, tmp.tm_hour, tmp.tm_min, tmp.tm_sec
+        )
     else:
-        raise ValueError("Unknown truncation type %s" % trtype)
+        raise ValueError('Unknown truncation type %s' % trtype)
     # if we where given a datetime object return it, else assume a date object and cast our return
     # value to that
     if isinstance(timestamp, datetime.datetime):
@@ -254,7 +286,9 @@ def get_tertialspan(date):
     (datetime.date(1978, 9, 1), datetime.date(1978, 12, 31))
     """
     startdate = date_trunc('tertial', date)
-    enddate = date_trunc('tertial', startdate + datetime.timedelta(days=130)) - datetime.timedelta(days=1)
+    enddate = date_trunc(
+        'tertial', startdate + datetime.timedelta(days=130)
+    ) - datetime.timedelta(days=1)
     return startdate, enddate
 
 
@@ -264,10 +298,11 @@ def get_quarterspan(date):
     >>> get_quarterspan(datetime.date(1978, 6, 12))
     (datetime.date(1978, 4, 1), datetime.date(1978, 6, 30))
     """
-
     startdate = date_trunc('quarter', date)
     # The date 100 days after the beginning of a quarter is always right inside the next quarter
-    enddate = date_trunc('quarter', startdate + datetime.timedelta(days=100)) - datetime.timedelta(days=1)
+    enddate = date_trunc(
+        'quarter', startdate + datetime.timedelta(days=100)
+    ) - datetime.timedelta(days=1)
     return startdate, enddate
 
 
@@ -302,39 +337,109 @@ def get_timespan(period, date):
 
     Convenience function as a wrapper for the other get_*span functions
     """
-    if period == "year":
+    if period == 'year':
         return get_yearspan(date)
-    elif period == "tertial":
+    elif period == 'tertial':
         return get_tertialspan(date)
-    elif period == "quarter":
+    elif period == 'quarter':
         get_quarterspan(date)
-    elif period == "month":
+    elif period == 'month':
         return get_monthspan(date)
-    elif period == "week":
+    elif period == 'week':
         return get_weekspan(date)
-    elif period == "day":
+    elif period == 'day':
         return date, date
     else:
-        raise ValueError("Unknown truncation type %s" % period)
+        raise ValueError('Unknown truncation type %s' % period)
 
 
-STATIC_GERMAN_HOLIDAYS = ((1, 1),    # Neujahr
-                          (5, 1),    # Tag der Arbeit
-                          (10, 3),   # Tag der deutschen Einheit
-                          (11, 1),   # Allerheiligen
-                          (12, 25),  # Erster Weihnachtstag
-                          (12, 26),  # Zweiter Weihnachtstag
-                          )
+def tertial_add(date, tertials):
+    """Add number of tertials to date.
+
+    >>> date = datetime.date(1982, 11, 7)
+    >>> tertial_add(date, -1)
+    datetime.date(1982, 5, 1)
+    >>> tertial_add(date, 0)
+    datetime.date(1982, 9, 1)
+    >>> tertial_add(date, 1)
+    datetime.date(1983, 1, 1)
+    >>> tertial_add(date, 2)
+    datetime.date(1983, 5, 1)
+    >>> tertial_add(date, 3)
+    datetime.date(1983, 9, 1)
+    >>> tertial_add(date, 4)
+    datetime.date(1984, 1, 1)
+
+    >>> date = datetime.datetime(1982, 11, 7)
+    >>> tertial_add(date, 4)
+    datetime.datetime(1984, 1, 1)
+    """
+    date = date_trunc('tertial', date)
+    month = date.month + tertials * 4
+    return date.replace(year=date.year + month // 12, month=month % 12)
+
+
+def month_add(date, months):
+    """Add number of months to date.
+
+    >>> import datetime
+    >>> date = datetime.date(1986, 3, 9)
+    >>> month_add(date, -12)
+    datetime.date(1985, 3, 9)
+    >>> month_add(date, -1)
+    datetime.date(1986, 2, 9)
+    >>> month_add(date, 0)
+    datetime.date(1986, 3, 9)
+    >>> month_add(date, 3)
+
+    >>> date = datetime.datetime(1986, 3, 9)
+    >>> month_add(date, 12)
+    datetime.datetime(1987, 3, 9)
+    """
+    year, month = divmod(date.year * 12 + date.month + months, 12)
+    return date.replace(year=year, month=month)
+
+
+def year_add(date, years):
+    """Add number of years to date.
+
+    >>> import datetime
+    >>> year_add(datetime.datetime(2016, 2, 29), 1)
+    datetime.date(2017, 2, 28)
+    >>> year_add(datetime.date(2016, 2, 29), 1)
+    datetime.date(2017, 2, 28)
+    >>> year_add(datetime.date(2015, 2, 28), 1)
+    datetime.date(2016, 2, 28)
+    >>> year_add(datetime.date(2017, 2, 28, -1)
+    datetime.date(2016, 2, 28)
+    >>> year_add(datetime.datetime(2016, 2, 29), -1)
+    datetime.datetime(2015, 2, 28)
+    """
+    if date.day == 29 and date.month == 2 and not calendar.isleap(date.year + years):
+        return date.replace(day=28, year=date.year + years)
+    return date.replace(year=date.year + years)
+
+
+STATIC_GERMAN_HOLIDAYS = (
+    (1, 1),  # Neujahr
+    (5, 1),  # Tag der Arbeit
+    (10, 3),  # Tag der deutschen Einheit
+    (11, 1),  # Allerheiligen
+    (12, 25),  # Erster Weihnachtstag
+    (12, 26),  # Zweiter Weihnachtstag
+)
 
 
 def add_to_day(day, offset):
-    "Returns the date n days before or after day"
+    """Returns the date n days before or after day."""
     return day + datetime.timedelta(days=offset)
 
 
 def easter(year):
     """Returns the day of Easter sunday for 'year'.
-    This function only works betweeen 1900 and 2099"""
+
+    This function only works betweeen 1900 and 2099
+    """
     h = (24 + 19 * (year % 19)) % 30
     i = h - (h / 28)
     j = (year + (year / 4) + i - 13) % 7
@@ -399,10 +504,11 @@ def workdays(start, end):
 
 
 def _workdays(start, end):
-    "Helper for `workdays()`."
-
+    'Helper for `workdays()`.'
     if start > end:
-        raise ValueError("can't handle  negative timespan! %r > %r" % (start, end))
+        raise ValueError(
+            "can't handle  negative timespan! {!r} > {!r}".format(start, end)
+        )
 
     # Wenn Anfangstag auf Wochenende liegt, addiere Tage bis Montag
     while start.isoweekday() > 5:
@@ -422,13 +528,16 @@ def _workdays(start, end):
         number_of_weekends += 1
     days = days - 2 * number_of_weekends
     if days < 0:
-        raise RuntimeError("%r days difference %r|%r|%r" % (days, start, end, number_of_weekends))
+        raise RuntimeError(
+            '{!r} days difference {!r}|{!r}|{!r}'.format(
+                days, start, end, number_of_weekends
+            )
+        )
     return days
 
 
 def workdays_german(start, end):
     """Calculates the number of working days between two given dates while considering german holidays."""
-
     if isinstance(start, datetime.datetime):
         start = start.date()
     if isinstance(end, datetime.datetime):
@@ -436,7 +545,11 @@ def workdays_german(start, end):
 
     days = workdays(start, end)
     # Deduct Holidays (but only the ones not on weekends)
-    holid = [x for x in holidays_german(start, end) if (x >= start) and (x < end) and (x.isoweekday() < 6)]
+    holid = [
+        x
+        for x in holidays_german(start, end)
+        if (x >= start) and (x < end) and (x.isoweekday() < 6)
+    ]
     return days - len(holid)
 
 
@@ -461,7 +574,6 @@ def next_workday_german(startday):
     >>> next_workday_german(datetime.date(2006, 12, 29))
     datetime.date(2007, 1, 2)
     """
-
     next_day = add_to_day(startday, 1)
     while not is_workday_german(next_day):
         next_day = add_to_day(next_day, 1)
@@ -474,7 +586,6 @@ def previous_workday_german(startday):
     >>> previous_workday_german(datetime.date(2007, 1, 2))
     datetime.date(2006, 12, 29)
     """
-
     prev_day = add_to_day(startday, -1)
     while not is_workday_german(prev_day):
         prev_day = add_to_day(prev_day, -1)
@@ -483,7 +594,6 @@ def previous_workday_german(startday):
 
 def add_workdays_german(startday, count):
     """Adds <count> workdays to <startday>."""
-
     day = startday
     while count > 0:
         day = next_workday_german(day)
@@ -495,48 +605,80 @@ def add_workdays_german(startday, count):
 
 
 class _FormatsTests(unittest.TestCase):
-
     def test_rfc3339_date(self):
         """Test basic rfc3339_date output."""
-        self.assertEqual(rfc3339_date(datetime.datetime(2007, 2, 3, 4, 5, 6)), '2007-02-03T04:05:06Z')
+        self.assertEqual(
+            rfc3339_date(datetime.datetime(2007, 2, 3, 4, 5, 6)), '2007-02-03T04:05:06Z'
+        )
 
     def test_rfc3339_date_parse(self):
         """Test basic rfc3339_date_parse output."""
-        self.assertEqual(rfc3339_date_parse('2007-02-03T04:05:06Z'),
-                         datetime.datetime(2007, 2, 3, 4, 5, 6))
+        self.assertEqual(
+            rfc3339_date_parse('2007-02-03T04:05:06Z'),
+            datetime.datetime(2007, 2, 3, 4, 5, 6),
+        )
 
     def test_rfc2616_date(self):
         """Test basic rfc2616_date output."""
-        self.assertEqual(rfc2616_date(datetime.datetime(2007, 2, 3, 4, 5, 6)),
-                         'Sat, 03 Feb 2007 03:05:06 GMT')
+        self.assertEqual(
+            rfc2616_date(datetime.datetime(2007, 2, 3, 4, 5, 6)),
+            'Sat, 03 Feb 2007 03:05:06 GMT',
+        )
 
     def test_rfc2616_date_parse(self):
         """Test basic rfc2616_date_parse output."""
-        self.assertEqual(rfc2616_date_parse('Sat, 03 Feb 2007 03:05:06 GMT'),
-                         datetime.datetime(2007, 2, 3, 4, 5, 6))
+        self.assertEqual(
+            rfc2616_date_parse('Sat, 03 Feb 2007 03:05:06 GMT'),
+            datetime.datetime(2007, 2, 3, 4, 5, 6),
+        )
 
     def test_convert_to_datetime(self):
         """Test convert_to_datetime() and convert_to_date() functionality"""
-        self.assertEqual(convert_to_datetime(datetime.date(2007, 2, 3)),
-                         datetime.datetime(2007, 2, 3, 0, 0))
-        self.assertEqual(convert_to_datetime(datetime.datetime(2007, 2, 3, 13, 14, 15, 16)),
-                         datetime.datetime(2007, 2, 3, 13, 14, 15, 16))
-        self.assertEqual(convert_to_datetime('2007-02-03'), datetime.datetime(2007, 2, 3, 0, 0))
-        self.assertEqual(convert_to_datetime('2007-2-3'), datetime.datetime(2007, 2, 3, 0, 0))
-        self.assertEqual(convert_to_datetime('20070203'), datetime.datetime(2007, 2, 3, 0, 0))
-        self.assertEqual(convert_to_datetime('20070203T131415'), datetime.datetime(2007, 2, 3, 13, 14, 15))
-        self.assertEqual(convert_to_datetime('2007-02-03T13:14:15'),
-                         datetime.datetime(2007, 2, 3, 13, 14, 15))
-        self.assertEqual(convert_to_datetime('2007-02-03T13:14:15.16'),
-                         datetime.datetime(2007, 2, 3, 13, 14, 15, 16))
-        self.assertEqual(convert_to_datetime('2007-02-03 13:14:15'),
-                         datetime.datetime(2007, 2, 3, 13, 14, 15))
-        self.assertEqual(convert_to_datetime('2007-02-03 13:14:15.16'),
-                         datetime.datetime(2007, 2, 3, 13, 14, 15, 16))
-        self.assertEqual(convert_to_datetime('2013-09-03 21:39:09 +0000'),
-                         datetime.datetime(2013, 9, 3, 21, 39, 9))
-        self.assertEqual(convert_to_datetime('2013-12-03 13:14'),
-                         datetime.datetime(2013, 12, 3, 13, 14, 0, 0))
+        self.assertEqual(
+            convert_to_datetime(datetime.date(2007, 2, 3)),
+            datetime.datetime(2007, 2, 3, 0, 0),
+        )
+        self.assertEqual(
+            convert_to_datetime(datetime.datetime(2007, 2, 3, 13, 14, 15, 16)),
+            datetime.datetime(2007, 2, 3, 13, 14, 15, 16),
+        )
+        self.assertEqual(
+            convert_to_datetime('2007-02-03'), datetime.datetime(2007, 2, 3, 0, 0)
+        )
+        self.assertEqual(
+            convert_to_datetime('2007-2-3'), datetime.datetime(2007, 2, 3, 0, 0)
+        )
+        self.assertEqual(
+            convert_to_datetime('20070203'), datetime.datetime(2007, 2, 3, 0, 0)
+        )
+        self.assertEqual(
+            convert_to_datetime('20070203T131415'),
+            datetime.datetime(2007, 2, 3, 13, 14, 15),
+        )
+        self.assertEqual(
+            convert_to_datetime('2007-02-03T13:14:15'),
+            datetime.datetime(2007, 2, 3, 13, 14, 15),
+        )
+        self.assertEqual(
+            convert_to_datetime('2007-02-03T13:14:15.16'),
+            datetime.datetime(2007, 2, 3, 13, 14, 15, 16),
+        )
+        self.assertEqual(
+            convert_to_datetime('2007-02-03 13:14:15'),
+            datetime.datetime(2007, 2, 3, 13, 14, 15),
+        )
+        self.assertEqual(
+            convert_to_datetime('2007-02-03 13:14:15.16'),
+            datetime.datetime(2007, 2, 3, 13, 14, 15, 16),
+        )
+        self.assertEqual(
+            convert_to_datetime('2013-09-03 21:39:09 +0000'),
+            datetime.datetime(2013, 9, 3, 21, 39, 9),
+        )
+        self.assertEqual(
+            convert_to_datetime('2013-12-03 13:14'),
+            datetime.datetime(2013, 12, 3, 13, 14, 0, 0),
+        )
 
 
 class _WeekspanTestCase(unittest.TestCase):
@@ -549,7 +691,9 @@ class _WeekspanTestCase(unittest.TestCase):
         start_date, end_date = get_weekspan(date)
         self.assertEqual(start_date.isoweekday(), 1)
         self.assertEqual(end_date.isoweekday(), 7)
-        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+        self.assertTrue(
+            start_date.toordinal() <= date.toordinal() <= end_date.toordinal()
+        )
 
     def test_tuesday(self):
         """get_weekspan for a tuesday"""
@@ -558,7 +702,9 @@ class _WeekspanTestCase(unittest.TestCase):
         start_date, end_date = get_weekspan(date)
         self.assertEqual(start_date.isoweekday(), 1)
         self.assertEqual(end_date.isoweekday(), 7)
-        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+        self.assertTrue(
+            start_date.toordinal() <= date.toordinal() <= end_date.toordinal()
+        )
 
     def test_wednesday(self):
         """get_weekspan for a wednesday"""
@@ -567,7 +713,9 @@ class _WeekspanTestCase(unittest.TestCase):
         start_date, end_date = get_weekspan(date)
         self.assertEqual(start_date.isoweekday(), 1)
         self.assertEqual(end_date.isoweekday(), 7)
-        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+        self.assertTrue(
+            start_date.toordinal() <= date.toordinal() <= end_date.toordinal()
+        )
 
     def test_thursday(self):
         """get_weekspan for a thursday"""
@@ -576,7 +724,9 @@ class _WeekspanTestCase(unittest.TestCase):
         start_date, end_date = get_weekspan(date)
         self.assertEqual(start_date.isoweekday(), 1)
         self.assertEqual(end_date.isoweekday(), 7)
-        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+        self.assertTrue(
+            start_date.toordinal() <= date.toordinal() <= end_date.toordinal()
+        )
 
     def test_friday(self):
         """get_weekspan for a friday"""
@@ -585,7 +735,9 @@ class _WeekspanTestCase(unittest.TestCase):
         start_date, end_date = get_weekspan(date)
         self.assertEqual(start_date.isoweekday(), 1)
         self.assertEqual(end_date.isoweekday(), 7)
-        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+        self.assertTrue(
+            start_date.toordinal() <= date.toordinal() <= end_date.toordinal()
+        )
 
     def test_saturday(self):
         """get_weekspan for a saturday"""
@@ -594,7 +746,9 @@ class _WeekspanTestCase(unittest.TestCase):
         start_date, end_date = get_weekspan(date)
         self.assertEqual(start_date.isoweekday(), 1)
         self.assertEqual(end_date.isoweekday(), 7)
-        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+        self.assertTrue(
+            start_date.toordinal() <= date.toordinal() <= end_date.toordinal()
+        )
 
     def test_sunday(self):
         """get_weekspan for a sunday"""
@@ -603,7 +757,9 @@ class _WeekspanTestCase(unittest.TestCase):
         start_date, end_date = get_weekspan(date)
         self.assertEqual(start_date.isoweekday(), 1)
         self.assertEqual(end_date.isoweekday(), 7)
-        self.assertTrue(start_date.toordinal() <= date.toordinal() <= end_date.toordinal())
+        self.assertTrue(
+            start_date.toordinal() <= date.toordinal() <= end_date.toordinal()
+        )
 
 
 class _MonthSpanTestCase(unittest.TestCase):
@@ -739,7 +895,6 @@ class _QuarterspanTestCase(unittest.TestCase):
 
     def test_all(self):
         """Tests the whole year"""
-
         # year = 1980  #unused
         date = datetime.date(1980, 1, 1)
         while date < datetime.date(1981, 1, 1):
@@ -750,7 +905,10 @@ class _QuarterspanTestCase(unittest.TestCase):
             elif date.month <= 9:
                 mindate, maxdate = datetime.date(1980, 7, 1), datetime.date(1980, 9, 30)
             else:
-                mindate, maxdate = datetime.date(1980, 10, 1), datetime.date(1980, 12, 31)
+                mindate, maxdate = (
+                    datetime.date(1980, 10, 1),
+                    datetime.date(1980, 12, 31),
+                )
 
             startdate, enddate = get_quarterspan(date)
             self.assertTrue(startdate >= mindate)
@@ -766,7 +924,6 @@ class _TertialspanTestCase(unittest.TestCase):
 
     def test_all(self):
         """Tests the whole year"""
-
         date = datetime.date(1980, 1, 1)
         while date < datetime.date(1981, 1, 1):
             if date.month <= 4:
@@ -774,7 +931,10 @@ class _TertialspanTestCase(unittest.TestCase):
             elif date.month <= 8:
                 mindate, maxdate = datetime.date(1980, 5, 1), datetime.date(1980, 8, 31)
             else:
-                mindate, maxdate = datetime.date(1980, 9, 1), datetime.date(1980, 12, 31)
+                mindate, maxdate = (
+                    datetime.date(1980, 9, 1),
+                    datetime.date(1980, 12, 31),
+                )
 
             startdate, enddate = get_tertialspan(date)
             self.assertTrue(startdate >= mindate)
@@ -786,7 +946,9 @@ class _TertialspanTestCase(unittest.TestCase):
 
 
 class _WorkdayTests(unittest.TestCase):
-    """Testcases for workdays module. Calendar hint:
+    """Testcases for workdays module.
+
+    Calendar hint::
         November 2006         December 2006          January 2007
      S  M Tu  W Th  F  S   S  M Tu  W Th  F  S   S  M Tu  W Th  F  S
               1  2  3  4                  1  2      1  2  3  4  5  6
@@ -801,26 +963,26 @@ class _WorkdayTests(unittest.TestCase):
         """Simple minded tests for workdays()."""
         date = datetime.date
 
-        self.assertEqual(0, workdays(date(2007, 1, 25), date(2007, 1, 25)))    # Th - Th
-        self.assertEqual(1, workdays(date(2007, 1, 25), date(2007, 1, 26)))    # Th - Fr
-        self.assertEqual(2, workdays(date(2007, 1, 25), date(2007, 1, 27)))    # Th - Sa
-        self.assertEqual(1, workdays(date(2007, 1, 26), date(2007, 1, 27)))    # Fr - Sa
-        self.assertEqual(1, workdays(date(2007, 1, 26), date(2007, 1, 28)))    # Fr - Su
-        self.assertEqual(1, workdays(date(2007, 1, 26), date(2007, 1, 29)))    # Fr - Mo
-        self.assertEqual(0, workdays(date(2007, 1, 28), date(2007, 1, 29)))    # Su - Mo
-        self.assertEqual(2, workdays(date(2007, 1, 26), date(2007, 1, 30)))    # Fr - Tu
-        self.assertEqual(1, workdays(date(2007, 1, 28), date(2007, 1, 30)))    # Su - Tu
+        self.assertEqual(0, workdays(date(2007, 1, 25), date(2007, 1, 25)))  # Th - Th
+        self.assertEqual(1, workdays(date(2007, 1, 25), date(2007, 1, 26)))  # Th - Fr
+        self.assertEqual(2, workdays(date(2007, 1, 25), date(2007, 1, 27)))  # Th - Sa
+        self.assertEqual(1, workdays(date(2007, 1, 26), date(2007, 1, 27)))  # Fr - Sa
+        self.assertEqual(1, workdays(date(2007, 1, 26), date(2007, 1, 28)))  # Fr - Su
+        self.assertEqual(1, workdays(date(2007, 1, 26), date(2007, 1, 29)))  # Fr - Mo
+        self.assertEqual(0, workdays(date(2007, 1, 28), date(2007, 1, 29)))  # Su - Mo
+        self.assertEqual(2, workdays(date(2007, 1, 26), date(2007, 1, 30)))  # Fr - Tu
+        self.assertEqual(1, workdays(date(2007, 1, 28), date(2007, 1, 30)))  # Su - Tu
 
-        self.assertEqual(0, workdays(date(2007, 1, 26), date(2007, 1, 26)))    # Fr - Fr
-        self.assertEqual(1, workdays(date(2007, 1, 26), date(2007, 1, 27)))    # Fr - Sa
-        self.assertEqual(1, workdays(date(2007, 1, 26), date(2007, 1, 28)))    # Fr - Su
-        self.assertEqual(0, workdays(date(2007, 1, 27), date(2007, 1, 28)))    # Sa - So
-        self.assertEqual(0, workdays(date(2007, 1, 27), date(2007, 1, 29)))    # Sa - Mo
-        self.assertEqual(1, workdays(date(2007, 1, 27), date(2007, 1, 30)))    # Fr - Tu
+        self.assertEqual(0, workdays(date(2007, 1, 26), date(2007, 1, 26)))  # Fr - Fr
+        self.assertEqual(1, workdays(date(2007, 1, 26), date(2007, 1, 27)))  # Fr - Sa
+        self.assertEqual(1, workdays(date(2007, 1, 26), date(2007, 1, 28)))  # Fr - Su
+        self.assertEqual(0, workdays(date(2007, 1, 27), date(2007, 1, 28)))  # Sa - So
+        self.assertEqual(0, workdays(date(2007, 1, 27), date(2007, 1, 29)))  # Sa - Mo
+        self.assertEqual(1, workdays(date(2007, 1, 27), date(2007, 1, 30)))  # Fr - Tu
 
         self.assertEqual(0, workdays(date(2006, 11, 29), date(2006, 11, 29)))  # We - We
         self.assertEqual(1, workdays(date(2006, 11, 29), date(2006, 11, 30)))  # We - Th
-        self.assertEqual(1, workdays(date(2006, 11, 30), date(2006, 12, 1)))   # Th - Fr
+        self.assertEqual(1, workdays(date(2006, 11, 30), date(2006, 12, 1)))  # Th - Fr
         self.assertEqual(5, workdays(date(2006, 12, 12), date(2006, 12, 19)))  # Tu - Tu
         self.assertEqual(0, workdays(date(2006, 11, 20), date(2006, 11, 20)))
         self.assertEqual(1, workdays(date(2006, 11, 20), date(2006, 11, 21)))
@@ -843,29 +1005,63 @@ class _WorkdayTests(unittest.TestCase):
         self.assertEqual(260, workdays(date(2007, 1, 1), date(2007, 12, 31)))
         self.assertEqual(261, workdays(date(2008, 1, 1), date(2008, 12, 31)))
         self.assertEqual(260 + 260, workdays(date(2005, 1, 1), date(2006, 12, 31)))
-        self.assertEqual(260 + 260 + 260, workdays(date(2005, 1, 1), date(2007, 12, 31)))
-        self.assertEqual(260 + 260 + 260, workdays(datetime.datetime(2005, 1, 1),
-                                                   datetime.datetime(2007, 12, 31)))
+        self.assertEqual(
+            260 + 260 + 260, workdays(date(2005, 1, 1), date(2007, 12, 31))
+        )
+        self.assertEqual(
+            260 + 260 + 260,
+            workdays(datetime.datetime(2005, 1, 1), datetime.datetime(2007, 12, 31)),
+        )
 
     def test_workdays_german(self):
         """Simple minded tests for workdays_german()."""
         date = datetime.date
-        self.assertEqual(0, workdays_german(date(2007, 1, 25), date(2007, 1, 25)))  # Th - Th
-        self.assertEqual(1, workdays_german(date(2007, 1, 25), date(2007, 1, 26)))  # Th - Fr
-        self.assertEqual(2, workdays_german(date(2007, 1, 25), date(2007, 1, 27)))  # Th - Sa
-        self.assertEqual(1, workdays_german(date(2007, 1, 26), date(2007, 1, 27)))  # Fr - Sa
-        self.assertEqual(1, workdays_german(date(2007, 1, 26), date(2007, 1, 28)))  # Fr - Su
-        self.assertEqual(1, workdays_german(date(2007, 1, 26), date(2007, 1, 29)))  # Fr - Mo
-        self.assertEqual(0, workdays_german(date(2007, 1, 28), date(2007, 1, 29)))  # Su - Mo
-        self.assertEqual(2, workdays_german(date(2007, 1, 26), date(2007, 1, 30)))  # Fr - Tu
-        self.assertEqual(1, workdays_german(date(2007, 1, 28), date(2007, 1, 30)))  # Su - Tu
+        self.assertEqual(
+            0, workdays_german(date(2007, 1, 25), date(2007, 1, 25))
+        )  # Th - Th
+        self.assertEqual(
+            1, workdays_german(date(2007, 1, 25), date(2007, 1, 26))
+        )  # Th - Fr
+        self.assertEqual(
+            2, workdays_german(date(2007, 1, 25), date(2007, 1, 27))
+        )  # Th - Sa
+        self.assertEqual(
+            1, workdays_german(date(2007, 1, 26), date(2007, 1, 27))
+        )  # Fr - Sa
+        self.assertEqual(
+            1, workdays_german(date(2007, 1, 26), date(2007, 1, 28))
+        )  # Fr - Su
+        self.assertEqual(
+            1, workdays_german(date(2007, 1, 26), date(2007, 1, 29))
+        )  # Fr - Mo
+        self.assertEqual(
+            0, workdays_german(date(2007, 1, 28), date(2007, 1, 29))
+        )  # Su - Mo
+        self.assertEqual(
+            2, workdays_german(date(2007, 1, 26), date(2007, 1, 30))
+        )  # Fr - Tu
+        self.assertEqual(
+            1, workdays_german(date(2007, 1, 28), date(2007, 1, 30))
+        )  # Su - Tu
 
-        self.assertEqual(0, workdays_german(date(2007, 1, 26), date(2007, 1, 26)))  # Fr - Fr
-        self.assertEqual(1, workdays_german(date(2007, 1, 26), date(2007, 1, 27)))  # Fr - Sa
-        self.assertEqual(1, workdays_german(date(2007, 1, 26), date(2007, 1, 28)))  # Fr - Su
-        self.assertEqual(0, workdays_german(date(2007, 1, 27), date(2007, 1, 28)))  # Sa - So
-        self.assertEqual(0, workdays_german(date(2007, 1, 27), date(2007, 1, 29)))  # Sa - Mo
-        self.assertEqual(1, workdays_german(date(2007, 1, 27), date(2007, 1, 30)))  # Fr - Tu
+        self.assertEqual(
+            0, workdays_german(date(2007, 1, 26), date(2007, 1, 26))
+        )  # Fr - Fr
+        self.assertEqual(
+            1, workdays_german(date(2007, 1, 26), date(2007, 1, 27))
+        )  # Fr - Sa
+        self.assertEqual(
+            1, workdays_german(date(2007, 1, 26), date(2007, 1, 28))
+        )  # Fr - Su
+        self.assertEqual(
+            0, workdays_german(date(2007, 1, 27), date(2007, 1, 28))
+        )  # Sa - So
+        self.assertEqual(
+            0, workdays_german(date(2007, 1, 27), date(2007, 1, 29))
+        )  # Sa - Mo
+        self.assertEqual(
+            1, workdays_german(date(2007, 1, 27), date(2007, 1, 30))
+        )  # Fr - Tu
 
         self.assertEqual(3, workdays_german(date(2006, 12, 25), date(2007, 1, 1)))
         self.assertEqual(1, workdays_german(date(2007, 2, 2), date(2007, 2, 5)))
@@ -876,25 +1072,48 @@ class _WorkdayTests(unittest.TestCase):
         # Christi Himmelfahrt
         self.assertEqual(1, workdays_german(date(2007, 5, 16), date(2007, 5, 17)))
         self.assertEqual(1, workdays_german(date(2007, 5, 16), date(2007, 5, 18)))
-        self.assertEqual(1, workdays_german(datetime.datetime(2007, 5, 16), datetime.datetime(2007, 5, 18)))
+        self.assertEqual(
+            1,
+            workdays_german(
+                datetime.datetime(2007, 5, 16), datetime.datetime(2007, 5, 18)
+            ),
+        )
         # Pfingsten
-        self.assertEqual(1, workdays_german(date(2007, 5, 24), date(2007, 5, 25)))  # Th - Fr
-        self.assertEqual(1, workdays_german(date(2007, 5, 25), date(2007, 5, 26)))  # Fr - Sa
-        self.assertEqual(1, workdays_german(date(2007, 5, 25), date(2007, 5, 27)))  # Fr - So
-        self.assertEqual(1, workdays_german(date(2007, 5, 25), date(2007, 5, 28)))  # Fr - Mo
-        self.assertEqual(1, workdays_german(date(2007, 5, 25), date(2007, 5, 29)))  # Fr - Tu
+        self.assertEqual(
+            1, workdays_german(date(2007, 5, 24), date(2007, 5, 25))
+        )  # Th - Fr
+        self.assertEqual(
+            1, workdays_german(date(2007, 5, 25), date(2007, 5, 26))
+        )  # Fr - Sa
+        self.assertEqual(
+            1, workdays_german(date(2007, 5, 25), date(2007, 5, 27))
+        )  # Fr - So
+        self.assertEqual(
+            1, workdays_german(date(2007, 5, 25), date(2007, 5, 28))
+        )  # Fr - Mo
+        self.assertEqual(
+            1, workdays_german(date(2007, 5, 25), date(2007, 5, 29))
+        )  # Fr - Tu
         # Christi Himmelfahrt
         self.assertEqual(1, workdays_german(date(2007, 6, 6), date(2007, 6, 7)))
         self.assertEqual(1, workdays_german(date(2007, 6, 6), date(2007, 6, 8)))
-        self.assertEqual(252 + 250, workdays_german(date(2005, 1, 1), date(2006, 12, 31)))
-        self.assertEqual(252 + 250 + 249, workdays_german(date(2005, 1, 1), date(2007, 12, 31)))
+        self.assertEqual(
+            252 + 250, workdays_german(date(2005, 1, 1), date(2006, 12, 31))
+        )
+        self.assertEqual(
+            252 + 250 + 249, workdays_german(date(2005, 1, 1), date(2007, 12, 31))
+        )
 
-        self.assertEqual(252 + 250 + 249, workdays_german(datetime.datetime(2005, 1, 1),
-                                                          datetime.datetime(2007, 12, 31)))
+        self.assertEqual(
+            252 + 250 + 249,
+            workdays_german(
+                datetime.datetime(2005, 1, 1), datetime.datetime(2007, 12, 31)
+            ),
+        )
 
     def test_is_workday_german(self):
         self.assertTrue(is_workday_german(datetime.date(2011, 4, 21)))  # Gründonnerstag
-        self.assertFalse(is_workday_german(datetime.date(2011, 4, 22)))   # karfreitag
+        self.assertFalse(is_workday_german(datetime.date(2011, 4, 22)))  # karfreitag
 
         self.assertTrue(is_workday_german(datetime.datetime(2011, 4, 21, 0, 0)))
         self.assertFalse(is_workday_german(datetime.datetime(2011, 4, 22, 0, 0)))
@@ -902,16 +1121,33 @@ class _WorkdayTests(unittest.TestCase):
     def test_next_workday_german(self):
         """Simple minded tests for next_workday_german()."""
         date = datetime.date
-        self.assertEqual(date(2007, 5, 21), next_workday_german(date(2007, 5, 18)))  # Fr
-        self.assertEqual(date(2007, 5, 22), next_workday_german(date(2007, 5, 21)))  # Mo
-        self.assertEqual(date(2007, 5, 25), next_workday_german(date(2007, 5, 24)))  # Th
+        self.assertEqual(
+            date(2007, 5, 21), next_workday_german(date(2007, 5, 18))
+        )  # Fr
+        self.assertEqual(
+            date(2007, 5, 22), next_workday_german(date(2007, 5, 21))
+        )  # Mo
+        self.assertEqual(
+            date(2007, 5, 25), next_workday_german(date(2007, 5, 24))
+        )  # Th
         # Pfingsten
-        self.assertEqual(date(2007, 5, 29), next_workday_german(date(2007, 5, 25)))  # Fr
-        self.assertEqual(date(2007, 5, 29), next_workday_german(date(2007, 5, 26)))  # Sa
-        self.assertEqual(date(2007, 5, 29), next_workday_german(date(2007, 5, 27)))  # Su
-        self.assertEqual(date(2007, 5, 29), next_workday_german(date(2007, 5, 28)))  # Mo ( Holiday)
+        self.assertEqual(
+            date(2007, 5, 29), next_workday_german(date(2007, 5, 25))
+        )  # Fr
+        self.assertEqual(
+            date(2007, 5, 29), next_workday_german(date(2007, 5, 26))
+        )  # Sa
+        self.assertEqual(
+            date(2007, 5, 29), next_workday_german(date(2007, 5, 27))
+        )  # Su
+        self.assertEqual(
+            date(2007, 5, 29), next_workday_german(date(2007, 5, 28))
+        )  # Mo ( Holiday)
         self.assertEqual(date(2007, 5, 31), next_workday_german(date(2007, 5, 30)))
-        self.assertEqual(datetime.datetime(2007, 5, 31), next_workday_german(datetime.datetime(2007, 5, 30)))
+        self.assertEqual(
+            datetime.datetime(2007, 5, 31),
+            next_workday_german(datetime.datetime(2007, 5, 30)),
+        )
 
     def test_add_workdays_german(self):
         """Simple minded tests for add_workdays_german,"""
@@ -919,14 +1155,19 @@ class _WorkdayTests(unittest.TestCase):
         self.assertEqual(date(2008, 11, 24), add_workdays_german(date(2008, 11, 24), 0))
         self.assertEqual(date(2008, 11, 25), add_workdays_german(date(2008, 11, 24), 1))
         self.assertEqual(date(2008, 12, 1), add_workdays_german(date(2008, 11, 24), 5))
-        self.assertEqual(date(2008, 11, 21), add_workdays_german(date(2008, 11, 24), -1))
-        self.assertEqual(date(2008, 11, 14), add_workdays_german(date(2008, 11, 24), -6))
-        self.assertEqual(datetime.datetime(2008, 11, 14),
-                         add_workdays_german(datetime.datetime(2008, 11, 24), -6))
+        self.assertEqual(
+            date(2008, 11, 21), add_workdays_german(date(2008, 11, 24), -1)
+        )
+        self.assertEqual(
+            date(2008, 11, 14), add_workdays_german(date(2008, 11, 24), -6)
+        )
+        self.assertEqual(
+            datetime.datetime(2008, 11, 14),
+            add_workdays_german(datetime.datetime(2008, 11, 24), -6),
+        )
 
 
 class _ApiTests(unittest.TestCase):
-
     def test_defaults(self):
         """Test rfc3339_date defaults"""
         rfc3339_date()
@@ -937,99 +1178,190 @@ class _DateTruncTestCase(unittest.TestCase):
     """Unittests for date_trunc"""
 
     def test_truncate_year(self):
-        self.assertEqual(date_trunc('year', datetime.datetime(1980, 5, 4)), datetime.datetime(1980, 1, 1))
-        self.assertEqual(date_trunc('year', datetime.datetime(1980, 5, 4)).date(), datetime.date(1980, 1, 1))
-        self.assertEqual(date_trunc('year', datetime.date(1980, 5, 4)),
-                         datetime.date(1980, 1, 1,))
-        self.assertEqual(date_trunc('year', datetime.date(1980, 5, 4)), datetime.date(1980, 1, 1))
+        self.assertEqual(
+            date_trunc('year', datetime.datetime(1980, 5, 4)),
+            datetime.datetime(1980, 1, 1),
+        )
+        self.assertEqual(
+            date_trunc('year', datetime.datetime(1980, 5, 4)).date(),
+            datetime.date(1980, 1, 1),
+        )
+        self.assertEqual(
+            date_trunc('year', datetime.date(1980, 5, 4)), datetime.date(1980, 1, 1)
+        )
+        self.assertEqual(
+            date_trunc('year', datetime.date(1980, 5, 4)), datetime.date(1980, 1, 1)
+        )
 
     def test_truncate_tertial(self):
-        self.assertEqual(date_trunc('tertial', datetime.datetime(2011, 4, 30)), datetime.datetime(2011, 1, 1))
-        self.assertEqual(date_trunc('tertial', datetime.datetime(2011, 4, 30)).date(),
-                         datetime.date(2011, 1, 1))
-        self.assertEqual(date_trunc('tertial', datetime.date(2011, 5, 1)),
-                         datetime.date(2011, 5, 1))
-        self.assertEqual(date_trunc('tertial', datetime.date(2011, 8, 31)), datetime.date(2011, 5, 1))
-        self.assertEqual(date_trunc('tertial', datetime.date(2011, 9, 1)), datetime.date(2011, 9, 1))
+        self.assertEqual(
+            date_trunc('tertial', datetime.datetime(2011, 4, 30)),
+            datetime.datetime(2011, 1, 1),
+        )
+        self.assertEqual(
+            date_trunc('tertial', datetime.datetime(2011, 4, 30)).date(),
+            datetime.date(2011, 1, 1),
+        )
+        self.assertEqual(
+            date_trunc('tertial', datetime.date(2011, 5, 1)), datetime.date(2011, 5, 1)
+        )
+        self.assertEqual(
+            date_trunc('tertial', datetime.date(2011, 8, 31)), datetime.date(2011, 5, 1)
+        )
+        self.assertEqual(
+            date_trunc('tertial', datetime.date(2011, 9, 1)), datetime.date(2011, 9, 1)
+        )
 
     def test_truncate_quarter(self):
-        self.assertEqual(date_trunc('quarter', datetime.datetime(1945, 2, 19)), datetime.datetime(1945, 1, 1))
-        self.assertEqual(date_trunc('quarter', datetime.datetime(1945, 2, 19)).date(),
-                         datetime.date(1945, 1, 1))
-        self.assertEqual(date_trunc('quarter', datetime.date(1945, 2, 19)),
-                         datetime.date(1945, 1, 1))
-        self.assertEqual(date_trunc('quarter', datetime.date(1945, 2, 19)), datetime.date(1945, 1, 1))
+        self.assertEqual(
+            date_trunc('quarter', datetime.datetime(1945, 2, 19)),
+            datetime.datetime(1945, 1, 1),
+        )
+        self.assertEqual(
+            date_trunc('quarter', datetime.datetime(1945, 2, 19)).date(),
+            datetime.date(1945, 1, 1),
+        )
+        self.assertEqual(
+            date_trunc('quarter', datetime.date(1945, 2, 19)), datetime.date(1945, 1, 1)
+        )
+        self.assertEqual(
+            date_trunc('quarter', datetime.date(1945, 2, 19)), datetime.date(1945, 1, 1)
+        )
 
-        self.assertEqual(date_trunc('quarter', datetime.datetime(1980, 5, 4)), datetime.datetime(1980, 4, 1))
-        self.assertEqual(date_trunc('quarter', datetime.datetime(1980, 5, 4)).date(),
-                         datetime.date(1980, 4, 1))
-        self.assertEqual(date_trunc('quarter', datetime.date(1980, 5, 4)),
-                         datetime.date(1980, 4, 1))
-        self.assertEqual(date_trunc('quarter', datetime.date(1980, 5, 4)), datetime.date(1980, 4, 1))
+        self.assertEqual(
+            date_trunc('quarter', datetime.datetime(1980, 5, 4)),
+            datetime.datetime(1980, 4, 1),
+        )
+        self.assertEqual(
+            date_trunc('quarter', datetime.datetime(1980, 5, 4)).date(),
+            datetime.date(1980, 4, 1),
+        )
+        self.assertEqual(
+            date_trunc('quarter', datetime.date(1980, 5, 4)), datetime.date(1980, 4, 1)
+        )
+        self.assertEqual(
+            date_trunc('quarter', datetime.date(1980, 5, 4)), datetime.date(1980, 4, 1)
+        )
 
-        self.assertEqual(date_trunc('quarter', datetime.datetime(1951, 7, 22)), datetime.datetime(1951, 7, 1))
-        self.assertEqual(date_trunc('quarter', datetime.datetime(1951, 7, 22)).date(),
-                         datetime.date(1951, 7, 1))
-        self.assertEqual(date_trunc('quarter', datetime.date(1951, 7, 22)),
-                         datetime.date(1951, 7, 1))
-        self.assertEqual(date_trunc('quarter', datetime.date(1951, 7, 22)), datetime.date(1951, 7, 1))
+        self.assertEqual(
+            date_trunc('quarter', datetime.datetime(1951, 7, 22)),
+            datetime.datetime(1951, 7, 1),
+        )
+        self.assertEqual(
+            date_trunc('quarter', datetime.datetime(1951, 7, 22)).date(),
+            datetime.date(1951, 7, 1),
+        )
+        self.assertEqual(
+            date_trunc('quarter', datetime.date(1951, 7, 22)), datetime.date(1951, 7, 1)
+        )
+        self.assertEqual(
+            date_trunc('quarter', datetime.date(1951, 7, 22)), datetime.date(1951, 7, 1)
+        )
 
-        self.assertEqual(date_trunc('quarter', datetime.datetime(2000, 12, 31)),
-                         datetime.datetime(2000, 10, 1))
-        self.assertEqual(date_trunc('quarter', datetime.datetime(2000, 12, 31)).date(),
-                         datetime.date(2000, 10, 1))
-        self.assertEqual(date_trunc('quarter', datetime.date(2000, 12, 31)),
-                         datetime.date(2000, 10, 1))
-        self.assertEqual(date_trunc('quarter', datetime.date(2000, 12, 31)), datetime.date(2000, 10, 1))
+        self.assertEqual(
+            date_trunc('quarter', datetime.datetime(2000, 12, 31)),
+            datetime.datetime(2000, 10, 1),
+        )
+        self.assertEqual(
+            date_trunc('quarter', datetime.datetime(2000, 12, 31)).date(),
+            datetime.date(2000, 10, 1),
+        )
+        self.assertEqual(
+            date_trunc('quarter', datetime.date(2000, 12, 31)),
+            datetime.date(2000, 10, 1),
+        )
+        self.assertEqual(
+            date_trunc('quarter', datetime.date(2000, 12, 31)),
+            datetime.date(2000, 10, 1),
+        )
 
     def test_truncate_month(self):
-        self.assertEqual(date_trunc('month', datetime.datetime(1978, 6, 12)), datetime.datetime(1978, 6, 1))
-        self.assertEqual(date_trunc('month', datetime.datetime(1978, 6, 12)).date(),
-                         datetime.date(1978, 6, 1))
-        self.assertEqual(date_trunc('month', datetime.date(1978, 6, 12)),
-                         datetime.date(1978, 6, 1))
-        self.assertEqual(date_trunc('month', datetime.date(1978, 6, 12)), datetime.date(1978, 6, 1))
+        self.assertEqual(
+            date_trunc('month', datetime.datetime(1978, 6, 12)),
+            datetime.datetime(1978, 6, 1),
+        )
+        self.assertEqual(
+            date_trunc('month', datetime.datetime(1978, 6, 12)).date(),
+            datetime.date(1978, 6, 1),
+        )
+        self.assertEqual(
+            date_trunc('month', datetime.date(1978, 6, 12)), datetime.date(1978, 6, 1)
+        )
+        self.assertEqual(
+            date_trunc('month', datetime.date(1978, 6, 12)), datetime.date(1978, 6, 1)
+        )
 
     def test_truncate_week(self):
-        self.assertEqual(date_trunc('week', datetime.datetime(2000, 1, 1)), datetime.datetime(1999, 12, 27))
-        self.assertEqual(date_trunc('week', datetime.datetime(2000, 1, 1)).date(),
-                         datetime.date(1999, 12, 27))
-        self.assertEqual(date_trunc('week', datetime.date(2000, 1, 1)),
-                         datetime.date(1999, 12, 27))
-        self.assertEqual(date_trunc('week', datetime.date(2000, 1, 1)), datetime.date(1999, 12, 27))
+        self.assertEqual(
+            date_trunc('week', datetime.datetime(2000, 1, 1)),
+            datetime.datetime(1999, 12, 27),
+        )
+        self.assertEqual(
+            date_trunc('week', datetime.datetime(2000, 1, 1)).date(),
+            datetime.date(1999, 12, 27),
+        )
+        self.assertEqual(
+            date_trunc('week', datetime.date(2000, 1, 1)), datetime.date(1999, 12, 27)
+        )
+        self.assertEqual(
+            date_trunc('week', datetime.date(2000, 1, 1)), datetime.date(1999, 12, 27)
+        )
 
     def test_truncate_day(self):
-        self.assertEqual(date_trunc('day', datetime.datetime(2006, 2, 25, 23, 17, 40)),
-                         datetime.datetime(2006, 2, 25))
-        self.assertEqual(date_trunc('day', datetime.datetime(2006, 2, 25)), datetime.datetime(2006, 2, 25))
-        self.assertEqual(date_trunc('day', datetime.date(2006, 2, 25)),
-                         datetime.date(2006, 2, 25))
-        self.assertEqual(date_trunc('day', datetime.date(2006, 2, 25)), datetime.date(2006, 2, 25))
+        self.assertEqual(
+            date_trunc('day', datetime.datetime(2006, 2, 25, 23, 17, 40)),
+            datetime.datetime(2006, 2, 25),
+        )
+        self.assertEqual(
+            date_trunc('day', datetime.datetime(2006, 2, 25)),
+            datetime.datetime(2006, 2, 25),
+        )
+        self.assertEqual(
+            date_trunc('day', datetime.date(2006, 2, 25)), datetime.date(2006, 2, 25)
+        )
+        self.assertEqual(
+            date_trunc('day', datetime.date(2006, 2, 25)), datetime.date(2006, 2, 25)
+        )
 
     def test_truncate_hour(self):
-        self.assertEqual(date_trunc('hour', datetime.datetime(2006, 2, 25, 23, 17, 40), ),
-                         datetime.datetime(2006, 2, 25, 23))
-        self.assertEqual(date_trunc('hour', datetime.datetime(2006, 2, 25, 23, 17, 40)),
-                         datetime.datetime(2006, 2, 25, 23, 0, 0))
-        self.assertEqual(date_trunc('hour', datetime.date(2006, 2, 25)),
-                         datetime.date(2006, 2, 25))
-        self.assertEqual(date_trunc('hour', datetime.date(2006, 2, 25)), datetime.date(2006, 2, 25))
+        self.assertEqual(
+            date_trunc('hour', datetime.datetime(2006, 2, 25, 23, 17, 40)),
+            datetime.datetime(2006, 2, 25, 23),
+        )
+        self.assertEqual(
+            date_trunc('hour', datetime.datetime(2006, 2, 25, 23, 17, 40)),
+            datetime.datetime(2006, 2, 25, 23, 0, 0),
+        )
+        self.assertEqual(
+            date_trunc('hour', datetime.date(2006, 2, 25)), datetime.date(2006, 2, 25)
+        )
+        self.assertEqual(
+            date_trunc('hour', datetime.date(2006, 2, 25)), datetime.date(2006, 2, 25)
+        )
 
     def test_truncate_minute(self):
-        self.assertEqual(date_trunc('minute', datetime.datetime(2006, 2, 25, 23, 17, 40)),
-                         datetime.datetime(2006, 2, 25, 23, 17, 0))
-        self.assertEqual(date_trunc('minute', datetime.date(2006, 2, 25)),
-                         datetime.date(2006, 2, 25))
-        self.assertEqual(date_trunc('minute', datetime.date(2006, 2, 25)),
-                         datetime.date(2006, 2, 25))
+        self.assertEqual(
+            date_trunc('minute', datetime.datetime(2006, 2, 25, 23, 17, 40)),
+            datetime.datetime(2006, 2, 25, 23, 17, 0),
+        )
+        self.assertEqual(
+            date_trunc('minute', datetime.date(2006, 2, 25)), datetime.date(2006, 2, 25)
+        )
+        self.assertEqual(
+            date_trunc('minute', datetime.date(2006, 2, 25)), datetime.date(2006, 2, 25)
+        )
 
     def test_truncate_second(self):
-        self.assertEqual(date_trunc('second', datetime.datetime(2006, 2, 25, 23, 17, 40)),
-                         datetime.datetime(2006, 2, 25, 23, 17, 40))
-        self.assertEqual(date_trunc('second', datetime.date(2006, 2, 25)),
-                         datetime.date(2006, 2, 25))
-        self.assertEqual(date_trunc('second', datetime.date(2006, 2, 25)),
-                         datetime.date(2006, 2, 25))
+        self.assertEqual(
+            date_trunc('second', datetime.datetime(2006, 2, 25, 23, 17, 40)),
+            datetime.datetime(2006, 2, 25, 23, 17, 40),
+        )
+        self.assertEqual(
+            date_trunc('second', datetime.date(2006, 2, 25)), datetime.date(2006, 2, 25)
+        )
+        self.assertEqual(
+            date_trunc('second', datetime.date(2006, 2, 25)), datetime.date(2006, 2, 25)
+        )
 
     def test_invalid(self):
         self.assertRaises(ValueError, date_trunc, 'alex', datetime.datetime.now())
