@@ -109,8 +109,6 @@ logging.getLogger('raven').setLevel(logging.WARNING)
 # Could also use the dictionary directly:
 # logging.Logger.manager.loggerDict['requests'].setLevel(logging.CRITICAL)
 
-# TODO: add sentry: https://docs.sentry.io/clients/python/integrations/logging/
-
 # pkg_resources.get_distribution() seems only to work for eggs, not if you use 'vendoring'.
 # But several Google packages use it to get the current package version.
 # Monkey-Patching let's us use these Packages.
@@ -141,10 +139,12 @@ except ImportError:
 # can solve this.
 
 # ensure conflictiong modules are loaded to pull in the Namespace Package
-for modname in ['google.cloud.exceptions']:
+for modname in ['google.cloud.exceptions', 'google.cloud.bigquery']:
     try:
         __import__(modname)
-    except (ImportError, pkg_resources.DistributionNotFound):
+    except ImportError:
+        pass
+    except pkg_resources.DistributionNotFound:
         pass
 
 if 'google' in sys.modules:
