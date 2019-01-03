@@ -21,10 +21,11 @@ uses `appengine_config.py`.
 Created by Maximillian Dornseif on 2017-06-24.
 Copyright (c) 2017, 2018 Maximillian Dornseif. MIT Licensed.
 """
-from __future__ import unicode_literals
-
 # pylint: skip-file
 # flake8: noqa
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import logging
 import os.path
 import sys
@@ -39,27 +40,37 @@ logging.captureWarnings(True)
 
 warnings.simplefilter('always')  # reset filter to see DeprecationWarning
 warnings.filterwarnings('ignore', module='cgitb')
-warnings.filterwarnings('ignore', module='ssl_')  # SNIMissingWarning, InsecurePlatformWarning
+warnings.filterwarnings(
+    'ignore', module='ssl_'
+)  # SNIMissingWarning, InsecurePlatformWarning
 warnings.filterwarnings('ignore', module='pkgutil')
 warnings.filterwarnings('ignore', message='decode_param_names is deprecated')
-warnings.filterwarnings('ignore', message='cgi.parse_qs is deprecated, use urlparse.parse_qs instead')
-warnings.filterwarnings('ignore', message='urllib3 is using URLFetch on Google App Engine sandbox')
-warnings.filterwarnings('ignore', message='Required is going away in WTForms 3.0, use DataRequired')
-warnings.filterwarnings('ignore', message='The TextField alias for StringField has been deprecated')
+warnings.filterwarnings(
+    'ignore', message='cgi.parse_qs is deprecated, use urlparse.parse_qs instead'
+)
+warnings.filterwarnings(
+    'ignore', message='urllib3 is using URLFetch on Google App Engine sandbox'
+)
+warnings.filterwarnings(
+    'ignore', message='Required is going away in WTForms 3.0, use DataRequired'
+)
+warnings.filterwarnings(
+    'ignore', message='The TextField alias for StringField has been deprecated'
+)
 
 # Include libraries
 # `google.appengine.ext.vendor.add` is just `site.addsitedir()` with path shuffling
 
 vendor.add('./lib')  # processes `.pth` files
-vendor.add('./lib/site-packages') # processes `.pth` files
+vendor.add('./lib/site-packages')  # processes `.pth` files
 
 # fixing botocore
 os.path.expanduser = lambda x: x
 
-import google.appengine.api.urlfetch    # isort:skip
-import requests    # isort:skip
-import requests_toolbelt.adapters.appengine    # isort:skip
-import urllib3   # isort:skip
+import google.appengine.api.urlfetch  # isort:skip
+import requests  # isort:skip
+import requests_toolbelt.adapters.appengine  # isort:skip
+import urllib3  # isort:skip
 
 requests_toolbelt.adapters.appengine.monkeypatch(validate_certificate=False)
 # this breaks code like
@@ -110,10 +121,13 @@ try:
 
     def get_distribution_dummy(name):
         """Simulating :func:`pkg_resources.get_distribution`."""
+
         class DummyObj(object):
             """Simulating :class:`pkg_resources.distribution`."""
+
             version = 'unknown'
             parsed_version = 'unknown'
+
         return DummyObj()
 
     pkg_resources.get_distribution = get_distribution_dummy
@@ -127,16 +141,20 @@ except ImportError:
 # can solve this.
 
 # ensure conflictiong modules are loaded to pull in the Namespace Package
-for modname in ['google.cloud.bigquery', 'google.cloud.exceptions']:
+for modname in ['google.cloud.exceptions']:
     try:
         __import__(modname)
-    except pkg_resources.DistributionNotFound:
+    except (ImportError, pkg_resources.DistributionNotFound):
         pass
 
 if 'google' in sys.modules:
     # merge ./lib/google_appengine/google ir so into ./lib/site-packages/google
     google_paths = getattr(sys.modules['google'], '__path__', [])
-    for gaepath in ['../lib/google_appengine', './lib/google_appengine', '/usr/local/google_appengine/']:
+    for gaepath in [
+        '../lib/google_appengine',
+        './lib/google_appengine',
+        '/usr/local/google_appengine/',
+    ]:
         if os.path.exists(gaepath):
             vendored_google_path = os.path.abspath(os.path.join(gaepath, 'google'))
             if vendored_google_path not in google_paths:
