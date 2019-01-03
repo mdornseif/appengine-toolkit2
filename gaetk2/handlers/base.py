@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-gaetk2.handlers.base - default Request Handler for gaetk2.
+"""gaetk2.handlers.base - default Request Handler for gaetk2.
 
 Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2010-2018 HUDORA. All rights reserved.
 """
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import inspect
@@ -40,8 +40,8 @@ try:
 except:
     from gaetk2 import _gaesessions as gaesessions
 
-
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.INFO)
 _jinja_env_cache = None
 
 # Your app usually will extend a `BasicHandler` or `DefaultHandler`
@@ -77,8 +77,6 @@ class BasicHandler(webapp2.RequestHandler):
         session: current session which is based on https://github.com/dound/gae-sessions.
         default_cachingtime (None or int): Class Variable. Which cache headers to generate,
             see :meth:`_set_cache_headers`.
-        debug_hooks (boolean): Class Variable. If set to ``True`` the order in which
-            hooks are called is logged.
 
     Note:
         gaetk2 adds various variables to the template context. Other mixins provide
@@ -127,15 +125,16 @@ class BasicHandler(webapp2.RequestHandler):
     to provide special functionality like in :class:`JsonBasicHandler`.
 
     You are encouraged to study the source code of :class:`BasicHandler`!
+
     """
 
     default_cachingtime = None
-    debug_hooks = False
 
     def __init__(self, *args, **kwargs):
         """Initialize RequestHandler."""
         self.credential = None
         self.session = {}
+        self._last_template_exception = None
         # Careful! `webapp2.RequestHandler` does not call super()!
         super(BasicHandler, self).__init__(*args, **kwargs)
         # ... so we route arround that
@@ -155,6 +154,7 @@ class BasicHandler(webapp2.RequestHandler):
         Example:
                 >>> BasicHandler().abs_url('/foo')
                 'http://server.example.com/foo'
+
         """
         if self.request:
             return urlparse.urljoin(self.request.uri, url)
@@ -172,6 +172,7 @@ class BasicHandler(webapp2.RequestHandler):
 
         Returns:
             boolean: the status of the currently logged in user.
+
         """
         # Google App Engine Administrators
         if users.is_current_user_admin():
@@ -197,6 +198,7 @@ class BasicHandler(webapp2.RequestHandler):
 
         Returns:
             boolean: the status of the currently logged in user is considered internal.
+
         """
         if self.is_sysadmin():
             return True
@@ -219,28 +221,32 @@ class BasicHandler(webapp2.RequestHandler):
             values (dict): variables for template context.
             template_name (str): name of the template to render.
 
-        See also:
+        See Also:
             :meth:`build_context()`also provides data to the template
             context and is often extended by plugins. See
             :class:`BasicHandler` docsting for standard template variables.
+
         """
         start = time.time()
         self._render_to_fd(values, template_name, self.response.out)
         delta = time.time() - start
         if delta > 500:
-            logger.warn('rendering took %d ms', (delta * 1000.0))
+            LOGGER.warn('rendering took %d ms', (delta * 1000.0))
 
-    def return_text(self, text, status=200, content_type='text/plain', encoding='utf-8'):
+    def return_text(
+        self, text, status=200, content_type='text/plain', encoding='utf-8'
+    ):
         """Quick and dirty sending of some plaintext to the client.
 
         Parameters:
-            text (str or unicode): Data to be sent to the cliend. A ``\\n`` is appended.
+            text (str or unicode): Data to be sent to the cliend. A NEWLINE is appended.
             status (int): status code to be sent to the client. Defaults to 200.
             content_type: to be sent to the client in respective header.
             encoding: to be used when sending to the client.
+
         """
         self.response.set_status(status)
-        self.response.headers['Content-Type'] = content_type
+        self.response.headers[b'Content-Type'] = str(content_type)
         if isinstance(text, unicode):
             text = text.encode(encoding)
         self.response.out.write(text)
@@ -258,14 +264,14 @@ class BasicHandler(webapp2.RequestHandler):
             myvalues.update(values)
             return myvalues
         """
-        ret = dict(
-            request=self.request,
-            credential=self.credential,
-            gaetk_logout_url='/gaetk2/auth/logout',
-            gaetk_path=self.request.path,
-            is_staff=self.is_staff(),
-            is_sysadmin=self.is_sysadmin(),
-        )
+        ret = {
+            'request': self.request,
+            'credential': self.credential,
+            'gaetk_logout_url': '/gaetk2/auth/logout',
+            'gaetk_path': self.request.path,
+            'is_staff': self.is_staff(),
+            'is_sysadmin': self.is_sysadmin(),
+        }
         ret.update(values)
         return ret
 
@@ -282,14 +288,16 @@ class BasicHandler(webapp2.RequestHandler):
         """
         if not gaetkconfig.APP_NAME:
             gaetkconfig.APP_NAME = get_application_id().capitalize()
-        env.globals.update(dict(
-            gaetk_production=is_production(),
-            gaetk_development=is_development(),
-            gaetk_release=get_release(),
-            gaetk_app_name=gaetkconfig.APP_NAME,
-            gaetk_sentry_dsn=gaetkconfig.SENTRY_PUBLIC_DSN,
-            gaetk_gae_version=os.environ.get('CURRENT_VERSION_ID', 'dev'),
-        ))
+        env.globals.update(
+            dict(
+                gaetk_production=is_production(),
+                gaetk_development=is_development(),
+                gaetk_release=get_release(),
+                gaetk_app_name=gaetkconfig.APP_NAME,
+                gaetk_sentry_dsn=gaetkconfig.SENTRY_PUBLIC_DSN,
+                gaetk_gae_version=os.environ.get('CURRENT_VERSION_ID', 'dev'),
+            )
+        )
         return env
 
     def debug(self, message, *args):
@@ -306,7 +314,7 @@ class BasicHandler(webapp2.RequestHandler):
             callfile = calframe[1][1].split('/')[-1]
             callfunc = calframe[1][3]
             message = '{} {}(): {}'.format(callfile, callfunc, message)
-            logger.debug(message, *args)
+            LOGGER.debug(message, *args)
             # filename, lineno, function, code_context, index).
 
     # For MixIns:
@@ -350,8 +358,7 @@ class BasicHandler(webapp2.RequestHandler):
     def response_overwrite(self, response, method, *args, **kwargs):
         """Function to transform response. To be overwritten."""
         if hasattr(self, 'response_overwrite_overwrite'):  # hack for JsonMixin
-            return self.response_overwrite_overwrite(
-                response, method, *args, **kwargs)
+            return self.response_overwrite_overwrite(response, method, *args, **kwargs)
         return response
 
     def finished_hook(self, method, *args, **kwargs):
@@ -363,7 +370,7 @@ class BasicHandler(webapp2.RequestHandler):
 
     def clear_session(self):
         """Terminate the session reliably."""
-        logger.info('clearing session')
+        LOGGER.info('clearing session')
         self.session['uid'] = None
         if self.session and self.session.is_active():
             self.session.terminate()
@@ -400,11 +407,13 @@ class BasicHandler(webapp2.RequestHandler):
     def _jinja2_exception_handler(self, traceback):
         """Is called during Jinja2 Exception processing to provide logging."""
         global _jinja_env_cache
+        # see http://jinja.pocoo.org/docs/2.10/faq/#my-tracebacks-look-weird-what-s-happening
         # see http://flask.pocoo.org/snippets/74/
         # here we still get the correct traceback information, it will be discarded later on
-        logger.info('Template globals = %r', getattr(_jinja_env_cache, 'globals', None))
-        logger.exception('Template Exception %r', traceback.render_as_text())
+        LOGGER.info('Template globals = %r', getattr(_jinja_env_cache, 'globals', None))
+        LOGGER.exception('Template Exception %r', traceback.render_as_text())
         sentry_client.captureException(exc_info=traceback.exc_info)
+        self._last_template_exception = traceback.exc_info[1]
 
     def _render_to_fd(self, values, template_name, fd):
         """Sends the rendered content of a Jinja2 Template to Output.
@@ -419,9 +428,11 @@ class BasicHandler(webapp2.RequestHandler):
             raise jinja2.TemplateNotFound(template_name)
         except (jinja2.TemplateAssertionError, jinja2.TemplateRuntimeError):
             # better logging
-            logger.debug('values=%r', values)
-            logger.debug('env.globals=%r', env.globals.keys())
-            logger.debug('env.filters=%r', env.filters.keys())
+            LOGGER.debug('values=%r', values)
+            LOGGER.debug('env.globals=%r', env.globals.keys())
+            LOGGER.debug('env.filters=%r', env.filters.keys())
+            if self._last_template_exception:
+                raise self._last_template_exception
             raise
 
         # to collect template variables from all Parent-Classes and MisIns.
@@ -434,10 +445,14 @@ class BasicHandler(webapp2.RequestHandler):
         if self.is_sysadmin() and self.request.get('_gaetk_dump'):
             self.body = ''
             self.response.headers['Content-Type'] = 'application/json'
-            fd.write(hujson2.htmlsafe_json_dumps({
-                'gaetk_globalcontext_json': env.globals,
-                'gaetk_localcontext_json': values,
-            }))
+            fd.write(
+                hujson2.htmlsafe_json_dumps(
+                    {
+                        'gaetk_globalcontext_json': env.globals,
+                        'gaetk_localcontext_json': values,
+                    }
+                )
+            )
             return None
 
         try:
@@ -446,8 +461,8 @@ class BasicHandler(webapp2.RequestHandler):
         except jinja2.TemplateNotFound:  # can happen for includes etc.
             # better error reporting
             # TODO: https://docs.sentry.io/clientdev/interfaces/template/
-            logger.info('jinja2 environment: %s', vars(env))
-            logger.info('template dirs: %s', gaetkconfig.TEMPLATE_DIRS)
+            LOGGER.info('jinja2 environment: %s', vars(env))
+            LOGGER.info('template dirs: %s', gaetkconfig.TEMPLATE_DIRS)
             raise
 
         # TODO: warn about undeclared variables
@@ -466,6 +481,7 @@ class BasicHandler(webapp2.RequestHandler):
                 be  cachetd at frontend caches. ``None`` means no Caching-Headers.
                 See also :any:`default_cachingtime`. `0` or negative Values generate
                 an comand to disable all caching.
+
         """
         ct = self.default_cachingtime
         if caching_time is not None:
@@ -479,13 +495,13 @@ class BasicHandler(webapp2.RequestHandler):
 
     def _call_all_inherited(self, funcname, *args, **kwargs):
         """In all SuperClasses call `funcname` - if it exists."""
-
         # We don't want to burden all mixins with implementing
         # the required methods and calling `super().meth()`
         # so we don't use a call chain provided by the
         # Parents and MixIns but instead work through them as a list.
         # it also reverses the call order
 
+        self._debug_callstack = []
         # This code is based in ideas from Guido van Rossum, see
         # https://www.python.org/download/releases/2.2/descrintro/#cooperation
         for cls in reversed(self.__class__.__mro__):
@@ -494,20 +510,39 @@ class BasicHandler(webapp2.RequestHandler):
                 if hasattr(x, '__get__'):
                     x = x.__get__(self)
                 if callable(x):
-                    if self.debug_hooks:
-                        logger.debug('calling %s.%s(*%r, **%r)', cls, funcname, args, kwargs)
+                    self._debug_callstack.append(x)
+                    LOGGER.debug(
+                        'calling %s.%s(*%r, **%r)', cls, funcname, args, kwargs
+                    )
                     try:
                         x(*args, **kwargs)
+                    except TypeError as e:
+                        e.message = '{} while calling {}.{}(*{!r}, **{!r})'.format(
+                            str(e), cls, funcname, args, kwargs
+                        )
+                        LOGGER.exception(
+                            'failure calling %s.%s(*%r, **%r)',
+                            cls,
+                            funcname,
+                            args,
+                            kwargs,
+                        )
+                        raise e
                     except BaseException as e:
                         if not isinstance(e, exc.HTTPException):
-                            logger.exception('failure calling %s.%s(*%r, **%r)', cls, funcname, args, kwargs)
+                            LOGGER.exception(
+                                'failure calling %s.%s(*%r, **%r)',
+                                cls,
+                                funcname,
+                                args,
+                                kwargs,
+                            )
                         raise
                 else:
-                    logger.warn('not clallable: %r', x)
+                    LOGGER.warn('not clallable: %r', x)
 
     def _reduce_all_inherited(self, funcname, initial):
         """In all SuperClasses call `funcname` with the output of the previus call."""
-
         # We don't want to burden all mixins with mplementing
         # the required methods and calling `super().meth()`
         # so we don't use a call chaon provided by the
@@ -523,23 +558,25 @@ class BasicHandler(webapp2.RequestHandler):
                 if hasattr(x, '__get__'):
                     x = x.__get__(self)
                 if callable(x):
-                    if self.debug_hooks:
-                        logger.debug('reducing %s.%s(%r)', cls, funcname, ret)
+                    LOGGER.debug('reducing %s.%s(%r)', cls, funcname, ret)
                     try:
                         ret = x(ret)
                     except:
-                        logger.debug('error reducing %s.%s(%r)', cls, funcname, ret)
+                        LOGGER.debug('error reducing %s.%s(%r)', cls, funcname, ret)
                         raise
                 else:
-                    logger.warn('not callable: %r', x)
+                    LOGGER.warn('not callable: %r', x)
                 if ret is None:
-                    raise RuntimeError('{}.{} did not provide a return value'.format(cls, funcname))
+                    raise RuntimeError(
+                        '{}.{} did not provide a return value'.format(cls, funcname)
+                    )
         return ret
 
     def dispatch(self):
         """Dispatches the requested method fom the WSGI App.
 
-        Meant for internal use by the stack."""
+        Meant for internal use by the stack.
+        """
         request = self.request
         method_name = request.route.handler_method
         if not method_name:
@@ -547,17 +584,17 @@ class BasicHandler(webapp2.RequestHandler):
 
         method = getattr(self, method_name, None)
         if hasattr(self, '__class__'):
-            sentry_client.tags_context({
-                'handler': self.__class__.__name__,
-                'method': method_name,
-            })
+            sentry_client.tags_context(
+                {'handler': self.__class__.__name__, 'method': method_name}
+            )
 
         if method is None:
             # 405 Method Not Allowed.
             valid = b', '.join(webapp2._get_handler_methods(self))
             raise exc.HTTP405_HTTPMethodNotAllowed(
                 'Method not allowed in {}'.format(self.__class__.__name__),
-                headers=[(b'Allow', valid)])
+                headers=[(b'Allow', valid)],
+            )
 
         # The handler only receives *args if no named variables are set.
         args, kwargs = request.route_args, request.route_kwargs
@@ -572,14 +609,24 @@ class BasicHandler(webapp2.RequestHandler):
             self.session = {}
 
         if str(self.session) != 'uninitialized session':
-            sentry_client.note('storage', 'Session loaded', data=dict(session=self.session))
+            sentry_client.note(
+                'storage', 'Session loaded', data=dict(session=self.session)
+            )
 
         try:
-            self._call_all_inherited('pre_authentication_hook', method_name, *args, **kwargs)
-            self._call_all_inherited('authentication_preflight_hook', method_name, *args, **kwargs)
-            self._call_all_inherited('authentication_hook', method_name, *args, **kwargs)
+            self._call_all_inherited(
+                'pre_authentication_hook', method_name, *args, **kwargs
+            )
+            self._call_all_inherited(
+                'authentication_preflight_hook', method_name, *args, **kwargs
+            )
+            self._call_all_inherited(
+                'authentication_hook', method_name, *args, **kwargs
+            )
             self._call_all_inherited('authorisation_hook', method_name, *args, **kwargs)
-            self._call_all_inherited('method_preperation_hook', method_name, *args, **kwargs)
+            self._call_all_inherited(
+                'method_preperation_hook', method_name, *args, **kwargs
+            )
             try:
                 response = method(*args, **kwargs)
             except TypeError:
@@ -589,14 +636,16 @@ class BasicHandler(webapp2.RequestHandler):
                 methname = method.__name__
                 sourcepos = '{}:{}'.format(
                     os.path.basename(method.__func__.__code__.co_filename),
-                    method.__func__.__code__.co_firstlineno)
-                logger.debug(
+                    method.__func__.__code__.co_firstlineno,
+                )
+                LOGGER.debug(
                     'method called: %s.%s(%r) from %s',
                     klass.__name__,
                     methname,
                     (args, kwargs),
-                    sourcepos)
-                logger.debug('defined at: %s %s', klass, sourcepos)
+                    sourcepos,
+                )
+                LOGGER.debug('defined at: %s %s', klass, sourcepos)
                 raise
             response = self.response_overwrite(response, method, *args, **kwargs)
         except exc.HTTPException as e:
@@ -604,7 +653,7 @@ class BasicHandler(webapp2.RequestHandler):
             if e.code < 500:
                 self._call_all_inherited('finished_hook', method_name, *args, **kwargs)
             return self.handle_exception(e, self.app.debug)
-        except BaseException, e:
+        except BaseException as e:
             return self.handle_exception(e, self.app.debug)
 
         if response and not getattr(self, '_gaetk2_allow_strange_responses', False):
@@ -627,6 +676,7 @@ class BasicHandler(webapp2.RequestHandler):
 
         Returns:
             response to be sent to the client.
+
         """
         raise
 

@@ -48,8 +48,9 @@ class WSGIApplication(webapp2.WSGIApplication):
     """
 
     # see https://github.com/GoogleCloudPlatform/webapp2/issues/69
-    allowed_methods = frozenset(('GET', 'POST', 'HEAD', 'OPTIONS', 'PUT',
-                                 'DELETE', 'TRACE', 'PATCH'))
+    allowed_methods = frozenset(
+        ('GET', 'POST', 'HEAD', 'OPTIONS', 'PUT', 'DELETE', 'TRACE', 'PATCH')
+    )
 
     @ndb.toplevel
     def __call__(self, environ, start_response):
@@ -64,15 +65,26 @@ class WSGIApplication(webapp2.WSGIApplication):
                     if request.method not in self.allowed_methods:
                         # 501 Not Implemented.
                         raise exc.HTTP501_NotImplemented()
-                    rv = self.router.dispatch(request, response)
+                    try:
+                        rv = self.router.dispatch(request, response)
+                    except exc.HTTP404_NotFound:
+                        # some extra logging to find non matching routes
+                        LOGGER.info('NotFound: %r', self)
+                        LOGGER.info('router: %r', vars(self.router))
+                        LOGGER.info('environ: %r', environ)
+                        raise
                     if rv is not None:
                         response = rv
                 # webapp2 only catches `Exception` not `BaseException`
                 except BaseException as e:
                     LOGGER.debug(
-                        'Exception %r via %s %s %s %s', e, request.route,
-                        request.route_args, request.route_kwargs,
-                        self.router)
+                        'Exception %r via %s %s %s %s',
+                        e,
+                        request.route,
+                        request.route_args,
+                        request.route_kwargs,
+                        self.router,
+                    )
                     try:
                         # Try to handle it with a custom error handler.
                         rv = self.handle_exception(request, response, e)
@@ -81,7 +93,10 @@ class WSGIApplication(webapp2.WSGIApplication):
                     except exc.HTTPException as e:
                         # Use the HTTP exception as response.
                         response = e
-                        if os.environ.get('GAETK2_WEBTEST') and getattr(e, 'code', 500) >= 500:
+                        if (
+                            os.environ.get('GAETK2_WEBTEST')
+                            and getattr(e, 'code', 500) >= 500
+                        ):
                             # make sure we get nice errors during testing
                             raise
                     except BaseException as e:
@@ -144,7 +159,7 @@ class WSGIApplication(webapp2.WSGIApplication):
             LOGGER.debug('using %s', handler)
             return handler(request, response, e)
         else:
-            if code >= 500:
+            if getattr(e, '_want_trackback', False) or code >= 500:
                 # Our default handler
                 return self.default_exception_handler(request, response, e)
             else:
@@ -159,7 +174,8 @@ class WSGIApplication(webapp2.WSGIApplication):
                         'HTTPException {}: {}'.format(code, e.explanation),
                         level='info',
                         tags={'httpcode': code, 'type': 'Exception'},
-                        extra=notedata)
+                        extra=notedata,
+                    )
                 logging.debug('HTTP exception:', exc_info=True)
                 raise  # pylint: disable=E0704
 
@@ -169,11 +185,18 @@ class WSGIApplication(webapp2.WSGIApplication):
 
         # Make sure we have at least some decent infotation in the logfile
         if level == 'error':
-            LOGGER.exception('Exception caught for path %s: %s', request.path, exception)
+            LOGGER.exception(
+                'Exception caught for path %s: %s', request.path, exception
+            )
             if os.environ.get('GAETK2_WEBTEST'):
                 raise  # pylint: disable=E0704
         else:
-            LOGGER.info('Exception caught for path %s: %s', request.path, exception, exc_info=True)
+            LOGGER.info(
+                'Exception caught for path %s: %s',
+                request.path,
+                exception,
+                exc_info=True,
+            )
 
         if not is_development():
             event_id = ''
@@ -191,14 +214,20 @@ class WSGIApplication(webapp2.WSGIApplication):
 
             # render error page for the client
             # we do not use jinja2 here to avoid an additional error source.
-            with open(os.path.join(os.path.dirname(__file__), '..', 'templates/error/500.html')) as fileobj:
+            with open(
+                os.path.join(
+                    os.path.dirname(__file__), '..', 'templates/error/500.html'
+                )
+            ) as fileobj:
                 # set sentry_event_id for GetSentry User Feedback
                 template = fileobj.read().decode('utf-8')
                 template = template.replace("'{{sentry_event_id}}'", "'%s'" % event_id)
                 template = template.replace(
-                    "'{{sentry_public_dsn}}'",
-                    "'%s'" % gaetkconfig.SENTRY_PUBLIC_DSN)
-                template = template.replace('{{exception_text}}', jinja2.escape('%s' % exception))
+                    "'{{sentry_public_dsn}}'", "'%s'" % gaetkconfig.SENTRY_PUBLIC_DSN
+                )
+                template = template.replace(
+                    '{{exception_text}}', jinja2.escape('%s' % exception)
+                )
                 response.clear()
                 response.headers['Content-Type'] = b'text/html'
                 response.out.body = template.encode('utf-8')
@@ -212,7 +241,7 @@ class WSGIApplication(webapp2.WSGIApplication):
         response.set_status(status)
 
     def get_sentry_addon(self, request):
-        """This tries to extract additional data from the request for Sentry after an Exception tootk place.
+        """Try to extract additional data from the request for Sentry after an Exception tootk place.
 
         Parameters:
             request: The Request Object
@@ -251,12 +280,14 @@ class WSGIApplication(webapp2.WSGIApplication):
         tags = {'url': request.uri}
 
         k = repr(exception.__class__)
-        if ('ApiTooSlowError' in k or
-                'TimeoutError' in k or
-                'Deadline exceeded' in k or
-                'CsApiException' in k or
-                'Deadlock waiting for' in k or
-                unicode(exception).endswith('timed out')):
+        if (
+            'ApiTooSlowError' in k
+            or 'TimeoutError' in k
+            or 'Deadline exceeded' in k
+            or 'CsApiException' in k
+            or 'Deadlock waiting for' in k
+            or unicode(exception).endswith('timed out')
+        ):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'class': 'timeout'}
@@ -264,8 +295,7 @@ class WSGIApplication(webapp2.WSGIApplication):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'class': 'abort'}
-        if ('TransientError' in k or
-                'InternalTransientError' in k):
+        if 'TransientError' in k or 'InternalTransientError' in k:
             status = 503  # Service Unavailable
             level = 'warning'
             tags = {'class': 'transienterror'}
@@ -283,11 +313,15 @@ class WSGIApplication(webapp2.WSGIApplication):
             # this propbably can be done smarter
             # fingerprint = [request.route]
             tags = {'class': 'timeout', 'subsystem': 'appengine'}
-        if isinstance(exception, google.appengine.runtime.apiproxy_errors.CancelledError):
+        if isinstance(
+            exception, google.appengine.runtime.apiproxy_errors.CancelledError
+        ):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'class': 'timeout', 'subsystem': 'googlecloud'}
-        if isinstance(exception, google.appengine.runtime.apiproxy_errors.DeadlineExceededError):
+        if isinstance(
+            exception, google.appengine.runtime.apiproxy_errors.DeadlineExceededError
+        ):
             # raised if an RPC exceeded its deadline.
             # This is typically 5 seconds, but it is settable for some APIs using the 'deadline' option.
             status = 504  # Gateway Time-out
@@ -298,12 +332,16 @@ class WSGIApplication(webapp2.WSGIApplication):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'class': 'timeout', 'subsystem': 'googlecloud', 'api': 'Datastore'}
-        if isinstance(exception, google.appengine.api.datastore_errors.TransactionFailedError):
+        if isinstance(
+            exception, google.appengine.api.datastore_errors.TransactionFailedError
+        ):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'subsystem': 'googlecloud', 'api': 'Datastore'}
         # CloudSQL
-        if isinstance(exception, google.storage.speckle.python.api.rdbms.OperationalError):
+        if isinstance(
+            exception, google.storage.speckle.python.api.rdbms.OperationalError
+        ):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'subsystem': 'googlecloud', 'api': 'CloudSQL'}
@@ -318,21 +356,30 @@ class WSGIApplication(webapp2.WSGIApplication):
                 status = 504  # Gateway Time-out
                 level = 'warning'
                 tags = {'subsystem': 'urlfetch', 'api': 'requests'}
-        if isinstance(exception, google.appengine.api.urlfetch_errors.ConnectionClosedError):
-            status = 507  # Insufficient Storage  - passt jetzt nicht wie die Faust auf's Auge ...
+        if isinstance(
+            exception, google.appengine.api.urlfetch_errors.ConnectionClosedError
+        ):
+            status = (
+                507
+            )  # Insufficient Storage  - passt jetzt nicht wie die Faust auf's Auge ...
             level = 'warning'
             tags = {'subsystem': 'urlfetch'}
-        if ('DownloadError' in k or
-                isinstance(exception, google.appengine.api.urlfetch_errors.InternalTransientError)):
+        if 'DownloadError' in k or isinstance(
+            exception, google.appengine.api.urlfetch_errors.InternalTransientError
+        ):
             status = 503  # Service Unavailable
             level = 'warning'
             tags = {'class': 'transienterror', 'subsystem': 'urlfetch'}
-        if isinstance(exception, google.appengine.api.urlfetch_errors.DeadlineExceededError):
+        if isinstance(
+            exception, google.appengine.api.urlfetch_errors.DeadlineExceededError
+        ):
             # raised if the URLFetch times out.
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'class': 'timeout', 'subsystem': 'urlfetch'}
-        if 'HTTPException: Deadline exceeded while waiting for HTTP response' in repr(exception):
+        if 'HTTPException: Deadline exceeded while waiting for HTTP response' in repr(
+            exception
+        ):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'class': 'timeout', 'subsystem': 'urlfetch'}
@@ -353,14 +400,18 @@ class WSGIApplication(webapp2.WSGIApplication):
 
         # see https://docs.sentry.io/clientdev/interfaces/user/
         env = request.environ
-        sentry_client.user_context({
-            'ip_address': env.get('REMOTE_ADDR'),
-            'email': env.get('USER_EMAIL'),
-            'id': env.get('USER_ID'),
-            'username': env.get('USER_NICKNAME', env.get('HTTP_X_APPENGINE_INBOUND_APPID')),
-            # HTTP_X_APPENGINE_CRON   true
-            # USER_ORGANIZATION USER_IS_ADMIN
-        })
+        sentry_client.user_context(
+            {
+                'ip_address': env.get('REMOTE_ADDR'),
+                'email': env.get('USER_EMAIL'),
+                'id': env.get('USER_ID'),
+                'username': env.get(
+                    'USER_NICKNAME', env.get('HTTP_X_APPENGINE_INBOUND_APPID')
+                ),
+                # HTTP_X_APPENGINE_CRON   true
+                # USER_ORGANIZATION USER_IS_ADMIN
+            }
+        )
 
         extra = {}
         for name in 'HTTP_REFERER HTTP_USER_AGENT'.split():
