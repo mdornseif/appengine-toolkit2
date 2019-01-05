@@ -2,9 +2,13 @@
 """
 structured.py - handle structured data/dicts/objects
 
+`class Struct` from huTools is not ported.
+It was used like https://pypi.org/project/stuf/
+
 Created by Maximillian Dornseif on 2009-12-27.
 Copyright (c) 2009-2011, 2015 HUDORA. MIT licensed.
 """
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import csv
@@ -16,9 +20,8 @@ from StringIO import StringIO
 
 
 # Code is based on http://code.activestate.com/recipes/573463/
-def _convert_dict_to_xml_recurse(parent, dictitem, listnames, sort=True):
+def convert_dict_to_xml_recurse(parent, dictitem, listnames, sort=True):
     """Helper Function for XML conversion."""
-
     if isinstance(dictitem, list):
         raise TypeError('Unable to convert bare lists')
 
@@ -41,14 +44,14 @@ def _convert_dict_to_xml_recurse(parent, dictitem, listnames, sort=True):
                     else:
                         elem = ET.SubElement(listelem, tag)
 
-                    _convert_dict_to_xml_recurse(elem, listchild, listnames, sort=sort)
+                    convert_dict_to_xml_recurse(elem, listchild, listnames, sort=sort)
             else:
                 if tag.startswith('@'):
                     parent.attrib[tag[1:]] = child
                 else:
                     elem = ET.Element(tag)
                     parent.append(elem)
-                    _convert_dict_to_xml_recurse(elem, child, listnames, sort=sort)
+                    convert_dict_to_xml_recurse(elem, child, listnames, sort=sort)
     elif dictitem is not None:
         parent.text = unicode(dictitem)
 
@@ -114,25 +117,25 @@ def dict2et(xmldict, roottag='data', listnames=None, sort=True):
 
     Sorting can be disabled which is only useful for collections.OrderedDict.
     """
-
     if not listnames:
         listnames = {}
     root = ET.Element(roottag)
-    _convert_dict_to_xml_recurse(root, xmldict, listnames, sort=sort)
+    convert_dict_to_xml_recurse(root, xmldict, listnames, sort=sort)
     return root
 
 
 def list2et(xmllist, root, elementname):
     """Converts a list to an ElementTree.
 
-        See also dict2et()
+    See also dict2et().
     """
-
     basexml = dict2et({root: xmllist}, 'xml', listnames={root: elementname})
     return basexml.find(root)
 
 
-def dict2xml(datadict, roottag='data', listnames=None, pretty=False, sort=True, outfd=None):
+def dict2xml(
+    datadict, roottag='data', listnames=None, pretty=False, sort=True, outfd=None
+):
     """Converts a dictionary to an UTF-8 encoded XML string.
 
     See also dict2et()
@@ -153,8 +156,8 @@ def list2xml(datalist, roottag, elementname, pretty=False, outfd=None):
 def to_string(root, encoding='utf-8', pretty=False, default_namespace=None, outfd=None):
     """Converts an ElementTree to a string.
 
-    Sends result to `outfd` or returns a string representation if `outfd` is `None`."""
-
+    Sends result to `outfd` or returns a string representation if `outfd` is `None`.
+    """
     if pretty:
         indent(root)
 
@@ -164,14 +167,16 @@ def to_string(root, encoding='utf-8', pretty=False, default_namespace=None, outf
             outfd,
             encoding=encoding,
             xml_declaration=True,
-            default_namespace=default_namespace)
+            default_namespace=default_namespace,
+        )
     else:
         fileobj = StringIO()
         tree.write(
             fileobj,
             encoding=encoding,
             xml_declaration=True,
-            default_namespace=default_namespace)
+            default_namespace=default_namespace,
+        )
         return fileobj.getvalue()
 
 
@@ -232,7 +237,8 @@ def dict2csv(data, datanodename='objects'):
 
 def list2xls(datalist):
     """Export a list of dicts to XLS."""
-    import structured_xls
+    from . import structured_xls
+
     data = x2tabular(datalist)
     writer = structured_xls.XLSwriter()
     for row in data:
@@ -249,6 +255,7 @@ def dict2xls(data, datanodename='objects'):
 # done by first indenting the tree (see below), and then serializing it as usual.
 # indent: Adds whitespace to the tree, so that saving it as usual results in a prettyprinted tree.
 # in-place prettyprint formatter
+
 
 def indent(elem, level=0):
     """XML prettyprint: Prints a tree with each node indented according to its depth."""
@@ -275,16 +282,13 @@ class TestCase(unittest.TestCase):
 
     def test_dict2xml(self):
         """Most basic test for dict2xml"""
-
-        data = {'guid': '3104247-7',
-                'menge': 7,
-                'artnr': '14695',
-                'batchnr': '3104247'}
+        data = {'guid': '3104247-7', 'menge': 7, 'artnr': '14695', 'batchnr': '3104247'}
 
         self.assertEqual(
             dict2xml(data, roottag='warenzugang'),
             '<?xml version=\'1.0\' encoding=\'utf-8\'?>\n<warenzugang><artnr>14695</artnr>'
-            '<batchnr>3104247</batchnr><guid>3104247-7</guid><menge>7</menge></warenzugang>')
+            '<batchnr>3104247</batchnr><guid>3104247-7</guid><menge>7</menge></warenzugang>',
+        )
 
 
 def test():
@@ -296,4 +300,5 @@ def test():
 
 if __name__ == '__main__':
     import doctest
+
     test()
