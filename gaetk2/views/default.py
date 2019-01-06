@@ -31,7 +31,8 @@ from gaetk2.handlers import DefaultHandler
 from . import backup
 
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.INFO)
 
 
 class RobotTxtHandler(DefaultHandler):
@@ -45,8 +46,10 @@ class RobotTxtHandler(DefaultHandler):
     def get(self):
         """Deliver robots.txt based on application version."""
         if not is_production():
-            response = ('# use http://%s/\nUser-agent: *\nDisallow: /\n'
-                        % google.appengine.api.app_identity.get_default_version_hostname())
+            response = (
+                '# use http://%s/\nUser-agent: *\nDisallow: /\n'
+                % google.appengine.api.app_identity.get_default_version_hostname()
+            )
         else:
             try:
                 # read robots.txt
@@ -101,15 +104,16 @@ class WarmupHandler(DefaultHandler):
         import datetime
         import jinja2
 
-        import gaetk2.admin  # this will pull in a lot of code, good for warming up
-        import gaetk2.modelexporter
         import gaetk2.tools.http
+
         # http://groups.google.com/group/google-appengine-python/browse_thread/thread/efbcffa181c32f33
         datetime.datetime.strptime('2000-01-01', '%Y-%m-%d').date()
-        logger.debug('is_production=%s is_development=%s', is_production(), is_development())
-        logger.debug('SERVER_SOFTWARE %r', os.environ.get('SERVER_SOFTWARE', ''))
-        logger.debug('SERVER_NAME %r', os.environ.get('SERVER_NAME', ''))
-        return repr([gaetk2.tools.http, jinja2, gaetk2.admin, gaetk2.modelexporter])
+        LOGGER.debug(
+            'is_production=%s is_development=%s', is_production(), is_development()
+        )
+        LOGGER.debug('SERVER_SOFTWARE %r', os.environ.get('SERVER_SOFTWARE', ''))
+        LOGGER.debug('SERVER_NAME %r', os.environ.get('SERVER_NAME', ''))
+        return repr([gaetk2.tools.http, jinja2])
 
     def get(self):
         """Handle warm up requests."""
@@ -129,8 +133,9 @@ class HeatUpHandler(DefaultHandler):
                 mod = handler['script'].split('.')
                 mod = '.'.join(mod[:-1])
                 url = handler.get('url')
-                logger.info('importing %s from %s', mod, url)
-                __import__(mod)
+                if mod not in ('gaetk2.views.load_into_bigquery',):
+                    LOGGER.info('importing %s from %s', mod, url)
+                    __import__(mod)
         self.return_text(
             json.dumps(
                 {
@@ -144,14 +149,16 @@ class HeatUpHandler(DefaultHandler):
         )
 
 
-application = WSGIApplication([
-    Route('/robots.txt', RobotTxtHandler),
-    Route('/version.txt', VersionHandler),
-    Route('/revision.txt', RevisionHandler),
-    Route('/release.txt', ReleaseHandler),
-    Route('/bluegreen.txt', BluegreenHandler),
-    Route('/_ah/warmup', WarmupHandler),
-    Route('/gaetk2/heatup/', HeatUpHandler),
-    Route('/gaetk2/backup/', backup.BackupHandler),
-    (r'^/_ah/queue/deferred.*', google.appengine.ext.deferred.deferred.TaskHandler),
-])
+application = WSGIApplication(
+    [
+        Route('/robots.txt', RobotTxtHandler),
+        Route('/version.txt', VersionHandler),
+        Route('/revision.txt', RevisionHandler),
+        Route('/release.txt', ReleaseHandler),
+        Route('/bluegreen.txt', BluegreenHandler),
+        Route('/_ah/warmup', WarmupHandler),
+        Route('/gaetk2/heatup/', HeatUpHandler),
+        Route('/gaetk2/backup/', backup.BackupHandler),
+        (r'^/_ah/queue/deferred.*', google.appengine.ext.deferred.deferred.TaskHandler),
+    ]
+)
