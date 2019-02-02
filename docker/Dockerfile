@@ -32,7 +32,7 @@ RUN curl -s https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > 
 	&& /usr/local/gcloud/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true \
 	&& sudo /usr/local/gcloud/google-cloud-sdk/bin/gcloud components install app-engine-python-extras
 
-ENV GAE_VERSION '1.9.78'
+ENV GAE_VERSION '1.9.80'
 
 RUN curl -s https://storage.googleapis.com/appengine-sdks/featured/google_appengine_${GAE_VERSION}.zip > /tmp/google_appengine.zip \
 	&& sudo unzip -q /tmp/google_appengine.zip -d /usr/local/ \
@@ -64,12 +64,13 @@ RUN \
 
 # update to a git which can run paralell (-j8) and install py3
 # and pseudo-python which needs py3
-RUN sudo apt-get install -y git python3 python3-distutils python3-setuptools \
+RUN sudo apt-get update \
+    && sudo apt-get install -y --fix-missing git python3 python3-distutils python3-setuptools \
 	&& sudo apt-get clean all \
     && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
 	&& sudo python3 get-pip.py && rm get-pip.py \
     && sudo pip3 install PyYAML --global-option="--without-libyaml" \
-    && sudo pip3 install pseudo==0.2.16 pseudo-python==0.2.34 \
+    && sudo pip3 install mypy==0.650 javascripthon==0.10 pseudo==0.2.16 pseudo-python==0.2.34 \
 	&& sudo rm -Rf /root/.cache
 
 # # Cache of npm modules
