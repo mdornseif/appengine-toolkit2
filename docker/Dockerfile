@@ -24,6 +24,12 @@ RUN sudo apt-get install -y less graphviz libfreetype6-dev libjpeg-dev zlib1g-de
 	&& sudo apt-get autoremove --yes \
 	&& sudo rm -rf /var/lib/{apt,dpkg,cache,log}/
 
+RUN \
+	sudo npm install -g codeclimate-test-reporter \
+	&& curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ~/cc-test-reporter \
+	&& sudo mv ~/cc-test-reporter /usr/local/bin/cc-test-reporter \
+	&& sudo chmod +x /usr/local/bin/cc-test-reporter
+
 RUN curl -s https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz \
 	&& sudo mkdir -p /usr/local/gcloud \
 	&& sudo tar -C /usr/local/gcloud -xf /tmp/google-cloud-sdk.tar.gz \
@@ -33,45 +39,42 @@ RUN curl -s https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > 
 	&& sudo /usr/local/gcloud/google-cloud-sdk/bin/gcloud components install app-engine-python-extras
 
 ENV GAE_VERSION '1.9.80'
-
 RUN curl -s https://storage.googleapis.com/appengine-sdks/featured/google_appengine_${GAE_VERSION}.zip > /tmp/google_appengine.zip \
 	&& sudo unzip -q /tmp/google_appengine.zip -d /usr/local/ \
 	&& rm /tmp/google_appengine.zip
 ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin:/usr/local/google_appengine
-
-# Cache of pypi modules
-WORKDIR /home/circleci/pypi-downloads
-RUN mkdir -p /home/circleci/.pip \
-	&& echo '[global]' > /home/circleci/.pip/pip.conf \
-	&& echo "cache-dir=/home/circleci/pypi-offline-cache/" >> /home/circleci/.pip/pip.conf \
-	&& echo "find-links=file:///home/circleci/pypi-offline-cache/ file:///home/circleci/pypi-downloads" \
-	&& mkdir -p /home/circleci/pypi-offline-cache/ \
-	&& mkdir -p /home/circleci/pypi-downloads \
-	&& sudo chown -R circleci /home/circleci/pypi-offline-cache/ /home/circleci/pypi-downloads
-
-RUN sudo pip install --upgrade pip \
- 	&& sudo /usr/local/bin/pip install Pillow==3.0 --global-option="build_ext" --global-option="--enable-freetype"
-
-COPY ./requirements-dev.txt requirements-dev.txt
-RUN \
-	# Python QA Modules & Modules from https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27
-	sudo /usr/local/bin/pip install -r requirements-dev.txt \
-	&& sudo rm -Rf /root/.cache \
-	&& sudo npm install -g codeclimate-test-reporter \
-	&& curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter \
-	&& sudo mv ./cc-test-reporter /usr/local/bin/cc-test-reporter \
-	&& sudo chmod +x /usr/local/bin/cc-test-reporter
 
 # update to a git which can run paralell (-j8) and install py3
 # and pseudo-python which needs py3
 RUN sudo apt-get update \
     && sudo apt-get install -y --fix-missing git python3 python3-distutils python3-setuptools \
 	&& sudo apt-get clean all \
-    && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
-	&& sudo python3 get-pip.py && rm get-pip.py \
+    && curl https://bootstrap.pypa.io/get-pip.py -o ~/get-pip.py \
+	&& sudo python3 ~/get-pip.py && rm ~/get-pip.py \
     && sudo pip3 install PyYAML --global-option="--without-libyaml" \
     && sudo pip3 install mypy==0.650 javascripthon==0.10 pseudo==0.2.16 pseudo-python==0.2.34 \
 	&& sudo rm -Rf /root/.cache
+
+# Cache of pypi modules
+# WORKDIR /home/circleci/pypi-downloads
+# RUN mkdir -p /home/circleci/.pip \
+# 	&& echo '[global]' > /home/circleci/.pip/pip.conf \
+# 	&& echo "cache-dir=/home/circleci/pypi-offline-cache/" >> /home/circleci/.pip/pip.conf \
+# 	&& echo "find-links=file:///home/circleci/pypi-offline-cache/ file:///home/circleci/pypi-downloads" \
+# 	&& mkdir -p /home/circleci/pypi-offline-cache/ \
+# 	&& mkdir -p /home/circleci/pypi-downloads \
+# 	&& sudo chown -R circleci /home/circleci/pypi-offline-cache/ /home/circleci/pypi-downloads
+
+RUN sudo pip install --upgrade pip \
+ 	&& sudo /usr/local/bin/pip2 install Pillow==3.0 --global-option="build_ext" --global-option="--enable-freetype"
+
+COPY ./requirements-dev.txt requirements-dev.txt
+RUN \
+	# Python QA Modules & Modules from https://cloud.google.com/appengine/docs/standard/python/tools/built-in-libraries-27
+	sudo /usr/local/bin/pip2 install -r requirements-dev.txt \
+	&& sudo rm -Rf /root/.cache \
+	&& /usr/local/bin/pip2 freeze > ~/requirements-installed.txt \
+	&& cat ~/requirements-installed.txt
 
 # # Cache of npm modules
 # WORKDIR /home/circleci/
