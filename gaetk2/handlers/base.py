@@ -3,7 +3,7 @@
 """gaetk2.handlers.base - default Request Handler for gaetk2.
 
 Created by Maximillian Dornseif on 2010-10-03.
-Copyright (c) 2010-2018 HUDORA. All rights reserved.
+Copyright (c) 2010-2019 HUDORA. All rights reserved.
 """
 from __future__ import absolute_import
 from __future__ import unicode_literals
@@ -14,6 +14,7 @@ import os
 import os.path
 import time
 import urlparse
+import warnings
 
 from google.appengine.api import memcache
 from google.appengine.api import users
@@ -412,6 +413,8 @@ class BasicHandler(webapp2.RequestHandler):
         # here we still get the correct traceback information, it will be discarded later on
         LOGGER.info('Template globals = %r', getattr(_jinja_env_cache, 'globals', None))
         LOGGER.exception('Template Exception %r', traceback.render_as_text())
+        # this logs the correct exception to Sentry
+        # but results in a duplocate incorrect one.
         sentry_client.captureException(exc_info=traceback.exc_info)
         self._last_template_exception = traceback.exc_info[1]
 
@@ -432,6 +435,9 @@ class BasicHandler(webapp2.RequestHandler):
             LOGGER.debug('env.globals=%r', env.globals.keys())
             LOGGER.debug('env.filters=%r', env.filters.keys())
             if self._last_template_exception:
+                # at his point the treceback is damaged
+                # but we send it earlier on to Sentry.
+                self._last_template_exception._hide_from_sentry = True
                 raise self._last_template_exception
             raise
 
@@ -698,6 +704,11 @@ class JsonBasicHandler(BasicHandler):
 
     def serialize(self, content):
         """convert content to JSON."""
+        warnings.warn(
+            'use `class Handler(BasicHandler, JsonMixin)`',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return hujson2.dumps(content)
 
     def response_overwrite(self, response, method, *args, **kwargs):

@@ -6,6 +6,7 @@ gaetk2/handlers/mixins/json.py - misc functionality to be added to gaetk handler
 Created by Maximillian Dornseif on 2010-10-03.
 Copyright (c) 2018 Maximillian Dornseif. MIT licensed.
 """
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import urllib
@@ -26,7 +27,7 @@ class JsonMixin(object):
     is generated. `cachingtime` defaults to 60 seconds.
 
     If the Request contained a body it be made available in parsed form as
-    `self.request.json`.
+    `self.json`.
     """
 
     # Our default caching is 60s
@@ -37,7 +38,8 @@ class JsonMixin(object):
     def method_preperation_hook(self, method, *args, **kwargs):
         """Try to read request body as JSON.
 
-        The parsed data will be available as `self.request.json`."""
+        The parsed data will be available as `self.json`.
+        """
         rawdata = self.request.body
         data = None
         if not rawdata:
@@ -45,10 +47,15 @@ class JsonMixin(object):
         elif self.request.headers['Content-Type'].startswith('application/json'):
             data = hujson2.loads(rawdata)
         else:
-            # some strange is being sent
-            if self.request.headers.get('Content-Type').startswith('application/x-www-form-urlencoded'):
-                data = hujson2.loads(urllib.unquote_plus(self.request.body).strip('=\n'))
-        self.request.json = data
+            # some strange stuff is being sent
+            if self.request.headers.get('Content-Type').startswith(
+                'application/x-www-form-urlencoded'
+            ):
+                data = hujson2.loads(
+                    urllib.unquote_plus(self.request.body).strip('=\n')
+                )
+        self.json = data
+        # TODO: use self.request.json
         sentry_client.note('rpc', message='JSON API Call', data=dict(data=data))
 
     def serialize(self, content):
