@@ -9,15 +9,17 @@ See https://cloud.google.com/appengine/articles/scheduled_backups
 also https://cloud.google.com/datastore/docs/schedule-export
 
 Created by Christian Klein on 2017-02-17.
-Copyright (c) 2017 HUDORA. MIT Licensed.
+Copyright (c) 2017, 2018 HUDORA. MIT Licensed.
 """
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import datetime
 import logging
 
 from google.appengine.api import taskqueue
-from google.appengine.api.app_identity import get_application_id, get_default_gcs_bucket_name
+from google.appengine.api.app_identity import get_application_id
+from google.appengine.api.app_identity import get_default_gcs_bucket_name
 from google.appengine.ext.db.metadata import Kind
 
 from gaetk2.config import gaetkconfig
@@ -37,9 +39,17 @@ logger = logging.getLogger(__name__)
 # -d '{
 #   "outputUrlPrefix": "gs://'${BUCKET}'",
 #   "entityFilter": {
-#     "namespaceIds": [""],
+#     "kinds": ["KIND1", "KIND2", …],
+#     "namespaceIds": ["NAMESPACE1", "NAMESPACE2", …],
 #   },
 # }'
+#
+# https://cloud.google.com/datastore/docs/export-import-entities
+#
+# Scopes:
+# https://www.googleapis.com/auth/datastore or
+# https://www.googleapis.com/auth/cloud-platform
+
 
 class BackupHandler(DefaultHandler):
     """Handler to start scheduled backups."""
@@ -57,18 +67,17 @@ class BackupHandler(DefaultHandler):
         today = datetime.date.today()
         kinds = [kind for kind in _get_all_datastore_kinds()]
         # if kind not in config.BACKUP_BLACKLIST]
-        bucketname = '/'.join([
-            bucket,
-            get_application_id(),
-            today.strftime('%Y-%m-%d')])
-        bucketname = bucketname.lstrip('/')
-        params = dict(
-            name='ds',
-            gs_bucket_name=bucketname,
-            filesystem='gs',
-            queue=gaetkconfig.BACKUP_QUEUE,
-            kind=kinds,
+        bucketname = '/'.join(
+            [bucket, get_application_id(), today.strftime('%Y-%m-%d')]
         )
+        bucketname = bucketname.lstrip('/')
+        params = {
+            'name': 'ds',
+            'gs_bucket_name': bucketname,
+            'filesystem': 'gs',
+            'queue': gaetkconfig.BACKUP_QUEUE,
+            'kind': kinds,
+        }
         logger.info('backup to %r %r', bucketname, params)
 
         taskqueue.add(

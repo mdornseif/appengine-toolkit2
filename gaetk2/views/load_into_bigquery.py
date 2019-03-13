@@ -6,14 +6,17 @@ load_into_big_query.py - Load Cloud Datastore Backups into BigQuery.
 See :ref:`backupreplication` for further Information.
 
 Es werden Daten eines Datastore-Backups zu BigQuery exportiert.
-Für Backups, s.
+Für Backups, siehe
 https://cloud.google.com/appengine/articles/scheduled_backups
-https://github.com/mdornseif/appengine-toolkit/blob/master/gaetk/defaulthandlers.py
+https://github.com/mdornseif/appengine-toolkit/blob/master/gaetk2/views/backup.py
+
+Zum Laden siehe https://cloud.google.com/bigquery/docs/loading-data-cloud-datastore
 
 Extrahiert aus huWaWi
 Created by Christian Klein on 2017-04-19.
 Copyright (c) 2017, 2018 HUDORA. All rights reserved.
 """
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import datetime
@@ -48,13 +51,15 @@ def create_job(filename):
         dataset = gaetkconfig.BIGQUERY_DATASET
 
     tablename = filename.split('.')[-2]
+    # see https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs#configuration.load
     resource = {
         'configuration': {
             'load': {
                 'destinationTable': {
                     'projectId': gaetkconfig.BIGQUERY_PROJECT,
                     'datasetId': dataset,
-                    'tableId': tablename},
+                    'tableId': tablename,
+                },
                 'maxBadRecords': 0,
                 'sourceUris': ['gs:/' + filename],
                 'projectionFields': [],
@@ -64,10 +69,11 @@ def create_job(filename):
         },
         'jobReference': {
             'projectId': gaetkconfig.BIGQUERY_PROJECT,
-            'jobId': 'import-{}-{}'.format(tablename, int(time.time()))
-        }
+            'jobId': 'import-{}-{}'.format(tablename, int(time.time())),
+        },
     }
 
+    # POST https://www.googleapis.com/bigquery/v2/projects/projectId/jobs
     job = bigquery_client.job_from_resource(resource)
     return job
 
@@ -125,11 +131,13 @@ class BqReplication(DefaultHandler):
                 dirs[datum] = subdir
 
         if not dirs:
-            raise RuntimeError('No Datastore Backup found in %r' % bucketpath)
+            raise RuntimeError('No Datastore Backup found in %r' % (bucketpath))
 
         datum = max(dirs)
         if datum < datetime.date.today() - datetime.timedelta(days=7):
-            raise exc.RuntimeError('Latest Datastore Backup in %r is way too old!' % bucketpath)
+            raise exc.RuntimeError(
+                'Latest Datastore Backup in {!r} is way too old!'.format(bucketpath)
+            )
 
         countdown = 1
         subdir = dirs[datum]
@@ -139,9 +147,7 @@ class BqReplication(DefaultHandler):
             if regexp.match(obj.filename):
                 defer(upload_backup_file, obj.filename, _countdown=countdown)
                 countdown += 2
-        self.response.write('ok, countdown=%d\n' % countdown)
+        self.response.write('ok, countdown=%d\n' % (countdown))
 
 
-application = WSGIApplication([
-    Route('/gaetk2/load_into_bigquery', BqReplication)
-])
+application = WSGIApplication([Route('/gaetk2/load_into_bigquery', BqReplication)])
