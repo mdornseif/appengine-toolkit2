@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""gaetk2.taskqueue.
+"""gaetk2.taskqueue Abstraktionen für Tasks.
 
 Created by Maximillian Dornseif on 2011-01-07.
 Copyright (c) 2011, 2012, 2016-2018 Cyberlogi/HUDORA. All rights reserved.
@@ -73,6 +73,7 @@ def taskqueue_add_multi_payload(name, url, payloadlist, **kwargs):
 # and https://medium.com/the-infinite-machine/problems-with-deferred-bad13cac3216
 # and https://pypi.python.org/pypi/appenginetaskutils
 
+
 def defer(obj, *args, **kwargs):
     """Defers a callable for execution later.
 
@@ -92,15 +93,18 @@ def defer(obj, *args, **kwargs):
     """
     try:
         suffix = '{}({!s},{!r})'.format(
-            obj.__name__,
+            getattr(obj, '__name__', '.?.'),
             ','.join(_to_str(arg) for arg in args),
-            ','.join('{}={}'.format(
-                key, _to_str(value)) for (key, value) in kwargs.items() if not key.startswith('_'))
+            ','.join(
+                '{}={}'.format(key, _to_str(value))
+                for (key, value) in kwargs.items()
+                if not key.startswith('_')
+            ),
         )
     except:
         suffix = ''
     suffix = re.sub(r'-+', '-', suffix.replace(' ', '-'))
-    suffix = re.sub(r'[^/A-Za-z0-9_,.:@&+$\(\)\-]+', '', suffix)
+    suffix = re.sub(r'[^/A-Za-z0-9_.:;@&=$_+!*,\'\(\)\-]+', '', suffix)
     url = google.appengine.ext.deferred.deferred._DEFAULT_URL + '/' + suffix[:200]
     kwargs['_url'] = kwargs.pop('_url', url)
     # kwargs["_queue"] = kwargs.pop("_queue", 'workersq')
@@ -129,7 +133,7 @@ def _to_str(value):
     value = str(value)
     if len(value) > 30:
         value = '{}...'.format(value[:30])
-    return value
+    return value.lstrip('u')
 
 
 def defer_once_per_hour(obj, *args, **kwargs):
@@ -152,19 +156,24 @@ def defer_once_per_day(obj, *args, **kwargs):
 def _defer_once_per_x(trunc, obj, *args, **kwargs):
     """Internal helper."""
     key = ','.join(unicode(arg) for arg in args)
-    key += ','.join('{}={}'.format(
-        key, unicode(value)) for (key, value) in kwargs.items())
+    key += ','.join(
+        '{}={}'.format(key, unicode(value)) for (key, value) in kwargs.items()
+    )
     key = key.encode('utf-8', errors='replace')
     name = '{}.{}-{}-{}'.format(
-        obj.__module__, obj.__name__,
+        obj.__module__,
+        obj.__name__,
         date_trunc(trunc, datetime.datetime.now()).strftime('%Y%m%dT%H'),
-        hashlib.md5(key).hexdigest()
+        hashlib.md5(key).hexdigest(),
     )
     suffix = '{}({!s},{!r})'.format(
-        getattr(obj, __name__, '.?.'),
+        getattr(obj, '__name__', '.?.'),
         ','.join(_to_str(arg) for arg in args),
-        ','.join('{}={}'.format(
-            key, _to_str(value)) for (key, value) in kwargs.items() if not key.startswith('_'))
+        ','.join(
+            '{}={}'.format(key, _to_str(value))
+            for (key, value) in kwargs.items()
+            if not key.startswith('_')
+        ),
     )
     suffix = re.sub(r'-+', '-', suffix.replace(' ', '-'))
     suffix = re.sub(r'[^/A-Za-z0-9_,.:@&+$\(\)\-]+', '', suffix)
