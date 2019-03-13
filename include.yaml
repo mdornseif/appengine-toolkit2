@@ -71,6 +71,7 @@ handlers:
 # `libraries:` unfortunately is ignored during including
 
 skip_files:
+- ^(bin|docs|htmlcov|js_src|tmp|venv)/.*
 - .*/requirements.txt$
 - .*\.graffle$
 - .*\.jar$
@@ -92,19 +93,19 @@ skip_files:
 - ^.*/(bin)?/.*
 - ^.*/(_build|docs|example|test|bin)s?/.*
 - ^.+/README.*
-- ^js_src/.*
-- ^tmp/.*
-- ^tmpcheckout/.*
-- ^venv/.*
 - ^(.*/)?lib/.*/(tests|testsuite|testing|examples|raven/contrib|bin|doc)/.*
 - ^(.*/)?lib/CentralServices/keys/.*
 - ^(.*/)?lib/fmtp/printclient/.*
 - ^(.*/)?lib/gae-sessions/(demo|demo-with-google-logins|docs|tests)/.*
-- ^(.*/)?lib/google_appengine/.*
 - ^(.*/)?lib/site-packages/(lxml|pytz|PIL|Crypto/SelfTest|raven/contrib|tkinter)/.*
-- ^(.*/)?lib/py2js/.*
 - lib/.*/site-packages
 - lib/python*.*
+- lib/DeadTrees/static/media/.*
+# build artifacts
+- static/obj/manual/_images/.*\.png\.map
+- coverage.xml
+- ^(.*/)?lib/google_appengine/.*
+- ^(.*/)?lib/py2js/.*
 # development-tools
 - lib/site-packages/cssutils.*
 - lib/site-packages/docutils.*
