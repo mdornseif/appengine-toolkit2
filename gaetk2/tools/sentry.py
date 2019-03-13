@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-gaetk2.sentry - Client Instance and Helpers for sentry logging.
+"""gaetk2.sentry - Client Instance and Helpers for sentry logging.
 
 Builds on https://github.com/getsentry/raven-python
 
 Created by Maximillian Dornseif on 2018-01-11.
 Copyright (c) 2018 Maximillian Dornseif. MIT Licensed.
 """
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import logging
@@ -34,6 +34,7 @@ class _Dummy(object):
 
     def __bool__(self):
         return False
+
     __nonzero__ = __bool__
 
     def captureException(*args, **kwargs):  # noqa: N802
@@ -55,7 +56,7 @@ class _Dummy(object):
         return
 
 
-if gaetkconfig.SENTRY_DSN:
+if gaetkconfig.SENTRY_DSN and not os.environ.get('GAETK2_UNITTEST'):
     import raven
     import raven.breadcrumbs
     from raven.transport.http import HTTPTransport
@@ -99,9 +100,18 @@ if gaetkconfig.SENTRY_DSN:
         sentry_client.is_active = True
 
     def note(category, message=None, data=None, typ=None):
-        """bei Bedarf strukturiert loggen, Sentry breadcrumbs """
+        """bei Bedarf strukturiert loggen, Sentry breadcrumbs."""
         assert category in [
-            'http', 'navigation', 'user', 'rpc', 'input', 'external', 'storage', 'auth']
+            'http',
+            'navigation',
+            'user',
+            'rpc',
+            'input',
+            'external',
+            'storage',
+            'auth',
+            'flow',
+        ]
         if not data:
             data = {}
 
@@ -110,7 +120,9 @@ if gaetkconfig.SENTRY_DSN:
         # for valid values
         if category == 'auth':
             category == 'user'
-            warnings.warn('use `user` instead of `auth`', DeprecationWarning, stacklevel=2)
+            warnings.warn(
+                'use `user` instead of `auth`', DeprecationWarning, stacklevel=2
+            )
         if category == 'http':
             category = 'rpc'
             typ = 'http'
@@ -126,19 +138,30 @@ if gaetkconfig.SENTRY_DSN:
                         data[key] = value[:200]
                 else:
                     data = str(data)[:1024]
-            except Exception, e:
+            except Exception as e:
                 data = {'error': 'data too big', 'exception': str(e)}
 
         logger.debug('note: %s: %s %r', category, message, data)
         raven.breadcrumbs.record(
-            data=data,
-            category=category,
-            type=typ,
-            message=message
+            data=data, category=category, type=typ, message=message
         )
+
+
 else:
+
     def note(category, message=None, data=None):
-        assert category in ['rpc', 'input', 'external', 'storage', 'auth', 'flow', 'navigation', 'http']
+        """Dummy Funktion, die loggt statt zu Sentry zu senden."""
+        assert category in [
+            'http',
+            'navigation',
+            'user',
+            'rpc',
+            'input',
+            'external',
+            'storage',
+            'auth',
+            'flow',
+        ]
         logger.debug('note: %s: %s %r', category, message, data)
 
 
@@ -153,6 +176,7 @@ def setup_logging():
     if gaetkconfig.SENTRY_DSN and sentry_client.is_active:
         import raven.handlers.logging
         import raven.conf
+
         # Configure the default client
         handler = raven.handlers.logging.SentryHandler(sentry_client)
         handler.setLevel(logging.ERROR)

@@ -41,13 +41,19 @@ def get_release():
         version = open('gaetk2-release.txt').readline().strip()
     except IOError:
         # if there is no version.txt file we return something fom the environment.
-        version = '{}-{}'.format(os.environ.get('CURRENT_VERSION_ID', 'dev'), time.time())
+        version = '{}-{}'.format(
+            os.environ.get('CURRENT_VERSION_ID', 'dev'), time.time()
+        )
     return version
 
 
 def get_version():
     """Do not use this."""
-    warnings.warn('`get_version` is deprecated, use `get_release`', DeprecationWarning, stacklevel=2)
+    warnings.warn(
+        '`get_version` is deprecated, use `get_release`',
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return get_release()
 
 
@@ -69,13 +75,27 @@ def get_revision():
 def get_userversion():
     u"""Return the User-Visible Version (eg `2018.11.3`)."""
     import yaml
+
     configyaml = yaml.safe_load(open('gaetk-conf.yaml'))
     return configyaml['userversion']
 
 
 @lru_cache(1)
+def get_uservisible_name():
+    """Get the user visible public name of the Applicationt.
+
+    E.g. ``huWaWi``.
+    """
+    import yaml
+
+    configyaml = yaml.safe_load(open('gaetk-conf.yaml'))
+    return configyaml['name']
+
+
+@lru_cache(1)
 def get_productiondomain():
     import yaml
+
     configyaml = yaml.safe_load(open('gaetk-conf.yaml'))
     return configyaml['productiondomain']
 
@@ -90,8 +110,9 @@ def get_environment():
         return 'production'
     elif os.environ.get('SERVER_NAME', '').startswith('staging'):
         return 'staging'
-    elif (os.environ.get('SERVER_NAME', '').startswith('v') and
-          os.environ.get('SERVER_NAME', '').endswith('appspot.com')):
+    elif os.environ.get('SERVER_NAME', '').startswith('v') and os.environ.get(
+        'SERVER_NAME', ''
+    ).endswith('appspot.com'):
         return 'testing'
     elif os.environ.get('SERVER_NAME', '').startswith('test'):
         return 'test'
@@ -109,10 +130,13 @@ def is_production():
     """
     if is_development():
         return False
-    elif os.environ.get('SERVER_NAME', '').startswith(('production', 'blue', 'green', 'staging', 'hotfix')):
+    elif os.environ.get('SERVER_NAME', '').startswith(
+        ('production', 'blue', 'green', 'staging', 'hotfix')
+    ):
         return True
-    elif (os.environ.get('SERVER_NAME', '').startswith('v') and
-          os.environ.get('SERVER_NAME', '').endswith('appspot.com')):
+    elif os.environ.get('SERVER_NAME', '').startswith('v') and os.environ.get(
+        'SERVER_NAME', ''
+    ).endswith('appspot.com'):
         return False
     else:
         return False
@@ -124,5 +148,9 @@ def is_development():
     See :term:`development version` what this means.
     """
     name = os.environ.get('SERVER_NAME', '')
-    return (os.environ.get('SERVER_SOFTWARE', '').startswith('Development') or
-            name.startswith('dev-') or name.startswith('test') or name.startswith('master'))
+    return (
+        os.environ.get('SERVER_SOFTWARE', '').startswith('Development')
+        or name.startswith('dev-')
+        or name.startswith('test')
+        or name.startswith('master')
+    )

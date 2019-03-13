@@ -202,13 +202,16 @@ class WSGIApplication(webapp2.WSGIApplication):
             event_id = ''
 
             if sentry_client:
-                event_id = sentry_client.captureException(
-                    level=level,
-                    extra=self.get_sentry_addon(request),
-                    fingerprint=fingerprint,
-                    tags=tags,
-                )
-                LOGGER.info('pushing to sentry: %s', event_id)
+                if not getattr(exception, '_hide_from_sentry', False):
+                    event_id = sentry_client.captureException(
+                        level=level,
+                        extra=self.get_sentry_addon(request),
+                        fingerprint=fingerprint,
+                        tags=tags,
+                    )
+                    LOGGER.info('pushing to sentry: %s', event_id)
+                else:
+                    LOGGER.info('hidden from sentry: %s')
             else:
                 LOGGER.info('sentry not configured')
 
