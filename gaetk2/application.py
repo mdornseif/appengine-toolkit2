@@ -283,6 +283,9 @@ class WSGIApplication(webapp2.WSGIApplication):
         tags = {'url': request.uri}
 
         k = repr(exception.__class__)
+        if 'PermanentTaskFailure' in k:
+            level = 'info'
+            tags = {'subsystem': 'taskqueue'}
         if (
             'ApiTooSlowError' in k
             or 'TimeoutError' in k
