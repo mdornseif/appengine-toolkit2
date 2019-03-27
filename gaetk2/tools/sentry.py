@@ -56,7 +56,9 @@ class _Dummy(object):
         return
 
 
-if gaetkconfig.SENTRY_DSN and not os.environ.get('GAETK2_UNITTEST'):
+if gaetkconfig.SENTRY_DSN and os.environ.get('SERVER_SOFTWARE', '').startswith(
+    'Google App Engine'
+):
     import raven
     import raven.breadcrumbs
     from raven.transport.http import HTTPTransport
