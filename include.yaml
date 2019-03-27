@@ -91,15 +91,18 @@ skip_files:
 - ^(.*/)?requirements\.txt
 - ^(.*/)?setup.py
 - ^.*/(bin)?/.*
-- ^.*/(_build|docs|example|test|bin)s?/.*
+- ^.*/(_build|docs|example|test|tests|bin)s?/.*
 - ^.+/README.*
 - ^(.*/)?lib/.*/(tests|testsuite|testing|examples|raven/contrib|bin|doc)/.*
 - ^(.*/)?lib/CentralServices/keys/.*
 - ^(.*/)?lib/fmtp/printclient/.*
 - ^(.*/)?lib/gae-sessions/(demo|demo-with-google-logins|docs|tests)/.*
 - ^(.*/)?lib/site-packages/(lxml|pytz|PIL|Crypto/SelfTest|raven/contrib|tkinter)/.*
+- tests/.*
+- lib/site-packages/.*egg-info/.*
 - lib/.*/site-packages
 - lib/python*.*
+- lib/pylint_plugins/.*
 - lib/DeadTrees/static/media/.*
 # build artifacts
 - static/obj/manual/_images/.*\.png\.map
