@@ -24,26 +24,33 @@ import time
 def _unknown_handler(value):
     """Helper for json.dmps())."""
     # originally from `huTools.hujson` (c) 2010
-    if isinstance(value, (datetime.date)):
+    if isinstance(value, datetime.datetime):
+        return value.isoformat().rstrip('Z') + 'Z'
+    elif isinstance(value, (datetime.date)):
         return unicode(value)
-    elif isinstance(value, datetime.datetime):
-        return value.isoformat() + 'Z'
-    elif hasattr(value, 'dict_mit_positionen') and callable(value.dict_mit_positionen):
-        # helpful for our internal data-modelling
-        return value.dict_mit_positionen()
+    # elif hasattr(value, 'dict_mit_positionen') and callable(value.dict_mit_positionen):
+    #     # helpful for our internal data-modelling
+    #     return value.dict_mit_positionen()
     elif hasattr(value, 'as_dict') and callable(value.as_dict):
         # helpful for structured.Struct() Objects
         return value.as_dict()
     # for Google AppEngine
     elif hasattr(value, 'to_dict') and callable(value.to_dict):
         # helpful for ndb.Model Objects
-        if hasattr(value, 'key') and hasattr(value.key, 'id') and callable(value.key.id):
+        if (
+            hasattr(value, 'key')
+            and hasattr(value.key, 'id')
+            and callable(value.key.id)
+        ):
             return dict(value.to_dict(), **dict(_id=value.key.id()))
         else:
             return value.to_dict()
     # for Google AppEngine `ndb`
-    elif (hasattr(value, '_properties') and hasattr(value._properties, 'items') and
-          callable(value._properties.items)):
+    elif (
+        hasattr(value, '_properties')
+        and hasattr(value._properties, 'items')
+        and callable(value._properties.items)
+    ):
         return {k: v._get_value(value) for k, v in value._properties.items()}
     elif hasattr(value, 'urlsafe') and callable(value.urlsafe):
         return str(value.urlsafe())
@@ -54,8 +61,11 @@ def _unknown_handler(value):
     elif hasattr(value, 'properties') and callable(value.properties):
         properties = value.properties()
         if isinstance(properties, dict):
-            keys = (key for (key, datatype) in properties.iteritems()
-                    if datatype.__class__.__name__ not in ['BlobProperty'])
+            keys = (
+                key
+                for (key, datatype) in properties.iteritems()
+                if datatype.__class__.__name__ not in ['BlobProperty']
+            )
         elif isinstance(properties, (set, list)):
             keys = properties
         else:
@@ -78,16 +88,26 @@ def _unknown_handler(value):
 
 def dump(val, fd, indent=' ', sort_keys=True):
     """Dump `val` into `fd` encoded as JSON."""
-    json.dump(val, fd, sort_keys=sort_keys, indent=bool(indent), ensure_ascii=True,
-              default=_unknown_handler)
+    json.dump(
+        val,
+        fd,
+        sort_keys=sort_keys,
+        indent=bool(indent),
+        ensure_ascii=True,
+        default=_unknown_handler,
+    )
 
 
 def dumps(val, indent=' ', sort_keys=True):
     """Return a JSON string containing encoded `val`."""
     start = time.time()
     ret = json.dumps(
-        val, sort_keys=sort_keys, indent=bool(indent), ensure_ascii=True,
-        default=_unknown_handler)
+        val,
+        sort_keys=sort_keys,
+        indent=bool(indent),
+        ensure_ascii=True,
+        default=_unknown_handler,
+    )
     delta = time.time() - start
     if delta > 1:
         logging.warn('dumps took %f seconds', delta)
@@ -102,4 +122,5 @@ def loads(data):
 def htmlsafe_json_dumps(obj, **kwargs):
     """Use `jinja2.utils.htmlsafe_json_dumps` with our dumper."""
     import jinja2.utils
+
     return jinja2.utils.htmlsafe_json_dumps(obj, dumper=dumps, **kwargs)
