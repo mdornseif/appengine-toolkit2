@@ -3,7 +3,7 @@
 """
 gaetk2.tools.datetools - formating and parsing of timestamps.
 
-Created as huTools.calendar.formats and huTools.calendar.formats
+Created as huTools.calendar.formats and huTools.calendar.workdays
 by Maximillian Dornseif and Christian Klein on 2007-06-24.
 And on workdays.py created by Christian Klein on 2006-11-28.
 Copyright (c) 2007, 2010, 2012, 2013, 2018 HUDORA GmbH. MIT licensed.

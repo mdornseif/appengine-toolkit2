@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-load_into_big_query.py - Load Cloud Datastore Backups into BigQuery.
+"""load_into_big_query.py - Load Cloud Datastore Backups into BigQuery.
 
 See :ref:`backupreplication` for further Information.
 
@@ -43,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_job(filename):
-    """Erzeuge Job zum Upload einer Datastore-Backup-Datei zu Google BigQuery"""
+    """Erzeuge Job zum Upload einer Datastore-Backup-Datei zu Google BigQuery."""
     bigquery_client = bigquery.Client(project=gaetkconfig.BIGQUERY_PROJECT)
     if not gaetkconfig.BIGQUERY_DATASET:
         dataset = get_default_gcs_bucket_name()
@@ -79,7 +78,7 @@ def create_job(filename):
 
 
 def upload_backup_file(filename):
-    """Lade Datastore-Backup-Datei zu Google BigQuery"""
+    """Lade Datastore-Backup-Datei zu Google BigQuery."""
     logger.info('uploading %r', filename)
     job = create_job(filename)
     job.result()  # Waits for table load to complete.
