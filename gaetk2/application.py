@@ -16,7 +16,6 @@ import google.appengine.api.datastore_errors
 import google.appengine.api.urlfetch_errors
 import google.appengine.runtime
 import google.appengine.runtime.apiproxy_errors
-import google.storage.speckle.python.api.rdbms
 
 from google.appengine.ext import ndb
 
@@ -344,13 +343,6 @@ class WSGIApplication(webapp2.WSGIApplication):
             status = 504  # Gateway Time-out
             level = 'warning'
             tags = {'subsystem': 'googlecloud', 'api': 'Datastore'}
-        # CloudSQL
-        if isinstance(
-            exception, google.storage.speckle.python.api.rdbms.OperationalError
-        ):
-            status = 504  # Gateway Time-out
-            level = 'warning'
-            tags = {'subsystem': 'googlecloud', 'api': 'CloudSQL'}
         # urlfetch
         if isinstance(exception, urllib3.exceptions.ProtocolError):
             if 'Connection aborted' in repr(exception):
