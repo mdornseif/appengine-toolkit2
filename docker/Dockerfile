@@ -38,12 +38,6 @@ RUN curl -s https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > 
 	&& /usr/local/gcloud/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true \
 	&& sudo /usr/local/gcloud/google-cloud-sdk/bin/gcloud components install app-engine-python-extras
 
-ENV GAE_VERSION '1.9.80'
-RUN curl -s https://storage.googleapis.com/appengine-sdks/featured/google_appengine_${GAE_VERSION}.zip > /tmp/google_appengine.zip \
-	&& sudo unzip -q /tmp/google_appengine.zip -d /usr/local/ \
-	&& rm /tmp/google_appengine.zip
-ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin:/usr/local/google_appengine
-
 # update to a git which can run paralell (-j8) and install py3
 # and pseudo-python which needs py3
 RUN sudo apt-get update \

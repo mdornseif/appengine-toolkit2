@@ -4,7 +4,7 @@
 Check if the stuff needed to develop with appengine toolkit is available.
 
 Created by Maximillian Dornseif on 2018-01-11.
-Copyright (c) 2018 Cyberlogi. MIT licensed.
+Copyright (c) 2018, 2020 Cyberlogi. MIT licensed.
 """
 from __future__ import unicode_literals
 
@@ -30,6 +30,7 @@ tools = collections.OrderedDict([
     # ('brew --version', 'https://docs.brew.sh/Installation.html'),
     ('make --version', 'https://developer.apple.com/downloads/index.action'),
     ('npm bin', 'https://nodejs.org/en/'),
+    ('yarn versions', 'https://classic.yarnpkg.com/en/docs/install/'),
     ('gcloud --version', 'https://cloud.google.com/sdk/downloads'),
     ('docker --version', 'https://docs.docker.com/docker-for-mac/'),
     ('git --version', 'brew install git'),
@@ -47,31 +48,6 @@ for command, doc in tools.items():
         sys.exit(1)
 
     print '+ exists', repr(command.split()[0]), output.split('\n')[0]
-
-# file and how to build it if it does not exist
-targets = {
-    'lib/google_appengine/appcfg.py': """
-    curl -s -O https://storage.googleapis.com/appengine-sdks/featured/google_appengine_{GAE_VERSION}.zip
-    unzip -q google_appengine_{GAE_VERSION}.zip
-    rm -Rf lib/google_appengine
-    mv google_appengine lib/
-    rm google_appengine_{GAE_VERSION}.zip
-""",
-}
-
-for target, commands in targets.items():
-    if os.path.exists(target):
-        print '+ exists', repr(target)
-    else:
-        print '-> building', repr(target)
-        for line in commands.split('\n'):
-            line = line.strip()
-            if line:
-                cmd = line.format(**config)
-                returncode = subprocess.call(cmd, shell=True)
-                if returncode:
-                    print returncode, cmd
-
 
 # install required libraries
 dpath, _ = os.path.split(__file__)

@@ -64,6 +64,34 @@ warnings.filterwarnings(
 vendor.add('./lib')  # processes `.pth` files
 vendor.add('./lib/site-packages')  # processes `.pth` files
 
+
+def setup_sdk_imports():
+    """Sets up appengine SDK third-party imports."""
+    # https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/appengine/standard/appengine_helper.py
+
+    sdk_path = os.environ.get('GAE_SDK_PATH')
+
+    if not sdk_path:
+        return
+
+    if os.path.exists(os.path.join(sdk_path, 'google_appengine')):
+        sdk_path = os.path.join(sdk_path, 'google_appengine')
+
+    if 'google' in sys.modules:
+        sys.modules['google'].__path__.append(os.path.join(sdk_path, 'google'))
+
+    # This sets up libraries packaged with the SDK, but puts them last in
+    # sys.path to prevent clobbering newer versions
+    sys.path.append(sdk_path)
+    # import dev_appserver
+    # sys.path.extend(dev_appserver.EXTRA_PATHS)
+
+    # Fixes timezone and other os-level items.
+    import google.appengine.tools.os_compat
+
+    (google.appengine.tools.os_compat)
+
+
 # fixing botocore
 os.path.expanduser = lambda x: x
 
@@ -147,18 +175,6 @@ for modname in ['google.cloud.exceptions', 'google.cloud.bigquery']:
     except pkg_resources.DistributionNotFound:
         pass
 
-if 'google' in sys.modules:
-    # merge ./lib/google_appengine/google ir so into ./lib/site-packages/google
-    google_paths = getattr(sys.modules['google'], '__path__', [])
-    for gaepath in [
-        '../lib/google_appengine',
-        './lib/google_appengine',
-        '/usr/local/google_appengine/',
-    ]:
-        if os.path.exists(gaepath):
-            vendored_google_path = os.path.abspath(os.path.join(gaepath, 'google'))
-            if vendored_google_path not in google_paths:
-                google_paths.append(vendored_google_path)
-
-
+setup_sdk_imports()
+print('PYTHONPATH={}'.format(':'.join(sys.path)))
 NOW_THIS_WORKS = __import__('google.appengine.ext')

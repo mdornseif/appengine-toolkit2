@@ -45,6 +45,33 @@ except ImportError:
     pass
 
 
+def setup_sdk_imports():
+    """Sets up appengine SDK third-party imports."""
+    # https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/appengine/standard/appengine_helper.py
+
+    sdk_path = os.environ.get('GAE_SDK_PATH')
+
+    if not sdk_path:
+        return
+
+    if os.path.exists(os.path.join(sdk_path, 'google_appengine')):
+        sdk_path = os.path.join(sdk_path, 'google_appengine')
+
+    if 'google' in sys.modules:
+        sys.modules['google'].__path__.append(os.path.join(sdk_path, 'google'))
+
+    # This sets up libraries packaged with the SDK, but puts them last in
+    # sys.path to prevent clobbering newer versions
+    sys.path.append(sdk_path)
+    # import dev_appserver
+    # sys.path.extend(dev_appserver.EXTRA_PATHS)
+
+    # Fixes timezone and other os-level items.
+    import google.appengine.tools.os_compat
+
+    (google.appengine.tools.os_compat)
+
+
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../../lib/site-packages'))
 sys.path.insert(0, os.path.abspath('../../../lib/site-packages'))
@@ -55,20 +82,11 @@ for modname in ['google.cloud.exceptions']:
     except (pkg_resources.DistributionNotFound, ImportError):
         pass
 
-if 'google' in sys.modules:
-    # merge ./lib/google_appengine/google into ./lib/site-packages/google
-    google_paths = getattr(sys.modules['google'], '__path__', [])
-    for gaepath in ['/usr/local/google_appengine/', '../lib/google_appengine', './lib/google_appengine']:
-        if os.path.exists(gaepath):
-            vendored_google_path = os.path.abspath(os.path.join(gaepath, 'google'))
-            if vendored_google_path not in google_paths:
-                google_paths.append(vendored_google_path)
-else:
-    sys.path.insert(0, os.path.abspath('../../lib/google_appengine'))
-    sys.path.insert(0, os.path.abspath('../../../lib/google_appengine'))
+setup_sdk_imports()
+print('PYTHONPATH={}'.format(':'.join(sys.path)))
+NOW_THIS_WORKS = __import__('google.appengine.ext')
 
 
-# NOW_THIS_WORKS = __import__('google.appengine.ext')
 autodoc_mock_imports = [
     'google.cloud.bigquery',
     'google.appengine.api',
