@@ -92,7 +92,7 @@ class AuthenticationReaderMixin(object):
                     self.get_credential(userdata['sub']),
                     'unknown uid %r' % userdata['sub'])
                 # We do not check the password because get_current_user() is trusted
-                return self._login_user('gaetk2 JWT')124
+                return self._login_user('gaetk2 JWT')
 
             else:
                 # Auth0 JWT, see http://filez.foxel.org/2P2o1O3j2f1N
