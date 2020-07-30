@@ -2,9 +2,9 @@
 # and also be able to handle automated deployments
 # Node is there for Javascript Builds and tests
 
-FROM circleci/python:2.7.14-stretch-node
+FROM circleci/python:2.7.16-buster-node
 # Python 2.7.12 is what is running on AppEngine
-# sothis would be more authentic:
+# so this would be more authentic:
 # RUN wget https://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz && \
 #     tar xzf Python-2.7.12.tgz && \
 #     rm Python-2.7.12.tgz && \
@@ -17,16 +17,16 @@ FROM circleci/python:2.7.14-stretch-node
 # for inspiration on how to build Browsers for headless testing
 
 # carefull! python packages get installed into system python and not user python
-RUN sudo apt-get install -y less graphviz libfreetype6-dev libjpeg-dev zlib1g-dev libtiff-dev python-pil \
-    && sudo /bin/sh -c 'echo "deb http://ftp.us.debian.org/debian testing main contrib non-free" >> /etc/apt/sources.list' \
+RUN sudo apt-get install -y less graphviz libfreetype6-dev libjpeg-dev zlib1g-dev libtiff-dev \
+	&& sudo /bin/sh -c 'echo "deb http://ftp.us.debian.org/debian testing main contrib non-free" >> /etc/apt/sources.list' \
 	&& sudo apt-get update \
+	&& sudo apt-get install python-pil \
 	&& sudo apt-get clean autoclean \
 	&& sudo apt-get autoremove --yes \
 	&& sudo rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 RUN \
-	sudo npm install -g codeclimate-test-reporter \
-	&& curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ~/cc-test-reporter \
+	curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ~/cc-test-reporter \
 	&& sudo mv ~/cc-test-reporter /usr/local/bin/cc-test-reporter \
 	&& sudo chmod +x /usr/local/bin/cc-test-reporter
 
@@ -38,16 +38,20 @@ RUN curl -s https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > 
 	&& /usr/local/gcloud/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true \
 	&& sudo /usr/local/gcloud/google-cloud-sdk/bin/gcloud components install app-engine-python-extras
 
+ENV PATH "$PATH:/usr/local/gcloud/google-cloud-sdk/bin"
+
 # update to a git which can run paralell (-j8) and install py3
 # and pseudo-python which needs py3
 RUN sudo apt-get update \
-    && sudo apt-get install -y --fix-missing git python3 python3-distutils python3-setuptools \
-	&& sudo apt-get clean all \
-    && curl https://bootstrap.pypa.io/get-pip.py -o ~/get-pip.py \
-	&& sudo python3 ~/get-pip.py && rm ~/get-pip.py \
-    && sudo pip3 install PyYAML --global-option="--without-libyaml" \
-    && sudo pip3 install mypy==0.650 javascripthon==0.10 pseudo==0.2.16 pseudo-python==0.2.34 \
-	&& sudo rm -Rf /root/.cache
+		&& sudo apt-get install -y --fix-missing git \
+		&& sudo apt-get clean all && sudo rm -Rf /root/.cache
+# RUN sudo apt-get install -y --fix-missing python3 python3-distutils python3-setuptools
+# RUN sudo apt-get clean all \
+#     && curl https://bootstrap.pypa.io/get-pip.py -o ~/get-pip.py
+# RUN sudo python3 ~/get-pip.py && rm ~/get-pip.py \
+#     && sudo pip3 install PyYAML --global-option="--without-libyaml" \
+#     && sudo pip3 install mypy==0.650 javascripthon==0.10 pseudo==0.2.16 pseudo-python==0.2.34 \
+RUN sudo apt-get clean all && sudo rm -Rf /root/.cache
 
 # Cache of pypi modules
 # WORKDIR /home/circleci/pypi-downloads
