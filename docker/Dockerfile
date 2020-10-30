@@ -2,7 +2,7 @@
 # and also be able to handle automated deployments
 # Node is there for Javascript Builds and tests
 
-FROM circleci/python:2.7.16-buster-node
+FROM circleci/python:2.7.16-buster
 # Python 2.7.12 is what is running on AppEngine
 # so this would be more authentic:
 # RUN wget https://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz && \
@@ -25,10 +25,10 @@ RUN sudo apt-get install -y less graphviz libfreetype6-dev libjpeg-dev zlib1g-de
 	&& sudo apt-get autoremove --yes \
 	&& sudo rm -rf /var/lib/{apt,dpkg,cache,log}/
 
-RUN \
-	curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ~/cc-test-reporter \
-	&& sudo mv ~/cc-test-reporter /usr/local/bin/cc-test-reporter \
-	&& sudo chmod +x /usr/local/bin/cc-test-reporter
+# RUN \
+#	curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ~/cc-test-reporter \
+#	&& sudo mv ~/cc-test-reporter /usr/local/bin/cc-test-reporter \
+#	&& sudo chmod +x /usr/local/bin/cc-test-reporter
 
 RUN curl -s https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz \
 	&& sudo mkdir -p /usr/local/gcloud \
@@ -37,7 +37,6 @@ RUN curl -s https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > 
 	&& sudo /usr/local/gcloud/google-cloud-sdk/install.sh \
 	&& /usr/local/gcloud/google-cloud-sdk/bin/gcloud config set disable_usage_reporting true \
 	&& sudo /usr/local/gcloud/google-cloud-sdk/bin/gcloud components install app-engine-python-extras
-
 ENV PATH "$PATH:/usr/local/gcloud/google-cloud-sdk/bin"
 
 # update to a git which can run paralell (-j8) and install py3
