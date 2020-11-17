@@ -167,7 +167,7 @@ except ImportError:
 # can solve this.
 
 # ensure conflictiong modules are loaded to pull in the Namespace Package
-for modname in ['google.cloud.exceptions', 'google.cloud.bigquery']:
+for modname in ['google.cloud.exceptions', 'google.cloud.bigquery', 'google.cloud.datastore']:
     try:
         __import__(modname)
     except ImportError:
