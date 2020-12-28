@@ -119,8 +119,8 @@ except ImportError:
 
 try:
     # incerase global HTTP-Timeout from 5 to 30 seconds
-    google.appengine.api.urlfetch.set_default_fetch_deadline(30)
     import google.appengine.api.urlfetch  # isort:skip
+    google.appengine.api.urlfetch.set_default_fetch_deadline(30)
 except ImportError:
     pass
 
