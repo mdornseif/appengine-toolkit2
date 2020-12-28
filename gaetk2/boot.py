@@ -62,7 +62,10 @@ warnings.filterwarnings(
 # `google.appengine.ext.vendor.add` is just `site.addsitedir()` with path shuffling
 
 vendor.add('./lib')  # processes `.pth` files
-vendor.add('./lib/site-packages')  # processes `.pth` files
+try:
+    vendor.add('./lib/site-packages')  # processes `.pth` files
+except ValueError:
+    pass
 
 
 def setup_sdk_imports():
