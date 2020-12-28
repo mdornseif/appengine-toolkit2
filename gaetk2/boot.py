@@ -98,24 +98,31 @@ def setup_sdk_imports():
 # fixing botocore
 os.path.expanduser = lambda x: x
 
-import google.appengine.api.urlfetch  # isort:skip
-import requests  # isort:skip
-import requests_toolbelt.adapters.appengine  # isort:skip
-import urllib3  # isort:skip
+try:
+    import requests  # isort:skip
+    import requests_toolbelt.adapters.appengine  # isort:skip
+    requests_toolbelt.adapters.appengine.monkeypatch(validate_certificate=False)
+    # this breaks code like
+    #    session = requests.session()
+    #    session.mount('https://', appengine.AppEngineAdapter())
+    #    return dropbox.Dropbox(access_token session=session)
+    # But without that session mounting you would get ChunkedEncodingError.
+except ImportError:
+    pass
 
-requests_toolbelt.adapters.appengine.monkeypatch(validate_certificate=False)
-# this breaks code like
-#    session = requests.session()
-#    session.mount('https://', appengine.AppEngineAdapter())
-#    return dropbox.Dropbox(access_token session=session)
-# But without that session mounting you would get ChunkedEncodingError.
+try:
+    # suppress SSL warnings we can not do anything about
+    import urllib3  # isort:skip
+    urllib3.disable_warnings()
+except ImportError:
+    pass
 
-# suppress SSL warnings we can not do anything about
-urllib3.disable_warnings()
-
-# incerase global HTTP-Timeout from 5 to 30 seconds
-google.appengine.api.urlfetch.set_default_fetch_deadline(30)
-
+try:
+    # incerase global HTTP-Timeout from 5 to 30 seconds
+    google.appengine.api.urlfetch.set_default_fetch_deadline(30)
+    import google.appengine.api.urlfetch  # isort:skip
+except ImportError:
+    pass
 
 # ensure we can see the funcname for convinience and the logger name for selective supression
 # see https://docs.python.org/2/library/logging.html#logrecord-attributes
