@@ -28,6 +28,7 @@ from google.appengine.ext import ndb
 
 class gaetk_Configuration(ndb.Model):
     """Generic configuration object"""
+    _use_cache = False
     value = ndb.TextProperty(default='', indexed=False)
     updated_at = ndb.DateTimeProperty(auto_now_add=True, auto_now=True)
     created_at = ndb.DateTimeProperty(auto_now_add=True)
