@@ -186,5 +186,5 @@ for modname in ['google.cloud.exceptions', 'google.cloud.bigquery', 'google.clou
         pass
 
 setup_sdk_imports()
-print('PYTHONPATH={}'.format(':'.join(sys.path)))
+# print('PYTHONPATH={}'.format(':'.join(sys.path)))
 NOW_THIS_WORKS = __import__('google.appengine.ext')
