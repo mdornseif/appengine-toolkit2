@@ -36,7 +36,7 @@ class LoginAuth0Handler(BasicHandler, AuthenticationReaderMixin):
     """
 
     def get(self):
-        """Reirect to Auth0 to initiate OpenID Connect Auth."""
+        """Redirect to Auth0 to initiate OpenID Connect Auth."""
         # Where do we want to go after auth?
         continue_url = self.request.GET.get('continue', '/').encode('ascii', 'ignore')
         assert continue_url
@@ -68,7 +68,7 @@ class LoginAuth0Handler(BasicHandler, AuthenticationReaderMixin):
 
         oauth_url = 'https://' + gaetkconfig.AUTH0_DOMAIN + '/authorize' + '?' + urllib.urlencode(params)
 
-        # redirect for google to get Authenticated
+        # redirect to Auth0 to get Authenticated
         logger.info(
             'redirecting with state %r to %s via %s',
             self.session['oauth_state'],
@@ -109,7 +109,10 @@ class Auth0OAuth2Callback(BasicHandler, AuthenticationReaderMixin):
                                              gaetkconfig.AUTH0_CLIENT_SECRET,
                                              self.request.get('code'),
                                              self.request.url)
-        user_info = json.loads(auth0_users.userinfo(token['access_token']))
+
+        user_info = auth0_users.userinfo(token['access_token'])
+        logger.debug('raw user_info: %r', user_info)
+        user_info = json.loads(user_info)
         logger.info('user_info: %r', user_info)
 
         # u'sub': u'auth0|5a2694527afc143957e80671',
