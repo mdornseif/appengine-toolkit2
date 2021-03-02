@@ -111,6 +111,10 @@ class Auth0OAuth2Callback(BasicHandler, AuthenticationReaderMixin):
                                              self.request.url)
 
         user_info = auth0_users.userinfo(token['access_token'])
+        try:
+            user_info = json.loads(user_info)
+        except:
+            pass
         logger.debug('user_info: %r', user_info)
 
         # u'sub': u'auth0|5a2694527afc143957e80671',
