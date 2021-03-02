@@ -57,6 +57,15 @@ warnings.filterwarnings(
 warnings.filterwarnings(
     'ignore', message='The TextField alias for StringField has been deprecated'
 )
+warnings.filterwarnings(
+    'ignore', category=PendingDeprecationWarning, message='The `channel` argument is deprecated; use `transport` instead.',
+)
+warnings.filterwarnings(
+    'ignore', category=DeprecationWarning, module=r'.*google.protobuf.*'
+)
+warnings.filterwarnings(
+    'ignore', category=DeprecationWarning, module=r'.*datastore_types', message='object.__init__() takes no parameter',
+)
 
 # Include libraries
 # `google.appengine.ext.vendor.add` is just `site.addsitedir()` with path shuffling
@@ -171,7 +180,7 @@ except ImportError:
     pass
 
 
-# often we get at this point a "Mamespace Package" in `lib/site-packages/google`
+# often we get at this point a "Namespace Package" in `lib/site-packages/google`
 # which shadows the App Engine SDK stored at `lib/google_appengine/google`
 # Seemingly only monkey patching `sys.modules['google'].__path__`
 # can solve this.
