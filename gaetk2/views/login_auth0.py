@@ -74,7 +74,7 @@ class LoginAuth0Handler(BasicHandler, AuthenticationReaderMixin):
             self.session['oauth_state'],
             self.session['oauth_redirect_uri'],
             oauth_url)
-        raise HTTP302_Found(location=oauth_url)
+        raise HTTP302_Found(location=oauth_url, comment="... da können Sie sich autentifizieren")
 
 
 class Auth0OAuth2Callback(BasicHandler, AuthenticationReaderMixin):

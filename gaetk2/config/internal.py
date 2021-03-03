@@ -31,6 +31,7 @@ gaetkconfig = _gaetk_registry.register(
         AUTH0_DOMAIN='*unset*',
         AUTH0_CLIENT_ID='*unset*',
         AUTH0_CLIENT_SECRET=None,
+        AUTH_ALLOWED_DOMAINS=['hudora.de'],
         # Backup To Google CloudStorage
         BACKUP_BUCKET=None,
         BACKUP_QUEUE='default',

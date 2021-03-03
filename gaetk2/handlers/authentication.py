@@ -351,12 +351,14 @@ class AuthenticationReaderMixin(object):
 
 
 def allow_credential_from_jwt(thejwt):
+    """Erzeugt automatisch einen neuen User, wenn der Nutzer bisher unbekannt ist."""
     # Tested with:
     # * GitHub
     # * Google-Apps
     # * Salesforce
     logger.debug('JWT: %s', thejwt)
-    if thejwt.get('email_verified') and thejwt['email'].endswith('@hudora.de'):
+    logger.debug('allowed: %s', ['@{}'.format(dom) for dom in gaetkconfig.AUTH_ALLOWED_DOMAINS])
+    if thejwt['email'].endswith(tuple(['@{}'.format(dom) for dom in gaetkconfig.AUTH_ALLOWED_DOMAINS])):
         return models.gaetk_Credential.create(
             id=thejwt['email'],
             uid=thejwt['email'],
