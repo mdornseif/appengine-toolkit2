@@ -32,6 +32,8 @@ class _Dummy(object):
     It also evaluates to `False`.
     """
 
+    is_active = False
+
     def __bool__(self):
         return False
 
@@ -63,7 +65,7 @@ if gaetkconfig.SENTRY_DSN and os.environ.get('SERVER_SOFTWARE', '').startswith(
     import raven.breadcrumbs
     from raven.transport.http import HTTPTransport
 
-    if gaetkconfig.SENTRY_DSN and not is_development():
+    if True:
         # see https://docs.sentry.io/clients/python/advanced/
         sentry_client = raven.Client(
             gaetkconfig.SENTRY_DSN,
@@ -150,7 +152,6 @@ if gaetkconfig.SENTRY_DSN and os.environ.get('SERVER_SOFTWARE', '').startswith(
 
 
 else:
-
     def note(category, message=None, data=None):
         """Dummy Funktion, die loggt statt zu Sentry zu senden."""
         assert category in [
