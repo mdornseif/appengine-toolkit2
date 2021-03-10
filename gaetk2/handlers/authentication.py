@@ -338,14 +338,6 @@ class AuthenticationReaderMixin(object):
                 elif getattr(cred1, 'kundennr', None):
                     cred.org_designator = cred1.kundennr
                 cred.put()
-        if cred:
-            if cred.meta is None:
-                cred.meta = {}
-                cred.put()
-            if (not cred.staff) and cred.email:
-                if (cred.email.endswith('@hudora.de') or cred.email.endswith('@cyberlogi.de')):
-                    cred.staff = True
-                    cred.put()
 
         return cred
 
