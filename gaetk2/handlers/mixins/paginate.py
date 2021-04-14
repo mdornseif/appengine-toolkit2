@@ -4,7 +4,7 @@
 gaetk2.handlers.mixins.paginate - Paginate NDB Queries.
 
 Created by Maximillian Dornseif on 2010-10-03.
-Copyright (c) 2010-2018 HUDORA. MIT licensed.
+Copyright (c) 2010-2018, 2021 HUDORA. MIT licensed.
 """
 from __future__ import unicode_literals
 
@@ -12,6 +12,8 @@ import math
 import urllib
 
 from google.appengine.datastore.datastore_query import Cursor
+from google.appengine.ext import db
+from google.appengine.ext import ndb
 
 import jinja2
 
@@ -234,9 +236,32 @@ def _xdb_fetch_page(query, limit, offset=None, start_cursor=None):
     Returns:
         (objects, cursor, more_objects)
     """
-    if start_cursor:
-        if isinstance(start_cursor, basestring):
-            start_cursor = Cursor(urlsafe=start_cursor)
-        return query.fetch_page(limit, start_cursor=start_cursor)
+
+    if isinstance(query, ndb.Query):
+        if start_cursor:
+            if isinstance(start_cursor, basestring):
+                start_cursor = Cursor(urlsafe=start_cursor)
+            objects, cursor, more_objects = query.fetch_page(limit, start_cursor=start_cursor)
+        else:
+            objects, cursor, more_objects = query.fetch_page(limit, offset=offset)
+    elif isinstance(query, db.Query) or isinstance(query, db.GqlQuery):
+        if start_cursor:
+            if isinstance(start_cursor, Cursor):
+                start_cursor = start_cursor.urlsafe()
+            query.with_cursor(start_cursor)
+            objects = query.fetch(limit)
+            cursor = Cursor(urlsafe=query.cursor())
+            more_objects = len(objects) == limit
+        else:
+            objects = query.fetch(limit, offset=offset)
+            # MultiQuery kann keine Cursor
+            if len(getattr(query, '_Query__query_sets', [])) < 2:
+                _cursor = query.cursor()
+                more_objects = query.with_cursor(_cursor).count(1) > 0
+                cursor = Cursor(urlsafe=_cursor)
+            else:
+                more_objects = len(objects) == limit
+                cursor = None
     else:
-        return query.fetch_page(limit, offset=offset)
+        raise RuntimeError('unknown query class: %s' % type(query))
+    return objects, cursor, more_objects
