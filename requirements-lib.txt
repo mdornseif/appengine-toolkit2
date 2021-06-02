@@ -3,7 +3,7 @@ GoogleAppEngineCloudStorageClient==1.9.22.1
 GoogleAppEngineMapReduce==1.9.22.0
 idna==2.6  # used by requests
 jinja2==2.10.1
-markdown2==2.3.5
+markdown2==2.4.0
 python-jose==3.0.0
 requests==2.20.0
 requests_toolbelt==0.8.0
